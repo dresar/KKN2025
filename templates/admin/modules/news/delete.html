@@ -1,0 +1,175 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Hapus Berita - {{ news.title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Hapus Berita</h1>
+            <p class="text-gray-600 mt-1">{{ news.title }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'news:news_admin' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Warning Card -->
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-red-400 text-2xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-lg font-medium text-red-800">Peringatan</h3>
+                <p class="text-red-700 mt-1">
+                    Tindakan ini tidak dapat dibatalkan. Semua data berita, gambar, dan komentar akan dihapus secara permanen.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- News Preview -->
+    <div class="bg-white rounded-lg shadow-sm border p-6 mb-6">
+        <h3 class="text-lg font-semibold mb-4">Berita yang Akan Dihapus</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-medium text-gray-700 mb-2">Informasi Dasar</h4>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium">Judul:</span> {{ news.title }}</div>
+                    <div><span class="font-medium">Kategori:</span> {{ news.category.name }}</div>
+                    <div><span class="font-medium">Penulis:</span> {{ news.author.get_full_name|default:news.author.username }}</div>
+                    <div><span class="font-medium">Status:</span> {{ news.get_status_display }}</div>
+                    <div><span class="font-medium">Dibuat:</span> {{ news.created_at|date:"d M Y H:i" }}</div>
+                    <div><span class="font-medium">Views:</span> {{ news.views_count|default:0 }}</div>
+                    <div><span class="font-medium">Likes:</span> {{ news.likes.count }}</div>
+                    <div><span class="font-medium">Komentar:</span> {{ news.comments.count }}</div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-medium text-gray-700 mb-2">Konten</h4>
+                <div class="text-sm text-gray-600">
+                    {% if news.excerpt %}
+                        <p class="mb-2">{{ news.excerpt }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500">
+                        {{ news.content|length }} karakter
+                        {% if news.reading_time %}
+                            • {{ news.reading_time }} menit baca
+                        {% endif %}
+                    </p>
+                </div>
+                
+                {% if news.tags.all %}
+                    <div class="mt-3">
+                        <h5 class="font-medium text-gray-700 mb-2">Tags</h5>
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in news.tags.all %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if news.featured_image %}
+            <div class="mt-4">
+                <h5 class="font-medium text-gray-700 mb-2">Gambar Utama</h5>
+                <img src="{{ news.featured_image.url }}" alt="{{ news.title }}" class="w-32 h-24 object-cover rounded border">
+            </div>
+        {% endif %}
+        
+        {% if news.images.all %}
+            <div class="mt-4">
+                <h5 class="font-medium text-gray-700 mb-2">Galeri Gambar ({{ news.images.count }})</h5>
+                <div class="flex space-x-2">
+                    {% for image in news.images.all|slice:":5" %}
+                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Gambar' }}" class="w-20 h-16 object-cover rounded border">
+                    {% endfor %}
+                    {% if news.images.count > 5 %}
+                        <div class="w-20 h-16 bg-gray-100 rounded border flex items-center justify-center text-xs text-gray-500">
+                            +{{ news.images.count|add:"-5" }} lagi
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Confirmation Form -->
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <div class="text-center">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Konfirmasi Penghapusan</h3>
+            <p class="text-gray-600 mb-6">
+                Ketik <strong>"HAPUS"</strong> untuk mengkonfirmasi penghapusan berita ini
+            </p>
+            
+            <form method="POST" id="deleteForm">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <input type="text" id="confirmText" placeholder="Ketik HAPUS" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center text-lg font-mono" 
+                               required>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-3">
+                        <a href="{% url 'news:news_admin' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                            Batal
+                        </a>
+                        <button type="submit" id="deleteBtn" disabled 
+                                class="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-trash mr-2"></i>Hapus Berita
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmText = document.getElementById('confirmText');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    // Enable/disable delete button based on confirmation text
+    confirmText.addEventListener('input', function() {
+        if (this.value === 'HAPUS') {
+            deleteBtn.disabled = false;
+        } else {
+            deleteBtn.disabled = true;
+        }
+    });
+    
+    // Form submission
+    deleteForm.addEventListener('submit', function(e) {
+        if (confirmText.value !== 'HAPUS') {
+            e.preventDefault();
+            alert('Ketik "HAPUS" untuk mengkonfirmasi penghapusan');
+            return;
+        }
+        
+        if (!confirm('Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.')) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Show loading state
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menghapus...';
+    });
+});
+</script>
+{% endblock %}
+

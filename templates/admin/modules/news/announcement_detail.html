@@ -1,0 +1,178 @@
+<div class="announcement-detail">
+    <div class="row">
+        <div class="col-md-8">
+            <h4 class="mb-3">{{ announcement.title }}</h4>
+            
+            <div class="announcement-meta mb-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-tag"></i> <strong>Jenis:</strong> {{ announcement.get_type_display }}
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-flag"></i> <strong>Prioritas:</strong> {{ announcement.get_priority_display }}
+                        </small>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> <strong>Dibuat:</strong> {{ announcement.created_at|date:"d F Y H:i" }}
+                        </small>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">
+                            <i class="fas fa-user"></i> <strong>Penulis:</strong> {{ announcement.author.get_full_name|default:announcement.author.username }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="announcement-content">
+                <h6>Isi Pengumuman:</h6>
+                <div class="border p-3 rounded bg-light">
+                    {{ announcement.content|safe }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Informasi Detail</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Status:</strong>
+                        <span class="badge badge-{% if announcement.status == 'published' %}success{% elif announcement.status == 'draft' %}warning{% else %}info{% endif %} ml-2">
+                            {{ announcement.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    {% if announcement.start_date %}
+                    <div class="mb-3">
+                        <strong>Tanggal Mulai:</strong><br>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar-alt"></i> {{ announcement.start_date|date:"d F Y H:i" }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if announcement.end_date %}
+                    <div class="mb-3">
+                        <strong>Tanggal Berakhir:</strong><br>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar-times"></i> {{ announcement.end_date|date:"d F Y H:i" }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if announcement.target_audience %}
+                    <div class="mb-3">
+                        <strong>Target Audiens:</strong><br>
+                        <small class="text-muted">
+                            <i class="fas fa-users"></i> {{ announcement.target_audience }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if announcement.contact_info %}
+                    <div class="mb-3">
+                        <strong>Kontak:</strong><br>
+                        <small class="text-muted">
+                            <i class="fas fa-phone"></i> {{ announcement.contact_info }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <strong>Slug:</strong><br>
+                        <small class="text-muted font-monospace">{{ announcement.slug }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <strong>Terakhir Diperbarui:</strong><br>
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> {{ announcement.updated_at|date:"d F Y H:i" }}
+                        </small>
+                    </div>
+                    
+                    {% if announcement.is_active %}
+                    <div class="alert alert-success alert-sm">
+                        <i class="fas fa-check-circle"></i> Pengumuman ini sedang aktif
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning alert-sm">
+                        <i class="fas fa-exclamation-triangle"></i> Pengumuman ini tidak aktif
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-3">
+                <button type="button" class="btn btn-warning btn-block" onclick="editAnnouncement({{ announcement.id }})">
+                    <i class="fas fa-edit"></i> Edit Pengumuman
+                </button>
+                <button type="button" class="btn btn-danger btn-block" onclick="deleteAnnouncement({{ announcement.id }}, '{{ announcement.title|escapejs }}')">
+                    <i class="fas fa-trash"></i> Hapus Pengumuman
+                </button>
+                {% if announcement.status == 'published' %}
+                <a href="{% url 'news:public_announcement_detail' announcement.slug %}" target="_blank" class="btn btn-info btn-block">
+                    <i class="fas fa-external-link-alt"></i> Lihat di Website
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.announcement-detail h4 {
+    color: #333;
+    font-weight: 600;
+}
+
+.announcement-meta {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border-left: 4px solid #007bff;
+}
+
+.announcement-content {
+    margin-top: 20px;
+}
+
+.announcement-content h6 {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.alert-sm {
+    padding: 8px 12px;
+    font-size: 0.875em;
+}
+
+.font-monospace {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #f8f9fa;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.card-header h6 {
+    color: #495057;
+}
+
+.btn-block {
+    margin-bottom: 8px;
+}
+</style>

@@ -1,0 +1,238 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+            <h1 class="text-2xl font-bold mb-2">{{ page_title }}</h1>
+            <p class="text-blue-100">{{ page_subtitle }}</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-handshake text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Koperasi</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="total-koperasi">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-building text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total BUMG</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="total-bumg">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-chart-line text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total UKM</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="total-ukm">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-boxes text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Aset</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="total-aset">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                    <i class="fas fa-tools text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Jasa</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="total-jasa">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Koperasi Merah Putih -->
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <i class="fas fa-handshake text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Koperasi Merah Putih</h3>
+                        <p class="text-sm text-gray-600">Kelola data koperasi</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Manajemen data koperasi merah putih di desa</p>
+                <a href="{% url 'business:koperasi' %}" class="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Kelola Data
+                </a>
+            </div>
+        </div>
+
+        <!-- BUMG -->
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-building text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">BUMG</h3>
+                        <p class="text-sm text-gray-600">Badan Usaha Milik Gampong</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Manajemen data Badan Usaha Milik Gampong</p>
+                <a href="{% url 'business:bumg' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Kelola Data
+                </a>
+            </div>
+        </div>
+
+        <!-- Input Data UKM -->
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-chart-line text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Input Data UKM</h3>
+                        <p class="text-sm text-gray-600">Usaha Kecil Menengah</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Input dan kelola data Usaha Kecil Menengah</p>
+                <a href="{% url 'business:ukm' %}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Kelola Data
+                </a>
+            </div>
+        </div>
+
+        <!-- Input Data Aset -->
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-boxes text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Input Data Aset</h3>
+                        <p class="text-sm text-gray-600">Aset bisnis dan usaha</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Input dan kelola data aset bisnis dan usaha</p>
+                <a href="{% url 'business:aset' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Kelola Data
+                </a>
+            </div>
+        </div>
+
+        <!-- Layanan Jasa -->
+        <div class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                        <i class="fas fa-tools text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Layanan Jasa</h3>
+                        <p class="text-sm text-gray-600">Jasa dan layanan</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 mb-4">Kelola data layanan jasa di desa</p>
+                <a href="{% url 'business:jasa' %}" class="inline-flex items-center px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-md hover:bg-orange-700 transition-colors">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Kelola Data
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load statistics on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatistics();
+});
+
+async function loadStatistics() {
+    try {
+        // Fetch Koperasi count using public API
+        const koperasiResponse = await fetch('/pulosarok/business/public/koperasi/count/');
+        if (koperasiResponse.ok) {
+            const koperasiData = await koperasiResponse.json();
+            document.getElementById('total-koperasi').textContent = koperasiData.total || 0;
+        }
+        
+        // Fetch BUMG count using public API
+        const bumgResponse = await fetch('/pulosarok/business/public/bumg/count/');
+        if (bumgResponse.ok) {
+            const bumgData = await bumgResponse.json();
+            document.getElementById('total-bumg').textContent = bumgData.total || 0;
+        }
+        
+        // Fetch UKM count using public API
+        const ukmResponse = await fetch('/pulosarok/business/public/ukm/count/');
+        if (ukmResponse.ok) {
+            const ukmData = await ukmResponse.json();
+            document.getElementById('total-ukm').textContent = ukmData.total || 0;
+        }
+        
+        // Fetch Aset count using public API
+        const asetResponse = await fetch('/pulosarok/business/public/aset/count/');
+        if (asetResponse.ok) {
+            const asetData = await asetResponse.json();
+            document.getElementById('total-aset').textContent = asetData.total || 0;
+        }
+        
+        // Fetch Jasa count using public API
+        const jasaResponse = await fetch('/pulosarok/business/public/jasa/count/');
+        if (jasaResponse.ok) {
+            const jasaData = await jasaResponse.json();
+            document.getElementById('total-jasa').textContent = jasaData.total || 0;
+        }
+        
+    } catch (error) {
+        console.error('Error loading statistics:', error);
+        // Set fallback values on error
+        document.getElementById('total-koperasi').textContent = '0';
+        document.getElementById('total-bumg').textContent = '0';
+        document.getElementById('total-ukm').textContent = '0';
+        document.getElementById('total-aset').textContent = '0';
+        document.getElementById('total-jasa').textContent = '0';
+    }
+}
+</script>
+{% endblock %}

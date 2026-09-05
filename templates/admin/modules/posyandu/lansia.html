@@ -1,0 +1,679 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Data Lansia - Posyandu{% endblock %}
+
+{% block page_title %}Data Lansia{% endblock %}
+
+{% block content %}
+<div class="p-2 sm:p-4 space-y-3">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-gray-900">Data Lansia</h1>
+            <p class="text-xs sm:text-sm text-gray-600">Manajemen data kesehatan lansia</p>
+        </div>
+        <div class="mt-2 sm:mt-0">
+            <button onclick="openAddModal()" class="w-full sm:w-auto inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-1"></i>
+                <span class="hidden sm:inline">Tambah Data Lansia</span>
+                <span class="sm:hidden">Tambah</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+        <div class="bg-white shadow rounded-lg p-3">
+            <div class="flex items-center">
+                <i class="fas fa-users text-lg text-blue-600 mr-2"></i>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs text-gray-500 truncate">Total</p>
+                    <p class="text-sm font-semibold text-gray-900" id="total-lansia">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-lg p-3">
+            <div class="flex items-center">
+                <i class="fas fa-heartbeat text-lg text-green-600 mr-2"></i>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs text-gray-500 truncate">Sehat</p>
+                    <p class="text-sm font-semibold text-gray-900" id="healthy-lansia">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-lg p-3">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle text-lg text-yellow-600 mr-2"></i>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs text-gray-500 truncate">Perhatian</p>
+                    <p class="text-sm font-semibold text-gray-900" id="attention-lansia">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-lg p-3">
+            <div class="flex items-center">
+                <i class="fas fa-hospital text-lg text-red-600 mr-2"></i>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs text-gray-500 truncate">Sakit</p>
+                    <p class="text-sm font-semibold text-gray-900" id="sick-lansia">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white shadow rounded-lg p-3">
+        <div class="space-y-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                <input type="text" id="search" placeholder="Cari nama atau NIK..." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm">
+                <select id="posyandu-filter" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm">
+                    <option value="">Semua Posyandu</option>
+                </select>
+                <select id="health-status-filter" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-xs sm:text-sm">
+                    <option value="">Semua Status</option>
+                    <option value="sehat">Sehat</option>
+                    <option value="perlu_perhatian">Perlu Perhatian</option>
+                    <option value="sakit">Sakit</option>
+                </select>
+                <button onclick="loadLansiaData()" class="w-full inline-flex justify-center items-center px-3 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-search mr-1"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-3 py-2 border-b border-gray-200">
+            <h3 class="text-sm sm:text-base font-medium text-gray-900">Daftar Lansia</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th class="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Umur</th>
+                        <th class="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Pemeriksaan</th>
+                        <th class="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="lansia-table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <div class="pagination-info" id="pagination-info">
+                Menampilkan 0-0 dari 0 data
+            </div>
+            <div class="pagination-controls">
+                <button id="prev-btn" class="pagination-btn" onclick="previousPage()" disabled>
+                    <i class="fas fa-chevron-left"></i>
+                    Sebelumnya
+                </button>
+                <div class="pagination-nav" id="page-numbers">
+                    <!-- Page numbers will be generated here -->
+                </div>
+                <button id="next-btn" class="pagination-btn" onclick="nextPage()" disabled>
+                    Selanjutnya
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Lansia Modal -->
+<div id="lansia-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="modal-title">Tambah Data Lansia</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="lansia-form" class="space-y-4">
+                <input type="hidden" id="lansia-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="patient-select" class="block text-sm font-medium text-gray-700">Pilih Penduduk Lansia</label>
+                        <select id="patient-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih penduduk...</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="posyandu-select" class="block text-sm font-medium text-gray-700">Posyandu</label>
+                        <select id="posyandu-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih posyandu...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="visit-date" class="block text-sm font-medium text-gray-700">Tanggal Kunjungan</label>
+                        <input type="date" id="visit-date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="weight" class="block text-sm font-medium text-gray-700">Berat Badan (kg)</label>
+                        <input type="number" id="weight" step="0.1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="height" class="block text-sm font-medium text-gray-700">Tinggi Badan (cm)</label>
+                        <input type="number" id="height" step="0.1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="blood-pressure" class="block text-sm font-medium text-gray-700">Tekanan Darah</label>
+                        <input type="text" id="blood-pressure" placeholder="120/80" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="blood-sugar" class="block text-sm font-medium text-gray-700">Gula Darah (mg/dL)</label>
+                        <input type="number" id="blood-sugar" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="cholesterol" class="block text-sm font-medium text-gray-700">Kolesterol (mg/dL)</label>
+                        <input type="number" id="cholesterol" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="complaints" class="block text-sm font-medium text-gray-700">Keluhan</label>
+                        <textarea id="complaints" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Keluhan yang dirasakan..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="diagnosis" class="block text-sm font-medium text-gray-700">Diagnosis</label>
+                        <textarea id="diagnosis" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Diagnosis dokter..."></textarea>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="treatment" class="block text-sm font-medium text-gray-700">Pengobatan</label>
+                    <textarea id="treatment" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Pengobatan yang diberikan..."></textarea>
+                </div>
+                
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Catatan</label>
+                    <textarea id="notes" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Catatan tambahan..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Hapus Data Lansia</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">Apakah Anda yakin ingin menghapus data lansia ini? Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let deleteId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadLansiaData();
+    loadPosyanduOptions();
+    loadPatientOptions();
+    
+    // Setup form submission
+    document.getElementById('lansia-form').addEventListener('submit', handleFormSubmit);
+    
+    // Setup search on enter
+    document.getElementById('search').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadLansiaData();
+        }
+    });
+});
+
+function loadLansiaData(page = 1) {
+    currentPage = page;
+    const search = document.getElementById('search').value;
+    const posyandu = document.getElementById('posyandu-filter').value;
+    const healthStatus = document.getElementById('health-status-filter').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 10,
+        search: search,
+        posyandu_id: posyandu,
+        health_status: healthStatus
+    });
+    
+    fetch(`/pulosarok/posyandu/api/lansia/?${params}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // The API returns data with 'results' and 'pagination' fields directly
+            if (data.results !== undefined) {
+                updateTable(data.results || []);
+                updatePagination(data.pagination || {});
+                updateStats();
+            } else {
+                showNotification('Error loading data: Invalid response format', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading lansia data:', error);
+            showNotification('Error loading data: ' + error.message, 'error');
+        });
+}
+
+function updateTable(data) {
+    const tbody = document.getElementById('lansia-table-body');
+    tbody.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-3 py-3 text-center text-gray-500 text-sm">Tidak ada data lansia</td></tr>';
+        return;
+    }
+    
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="px-2 sm:px-4 py-3">
+                <div class="text-xs sm:text-sm font-medium text-gray-900">${item.nama || item.name || item.patient_name || '-'}</div>
+                <div class="text-xs text-gray-500 sm:hidden">${item.age || '-'}th</div>
+            </td>
+            <td class="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 hidden sm:table-cell">${item.age || '-'} tahun</td>
+            <td class="px-2 sm:px-4 py-3">
+                <span class="inline-flex px-1 sm:px-2 py-1 text-xs font-semibold rounded-full ${
+                    getHealthStatusColor(item.health_status)
+                }">
+                    ${getHealthStatusText(item.health_status)}
+                </span>
+            </td>
+            <td class="px-2 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 hidden lg:table-cell">${formatDate(item.visit_date || item.last_checkup || item.tanggal_kunjungan)}</td>
+            <td class="px-2 sm:px-4 py-3 text-sm font-medium">
+                <button onclick="editLansia(${item.id})" class="text-green-600 hover:text-green-900 mr-2 p-1" title="Edit">
+                    <i class="fas fa-edit text-xs sm:text-sm"></i>
+                </button>
+                <button onclick="deleteLansia(${item.id})" class="text-red-600 hover:text-red-900 p-1" title="Hapus">
+                    <i class="fas fa-trash text-xs sm:text-sm"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function getHealthStatusColor(status) {
+    const colors = {
+        'sehat': 'bg-green-100 text-green-800',
+        'perlu_perhatian': 'bg-yellow-100 text-yellow-800',
+        'sakit': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+}
+
+function getHealthStatusText(status) {
+    const texts = {
+        'sehat': 'Sehat',
+        'perlu_perhatian': 'Perlu Perhatian',
+        'sakit': 'Sakit'
+    };
+    return texts[status] || status || 'Tidak Diketahui';
+}
+
+function formatDate(dateString) {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID');
+}
+
+function updatePagination(pagination) {
+    if (!pagination) return;
+    
+    document.getElementById('showing-start').textContent = ((pagination.current_page - 1) * 10) + 1;
+    document.getElementById('showing-end').textContent = Math.min(pagination.current_page * 10, pagination.total_items);
+    document.getElementById('total-items').textContent = pagination.total_items;
+    
+    // Generate pagination buttons
+    const nav = document.getElementById('pagination-nav');
+    nav.innerHTML = '';
+    
+    // Previous button
+    if (pagination.has_previous) {
+        nav.innerHTML += `<button onclick="loadLansiaData(${pagination.current_page - 1})" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</button>`;
+    }
+    
+    // Page numbers
+    for (let i = Math.max(1, pagination.current_page - 2); i <= Math.min(pagination.total_pages, pagination.current_page + 2); i++) {
+        const isActive = i === pagination.current_page;
+        nav.innerHTML += `<button onclick="loadLansiaData(${i})" class="relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            isActive ? 'z-10 bg-blue-50 border-blue-500 text-blue-600' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+        }">${i}</button>`;
+    }
+    
+    // Next button
+    if (pagination.has_next) {
+        nav.innerHTML += `<button onclick="loadLansiaData(${pagination.current_page + 1})" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</button>`;
+    }
+}
+
+function updateStats() {
+    fetch('/pulosarok/posyandu/api/lansia/stats/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const stats = data.data || data;
+                document.getElementById('total-lansia').textContent = stats.total || 0;
+                document.getElementById('healthy-lansia').textContent = stats.healthy || 0;
+                document.getElementById('attention-lansia').textContent = stats.attention || 0;
+                document.getElementById('sick-lansia').textContent = stats.sick || 0;
+            } else {
+                console.error('Stats API returned error:', data.message);
+                // Set default values on error
+                document.getElementById('total-lansia').textContent = 0;
+                document.getElementById('healthy-lansia').textContent = 0;
+                document.getElementById('attention-lansia').textContent = 0;
+                document.getElementById('sick-lansia').textContent = 0;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+            // Set default values on error
+            document.getElementById('total-lansia').textContent = 0;
+            document.getElementById('healthy-lansia').textContent = 0;
+            document.getElementById('attention-lansia').textContent = 0;
+            document.getElementById('sick-lansia').textContent = 0;
+        });
+}
+
+function loadPosyanduOptions() {
+    fetch('/pulosarok/posyandu/api/posyandu/list/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const selects = ['posyandu-filter', 'posyandu-select'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                const firstOption = select.querySelector('option');
+                select.innerHTML = '';
+                select.appendChild(firstOption);
+                
+                const posyandus = data.results || data.data || data;
+                if (Array.isArray(posyandus)) {
+                    posyandus.forEach(posyandu => {
+                        const option = document.createElement('option');
+                        option.value = posyandu.id;
+                        option.textContent = posyandu.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading posyandu options:', error);
+            showNotification('Error loading posyandu options: ' + error.message, 'error');
+        });
+}
+
+function loadPatientOptions() {
+    fetch('/pulosarok/posyandu/api/residents/list/?age_min=60')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('patient-select');
+            const firstOption = select.querySelector('option');
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            const residents = data.results || data.data || data;
+            if (Array.isArray(residents)) {
+                residents.forEach(resident => {
+                    const option = document.createElement('option');
+                    option.value = resident.id;
+                    option.textContent = `${resident.name} (${resident.nik}) - ${resident.age} tahun`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading patient options:', error);
+            showNotification('Error loading patient options: ' + error.message, 'error');
+        });
+}
+
+function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Tambah Data Lansia';
+    document.getElementById('lansia-form').reset();
+    document.getElementById('lansia-id').value = '';
+    document.getElementById('visit-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('lansia-modal').classList.remove('hidden');
+}
+
+function editLansia(id) {
+    document.getElementById('modal-title').textContent = 'Edit Data Lansia';
+    document.getElementById('lansia-id').value = id;
+    
+    fetch(`/pulosarok/posyandu/api/lansia/${id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const lansia = data.data;
+                document.getElementById('patient-select').value = lansia.patient_id || '';
+                document.getElementById('posyandu-select').value = lansia.posyandu_id || '';
+                document.getElementById('visit-date').value = lansia.visit_date || '';
+                document.getElementById('weight').value = lansia.weight || '';
+                document.getElementById('height').value = lansia.height || '';
+                document.getElementById('blood-pressure').value = lansia.blood_pressure || '';
+                document.getElementById('blood-sugar').value = lansia.blood_sugar || '';
+                document.getElementById('cholesterol').value = lansia.cholesterol || '';
+                document.getElementById('complaints').value = lansia.complaints || '';
+                document.getElementById('diagnosis').value = lansia.diagnosis || '';
+                document.getElementById('treatment').value = lansia.treatment || '';
+                document.getElementById('notes').value = lansia.notes || '';
+                
+                document.getElementById('lansia-modal').classList.remove('hidden');
+            } else {
+                showNotification('Error loading data: ' + (data.message || 'Unknown error'), 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading lansia data:', error);
+            showNotification('Error loading data', 'error');
+        });
+}
+
+function deleteLansia(id) {
+    deleteId = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    
+    fetch(`/pulosarok/posyandu/api/lansia/${deleteId}/delete/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Data berhasil dihapus', 'success');
+            loadLansiaData(currentPage);
+            closeDeleteModal();
+        } else {
+            showNotification(data.message || 'Error deleting data', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting lansia data:', error);
+        showNotification('Error deleting data: ' + error.message, 'error');
+    });
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        patient_id: document.getElementById('patient-select').value,
+        posyandu_id: document.getElementById('posyandu-select').value,
+        visit_date: document.getElementById('visit-date').value,
+        weight: document.getElementById('weight').value || null,
+        height: document.getElementById('height').value || null,
+        blood_pressure: document.getElementById('blood-pressure').value || null,
+        blood_sugar: document.getElementById('blood-sugar').value || null,
+        cholesterol: document.getElementById('cholesterol').value || null,
+        complaints: document.getElementById('complaints').value || '',
+        diagnosis: document.getElementById('diagnosis').value || '',
+        treatment: document.getElementById('treatment').value || '',
+        notes: document.getElementById('notes').value || ''
+    };
+    
+    const lansiaId = document.getElementById('lansia-id').value;
+    const url = lansiaId ? 
+        `/pulosarok/posyandu/api/lansia/${lansiaId}/update/` : 
+        '/pulosarok/posyandu/api/lansia/create/';
+    const method = lansiaId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message || 'Data berhasil disimpan', 'success');
+            loadLansiaData(currentPage);
+            closeModal();
+        } else {
+            showNotification(data.message || 'Error saving data', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving lansia data:', error);
+        showNotification('Error saving data: ' + error.message, 'error');
+    });
+}
+
+function closeModal() {
+    document.getElementById('lansia-modal').classList.add('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    deleteId = null;
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+{% endblock %}

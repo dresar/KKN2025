@@ -1,0 +1,823 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Manajemen Kategori - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .category-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        color: white;
+    }
+    .category-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    .category-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+    .category-item {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    .category-item:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+    .category-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: white;
+        margin-right: 12px;
+    }
+    .action-button {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        margin: 1px;
+        border: none;
+        cursor: pointer;
+    }
+    .action-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .btn-edit {
+        background: #3b82f6;
+        color: white;
+    }
+    .btn-edit:hover {
+        background: #2563eb;
+        color: white;
+    }
+    .btn-delete {
+        background: #ef4444;
+        color: white;
+    }
+    .btn-delete:hover {
+        background: #dc2626;
+        color: white;
+    }
+    .btn-view {
+        background: #10b981;
+        color: white;
+    }
+    .btn-view:hover {
+        background: #059669;
+        color: white;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+    }
+    .stat-label {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.3s ease;
+    }
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slideIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .form-group {
+        margin-bottom: 16px;
+    }
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s ease;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .form-textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+    .color-picker {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .color-option {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .color-option:hover {
+        transform: scale(1.1);
+    }
+    .color-option.selected {
+        border-color: #374151;
+        transform: scale(1.1);
+    }
+    .search-box {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 8px;
+        padding: 12px 16px;
+        width: 100%;
+        max-width: 400px;
+    }
+    .search-box::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    .search-box:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.15);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: #6b7280;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 16px;
+        color: #d1d5db;
+    }
+    .category-tree {
+        margin-left: 20px;
+        border-left: 2px solid #e5e7eb;
+        padding-left: 16px;
+    }
+    .parent-category {
+        font-weight: 600;
+        color: #374151;
+    }
+    .child-category {
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-left: 16px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="category-header">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Manajemen Kategori</h1>
+                <p class="opacity-90">Kelola kategori berita untuk mengorganisir konten</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <input type="text" id="searchCategories" placeholder="Cari kategori..." class="search-box">
+                    <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-white opacity-70"></i>
+                </div>
+                <button onclick="openCategoryModal()" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-plus mr-2"></i>Tambah Kategori
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number text-blue-600">{{ stats.total_categories|default:0 }}</div>
+            <div class="stat-label">Total Kategori</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-green-600">{{ stats.active_categories|default:0 }}</div>
+            <div class="stat-label">Kategori Aktif</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-purple-600">{{ stats.total_news|default:0 }}</div>
+            <div class="stat-label">Total Berita</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-orange-600">{{ stats.most_used_category.news_count|default:0 }}</div>
+            <div class="stat-label">Kategori Terpopuler</div>
+            {% if stats.most_used_category %}
+                <div class="text-xs text-gray-500 mt-1">{{ stats.most_used_category.name }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Categories List -->
+    <div class="category-card">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Daftar Kategori</h2>
+            <div class="flex space-x-2">
+                <button onclick="toggleView('grid')" id="gridViewBtn" class="p-2 rounded-lg bg-blue-500 text-white">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <button onclick="toggleView('list')" id="listViewBtn" class="p-2 rounded-lg bg-gray-300 text-gray-600">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Grid View -->
+        <div id="gridView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for category in categories %}
+                <div class="category-item" data-category-name="{{ category.name|lower }}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-center flex-1">
+                            <div class="category-icon" style="background: {{ category.color|default:'#3b82f6' }}">
+                                <i class="{{ category.icon|default:'fas fa-folder' }}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900">{{ category.name }}</h3>
+                                {% if category.description %}
+                                    <p class="text-sm text-gray-600 mt-1">{{ category.description|truncatechars:60 }}</p>
+                                {% endif %}
+                                <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                    <span><i class="fas fa-newspaper mr-1"></i>{{ category.news_count|default:0 }} berita</span>
+                                    <span><i class="fas fa-calendar mr-1"></i>{{ category.created_at|date:"d M Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-1 ml-2">
+                            <button onclick="viewCategory({{ category.id }})" class="action-button btn-view" title="Lihat">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="editCategory({{ category.id }})" class="action-button btn-edit" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCategory({{ category.id }})" class="action-button btn-delete" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <h3 class="text-lg font-medium mb-2">Belum ada kategori</h3>
+                    <p class="text-sm mb-4">Mulai dengan menambahkan kategori pertama untuk mengorganisir berita.</p>
+                    <button onclick="openCategoryModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Tambah Kategori
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- List View -->
+        <div id="listView" class="hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b">
+                        <tr>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Kategori</th>
+                            <th class="text-left py-3 px-4 font-semibold text-gray-700">Deskripsi</th>
+                            <th class="text-center py-3 px-4 font-semibold text-gray-700">Berita</th>
+                            <th class="text-center py-3 px-4 font-semibold text-gray-700">Dibuat</th>
+                            <th class="text-center py-3 px-4 font-semibold text-gray-700">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for category in categories %}
+                            <tr class="hover:bg-gray-50" data-category-name="{{ category.name|lower }}">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center">
+                                        <div class="category-icon mr-3" style="background: {{ category.color|default:'#3b82f6' }}">
+                                            <i class="{{ category.icon|default:'fas fa-folder' }}"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold text-gray-900">{{ category.name }}</div>
+                                            <div class="text-sm text-gray-500">{{ category.slug }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <div class="text-sm text-gray-600">
+                                        {{ category.description|default:"-"|truncatechars:80 }}
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                        {{ category.news_count|default:0 }}
+                                    </span>
+                                </td>
+                                <td class="py-3 px-4 text-center text-sm text-gray-600">
+                                    {{ category.created_at|date:"d M Y" }}
+                                </td>
+                                <td class="py-3 px-4 text-center">
+                                    <div class="flex justify-center space-x-1">
+                                        <button onclick="viewCategory({{ category.id }})" class="action-button btn-view" title="Lihat">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="editCategory({{ category.id }})" class="action-button btn-edit" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteCategory({{ category.id }})" class="action-button btn-delete" title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="py-8 text-center text-gray-500">
+                                    <i class="fas fa-folder-open text-4xl mb-4 text-gray-300"></i>
+                                    <div class="text-lg font-medium mb-2">Belum ada kategori</div>
+                                    <div class="text-sm">Mulai dengan menambahkan kategori pertama.</div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Modal -->
+<div id="categoryModal" class="modal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 id="modalTitle" class="text-xl font-semibold text-gray-900">Tambah Kategori</h3>
+            <button onclick="closeCategoryModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <form id="categoryForm">
+            {% csrf_token %}
+            <input type="hidden" id="categoryId" name="category_id">
+            
+            <div class="form-group">
+                <label class="form-label" for="categoryName">Nama Kategori *</label>
+                <input type="text" id="categoryName" name="name" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="categorySlug">Slug</label>
+                <input type="text" id="categorySlug" name="slug" class="form-input" readonly>
+                <div class="text-xs text-gray-500 mt-1">Akan dibuat otomatis dari nama kategori</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="categoryDescription">Deskripsi</label>
+                <textarea id="categoryDescription" name="description" class="form-input form-textarea" placeholder="Deskripsi kategori (opsional)"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Warna Kategori</label>
+                <input type="hidden" id="categoryColor" name="color" value="#3b82f6">
+                <div class="color-picker">
+                    <div class="color-option selected" style="background: #3b82f6" data-color="#3b82f6"></div>
+                    <div class="color-option" style="background: #10b981" data-color="#10b981"></div>
+                    <div class="color-option" style="background: #f59e0b" data-color="#f59e0b"></div>
+                    <div class="color-option" style="background: #ef4444" data-color="#ef4444"></div>
+                    <div class="color-option" style="background: #8b5cf6" data-color="#8b5cf6"></div>
+                    <div class="color-option" style="background: #06b6d4" data-color="#06b6d4"></div>
+                    <div class="color-option" style="background: #84cc16" data-color="#84cc16"></div>
+                    <div class="color-option" style="background: #f97316" data-color="#f97316"></div>
+                    <div class="color-option" style="background: #ec4899" data-color="#ec4899"></div>
+                    <div class="color-option" style="background: #6b7280" data-color="#6b7280"></div>
+                    <div class="color-option" style="background: #1f2937" data-color="#1f2937"></div>
+                    <div class="color-option" style="background: #7c2d12" data-color="#7c2d12"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="categoryIcon">Icon (Font Awesome)</label>
+                <input type="text" id="categoryIcon" name="icon" class="form-input" placeholder="fas fa-folder" value="fas fa-folder">
+                <div class="text-xs text-gray-500 mt-1">Contoh: fas fa-folder, fas fa-newspaper, fas fa-tag</div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                    Batal
+                </button>
+                <button type="submit" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200">
+                    <span id="submitText">Simpan</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Category Modal -->
+<div id="viewCategoryModal" class="modal">
+    <div class="modal-content">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-semibold text-gray-900">Detail Kategori</h3>
+            <button onclick="closeViewCategoryModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div id="categoryDetails">
+            <!-- Category details will be loaded here -->
+        </div>
+        
+        <div class="flex justify-end space-x-3 mt-6">
+            <button onclick="closeViewCategoryModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                Tutup
+            </button>
+            <button onclick="editCategoryFromView()" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200">
+                <i class="fas fa-edit mr-2"></i>Edit
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentCategoryId = null;
+let currentView = 'grid';
+
+// Modal functions
+function openCategoryModal(categoryId = null) {
+    currentCategoryId = categoryId;
+    const modal = document.getElementById('categoryModal');
+    const title = document.getElementById('modalTitle');
+    const submitText = document.getElementById('submitText');
+    
+    if (categoryId) {
+        title.textContent = 'Edit Kategori';
+        submitText.textContent = 'Update';
+        loadCategoryData(categoryId);
+    } else {
+        title.textContent = 'Tambah Kategori';
+        submitText.textContent = 'Simpan';
+        resetForm();
+    }
+    
+    modal.classList.add('show');
+}
+
+function closeCategoryModal() {
+    document.getElementById('categoryModal').classList.remove('show');
+    resetForm();
+}
+
+function openViewCategoryModal(categoryId) {
+    currentCategoryId = categoryId;
+    loadCategoryDetails(categoryId);
+    document.getElementById('viewCategoryModal').classList.add('show');
+}
+
+function closeViewCategoryModal() {
+    document.getElementById('viewCategoryModal').classList.remove('show');
+}
+
+function editCategoryFromView() {
+    closeViewCategoryModal();
+    openCategoryModal(currentCategoryId);
+}
+
+// Form functions
+function resetForm() {
+    document.getElementById('categoryForm').reset();
+    document.getElementById('categoryId').value = '';
+    document.getElementById('categoryColor').value = '#3b82f6';
+    document.getElementById('categoryIcon').value = 'fas fa-folder';
+    
+    // Reset color selection
+    document.querySelectorAll('.color-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.querySelector('.color-option[data-color="#3b82f6"]').classList.add('selected');
+}
+
+// Auto-generate slug
+document.getElementById('categoryName').addEventListener('input', function() {
+    const name = this.value;
+    const slug = name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .trim('-');
+    document.getElementById('categorySlug').value = slug;
+});
+
+// Color picker
+document.querySelectorAll('.color-option').forEach(option => {
+    option.addEventListener('click', function() {
+        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+        this.classList.add('selected');
+        document.getElementById('categoryColor').value = this.dataset.color;
+    });
+});
+
+// Form submission
+document.getElementById('categoryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const url = currentCategoryId ? 
+        `/admin/news/categories/${currentCategoryId}/update/` : 
+        '/admin/news/categories/create/';
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(
+                currentCategoryId ? 'Kategori berhasil diupdate!' : 'Kategori berhasil ditambahkan!', 
+                'success'
+            );
+            closeCategoryModal();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.message || 'Terjadi kesalahan', 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Terjadi kesalahan', 'error');
+    });
+});
+
+// Load category data for editing
+function loadCategoryData(categoryId) {
+    fetch(`/admin/news/categories/${categoryId}/`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('categoryId').value = data.id;
+            document.getElementById('categoryName').value = data.name;
+            document.getElementById('categorySlug').value = data.slug;
+            document.getElementById('categoryDescription').value = data.description || '';
+            document.getElementById('categoryColor').value = data.color || '#3b82f6';
+            document.getElementById('categoryIcon').value = data.icon || 'fas fa-folder';
+            
+            // Update color selection
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.dataset.color === data.color) {
+                    option.classList.add('selected');
+                }
+            });
+        })
+        .catch(error => {
+            showNotification('Gagal memuat data kategori', 'error');
+        });
+}
+
+// Load category details for viewing
+function loadCategoryDetails(categoryId) {
+    fetch(`/admin/news/categories/${categoryId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const detailsHtml = `
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="category-icon" style="background: ${data.color || '#3b82f6'}">
+                            <i class="${data.icon || 'fas fa-folder'}"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold">${data.name}</h4>
+                            <p class="text-sm text-gray-500">${data.slug}</p>
+                        </div>
+                    </div>
+                    
+                    ${data.description ? `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                            <p class="text-gray-600">${data.description}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Total Berita</label>
+                            <p class="text-2xl font-bold text-blue-600">${data.news_count || 0}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Dibuat</label>
+                            <p class="text-gray-600">${new Date(data.created_at).toLocaleDateString('id-ID')}</p>
+                        </div>
+                    </div>
+                    
+                    ${data.recent_news && data.recent_news.length > 0 ? `
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Berita Terbaru</label>
+                            <div class="space-y-2">
+                                ${data.recent_news.map(news => `
+                                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                        <span class="text-sm">${news.title}</span>
+                                        <span class="text-xs text-gray-500">${new Date(news.created_at).toLocaleDateString('id-ID')}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            document.getElementById('categoryDetails').innerHTML = detailsHtml;
+        })
+        .catch(error => {
+            showNotification('Gagal memuat detail kategori', 'error');
+        });
+}
+
+// Action functions
+function viewCategory(categoryId) {
+    openViewCategoryModal(categoryId);
+}
+
+function editCategory(categoryId) {
+    openCategoryModal(categoryId);
+}
+
+function deleteCategory(categoryId) {
+    if (confirm('Apakah Anda yakin ingin menghapus kategori ini? Semua berita dalam kategori ini akan dipindahkan ke kategori "Uncategorized".')) {
+        fetch(`/admin/news/categories/${categoryId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Kategori berhasil dihapus!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'Gagal menghapus kategori', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Terjadi kesalahan', 'error');
+        });
+    }
+}
+
+// View toggle
+function toggleView(view) {
+    currentView = view;
+    const gridView = document.getElementById('gridView');
+    const listView = document.getElementById('listView');
+    const gridBtn = document.getElementById('gridViewBtn');
+    const listBtn = document.getElementById('listViewBtn');
+    
+    if (view === 'grid') {
+        gridView.classList.remove('hidden');
+        listView.classList.add('hidden');
+        gridBtn.classList.add('bg-blue-500', 'text-white');
+        gridBtn.classList.remove('bg-gray-300', 'text-gray-600');
+        listBtn.classList.add('bg-gray-300', 'text-gray-600');
+        listBtn.classList.remove('bg-blue-500', 'text-white');
+    } else {
+        gridView.classList.add('hidden');
+        listView.classList.remove('hidden');
+        listBtn.classList.add('bg-blue-500', 'text-white');
+        listBtn.classList.remove('bg-gray-300', 'text-gray-600');
+        gridBtn.classList.add('bg-gray-300', 'text-gray-600');
+        gridBtn.classList.remove('bg-blue-500', 'text-white');
+    }
+}
+
+// Search functionality
+document.getElementById('searchCategories').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const categories = document.querySelectorAll('[data-category-name]');
+    
+    categories.forEach(category => {
+        const categoryName = category.dataset.categoryName;
+        if (categoryName.includes(searchTerm)) {
+            category.style.display = '';
+        } else {
+            category.style.display = 'none';
+        }
+    });
+});
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500'
+    };
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white ${colors[type]} shadow-lg transform translate-x-full transition-transform duration-300`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Animate out and remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Close modals when clicking outside
+document.getElementById('categoryModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeCategoryModal();
+    }
+});
+
+document.getElementById('viewCategoryModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeViewCategoryModal();
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeCategoryModal();
+        closeViewCategoryModal();
+    }
+});
+</script>
+{% endblock %}

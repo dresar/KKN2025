@@ -1,0 +1,1100 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Import Surat{% endblock %}
+
+{% block page_title %}Import Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .import-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+    .import-zone.dragover {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        transform: scale(1.02);
+    }
+    .import-zone.error {
+        border-color: #ef4444;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+    .import-zone.success {
+        border-color: #10b981;
+        background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    }
+    .file-preview {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
+    .validation-item {
+        transition: all 0.2s ease;
+    }
+    .validation-item:hover {
+        background-color: #f9fafb;
+    }
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+        color: #6b7280;
+        font-weight: 600;
+        margin-right: 1rem;
+        position: relative;
+    }
+    .step.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .step.completed {
+        background-color: #10b981;
+        color: white;
+    }
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        width: 60px;
+        height: 2px;
+        background-color: #e5e7eb;
+        transform: translateY(-50%);
+    }
+    .step:last-child::after {
+        display: none;
+    }
+    .step.completed::after {
+        background-color: #10b981;
+    }
+    .format-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+    .format-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .format-card.selected {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    .progress-ring-circle {
+        transition: stroke-dashoffset 0.35s;
+        transform-origin: 50% 50%;
+    }
+    .mapping-row {
+        transition: all 0.2s ease;
+    }
+    .mapping-row:hover {
+        background-color: #f9fafb;
+    }
+    .error-highlight {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+    }
+    .warning-highlight {
+        background-color: #fffbeb;
+        border-left: 4px solid #f59e0b;
+    }
+    .success-highlight {
+        background-color: #f0fdf4;
+        border-left: 4px solid #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step-1">1</div>
+        <div class="step" id="step-2">2</div>
+        <div class="step" id="step-3">3</div>
+        <div class="step" id="step-4">4</div>
+    </div>
+    
+    <!-- Step 1: Select Import Format -->
+    <div id="step-1-content" class="step-content">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-file-import mr-3 text-blue-600"></i>
+                Pilih Format Import
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Excel Format -->
+                <div class="format-card bg-white rounded-lg shadow p-6" onclick="selectFormat('excel')" data-format="excel">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-file-excel text-green-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Excel (.xlsx)</h3>
+                        <p class="text-sm text-gray-600 mb-4">Import dari file Excel dengan multiple sheets</p>
+                        <div class="text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-star mr-1"></i>
+                                Recommended
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CSV Format -->
+                <div class="format-card bg-white rounded-lg shadow p-6" onclick="selectFormat('csv')" data-format="csv">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-file-csv text-purple-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">CSV (.csv)</h3>
+                        <p class="text-sm text-gray-600 mb-4">Import dari file CSV dengan delimiter kustom</p>
+                        <div class="text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <i class="fas fa-database mr-1"></i>
+                                Simple
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- JSON Format -->
+                <div class="format-card bg-white rounded-lg shadow p-6" onclick="selectFormat('json')" data-format="json">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-file-code text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">JSON (.json)</h3>
+                        <p class="text-sm text-gray-600 mb-4">Import dari file JSON dengan struktur nested</p>
+                        <div class="text-center">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-code mr-1"></i>
+                                Advanced
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Template Download -->
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">
+                    <i class="fas fa-download mr-2 text-gray-600"></i>
+                    Download Template
+                </h3>
+                <p class="text-sm text-gray-600 mb-4">Download template untuk memastikan format data yang benar sebelum import.</p>
+                <div class="flex space-x-3">
+                    <button onclick="downloadTemplate('excel')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Template Excel
+                    </button>
+                    <button onclick="downloadTemplate('csv')" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-file-csv mr-2"></i>
+                        Template CSV
+                    </button>
+                    <button onclick="downloadTemplate('json')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-file-code mr-2"></i>
+                        Template JSON
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-end">
+                <button onclick="nextStep(2)" id="next-step-1" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Lanjut
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 2: Upload File -->
+    <div id="step-2-content" class="step-content hidden">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-cloud-upload-alt mr-3 text-green-600"></i>
+                Upload File Import
+            </h2>
+            
+            <!-- File Upload Zone -->
+            <div class="import-zone p-12 text-center mb-6" id="upload-zone">
+                <div id="upload-content">
+                    <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Drag & Drop File Disini</h3>
+                    <p class="text-gray-500 mb-6">atau klik untuk memilih file</p>
+                    <button onclick="selectFile()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-folder-open mr-2"></i>
+                        Pilih File
+                    </button>
+                    <input type="file" id="file-input" class="hidden" accept=".xlsx,.csv,.json">
+                </div>
+                
+                <div id="upload-progress" class="hidden">
+                    <div class="flex items-center justify-center space-x-4">
+                        <div class="progress-ring w-16 h-16">
+                            <svg class="w-16 h-16" viewBox="0 0 64 64">
+                                <circle class="progress-ring-circle stroke-current text-gray-200" stroke-width="4" fill="transparent" r="28" cx="32" cy="32"/>
+                                <circle class="progress-ring-circle stroke-current text-blue-600" stroke-width="4" fill="transparent" r="28" cx="32" cy="32" stroke-dasharray="176" stroke-dashoffset="176" id="progress-circle"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-lg font-semibold text-gray-900" id="upload-percentage">0%</p>
+                            <p class="text-sm text-gray-600" id="upload-status">Uploading...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="upload-success" class="hidden">
+                    <i class="fas fa-check-circle text-6xl text-green-600 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-green-700 mb-2">File Berhasil Diupload!</h3>
+                    <p class="text-green-600 mb-4" id="file-info"></p>
+                    <button onclick="resetUpload()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200 text-sm">
+                        <i class="fas fa-redo mr-2"></i>
+                        Upload File Lain
+                    </button>
+                </div>
+            </div>
+            
+            <!-- File Information -->
+            <div id="file-details" class="hidden bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Informasi File</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Nama File</p>
+                        <p class="font-medium text-gray-900" id="file-name">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Ukuran File</p>
+                        <p class="font-medium text-gray-900" id="file-size">-</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Jumlah Baris</p>
+                        <p class="font-medium text-gray-900" id="file-rows">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Import Options -->
+            <div id="import-options" class="hidden">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Opsi Import</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mode Import</label>
+                        <select id="import-mode" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="insert">Insert - Tambah data baru</option>
+                            <option value="update">Update - Update data yang ada</option>
+                            <option value="upsert">Upsert - Insert atau Update</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Delimiter (CSV)</label>
+                        <select id="csv-delimiter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value=",">Koma (,)</option>
+                            <option value=";">Semicolon (;)</option>
+                            <option value="\t">Tab</option>
+                            <option value="|">Pipe (|)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mt-4 space-y-3">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" id="skip-header" checked>
+                        <span class="text-sm text-gray-700">Skip baris pertama (header)</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" id="validate-data" checked>
+                        <span class="text-sm text-gray-700">Validasi data sebelum import</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" id="auto-numbering">
+                        <span class="text-sm text-gray-700">Generate nomor surat otomatis</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-between">
+                <button onclick="prevStep(1)" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                <button onclick="nextStep(3)" id="next-step-2" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Lanjut
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 3: Map Fields -->
+    <div id="step-3-content" class="step-content hidden">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-exchange-alt mr-3 text-purple-600"></i>
+                Mapping Field Data
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Field Mapping -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Mapping Field</h3>
+                    <div class="space-y-3" id="field-mapping">
+                        <!-- Dynamic field mapping will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Data Preview -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Preview Data</h3>
+                    <div class="file-preview bg-gray-50 p-4">
+                        <div class="text-center text-gray-500 py-8" id="preview-placeholder">
+                            <i class="fas fa-table text-4xl mb-4"></i>
+                            <p>Preview data akan muncul setelah mapping field</p>
+                        </div>
+                        <div id="data-preview" class="hidden">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-200" id="preview-header">
+                                        <!-- Dynamic headers -->
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-body">
+                                    <!-- Dynamic data rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Validation Summary -->
+            <div class="mt-6 bg-gray-50 rounded-lg p-4" id="validation-summary">
+                <h3 class="text-lg font-medium text-gray-900 mb-3">Ringkasan Validasi</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-green-600" id="valid-count">0</p>
+                        <p class="text-sm text-gray-600">Data Valid</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-yellow-600" id="warning-count">0</p>
+                        <p class="text-sm text-gray-600">Warning</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-red-600" id="error-count">0</p>
+                        <p class="text-sm text-gray-600">Error</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-between">
+                <button onclick="prevStep(2)" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                <button onclick="nextStep(4)" id="next-step-3" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Lanjut
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 4: Import Process -->
+    <div id="step-4-content" class="step-content hidden">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-database mr-3 text-green-600"></i>
+                Import Data
+            </h2>
+            
+            <!-- Import Summary -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Ringkasan Import</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">File: <span class="font-medium text-gray-900" id="summary-file">-</span></p>
+                        <p class="text-sm text-gray-600">Total Baris: <span class="font-medium text-gray-900" id="summary-rows">0</span></p>
+                        <p class="text-sm text-gray-600">Mode: <span class="font-medium text-gray-900" id="summary-mode">Insert</span></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Data Valid: <span class="font-medium text-green-600" id="summary-valid">0</span></p>
+                        <p class="text-sm text-gray-600">Warning: <span class="font-medium text-yellow-600" id="summary-warning">0</span></p>
+                        <p class="text-sm text-gray-600">Error: <span class="font-medium text-red-600" id="summary-error">0</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Import Progress -->
+            <div class="mb-6" id="import-progress" style="display: none;">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">Progress Import</span>
+                    <span class="text-sm text-gray-500" id="import-percentage">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%" id="import-progress-bar"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" id="import-status">Mempersiapkan import...</p>
+            </div>
+            
+            <!-- Validation Issues -->
+            <div class="mb-6" id="validation-issues" style="display: none;">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Issues yang Ditemukan</h3>
+                <div class="space-y-2 max-h-60 overflow-y-auto" id="issues-list">
+                    <!-- Dynamic validation issues -->
+                </div>
+            </div>
+            
+            <!-- Import Result -->
+            <div class="mb-6" id="import-result" style="display: none;">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-medium text-green-800">Import Berhasil!</h3>
+                            <p class="text-sm text-green-700 mt-1" id="import-success-message">Data telah berhasil diimport ke database.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <p class="text-lg font-bold text-green-600" id="result-inserted">0</p>
+                            <p class="text-xs text-green-700">Data Ditambahkan</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-bold text-blue-600" id="result-updated">0</p>
+                            <p class="text-xs text-blue-700">Data Diupdate</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-lg font-bold text-red-600" id="result-skipped">0</p>
+                            <p class="text-xs text-red-700">Data Dilewati</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between">
+                <button onclick="prevStep(3)" id="back-btn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                <div class="space-x-3">
+                    <button onclick="startImport()" id="import-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                        <i class="fas fa-database mr-2"></i>
+                        Mulai Import
+                    </button>
+                    <button onclick="resetImport()" id="reset-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200" style="display: none;">
+                        <i class="fas fa-redo mr-2"></i>
+                        Import Lagi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentStep = 1;
+    let selectedFormat = null;
+    let uploadedFile = null;
+    let fileData = null;
+    let fieldMapping = {};
+    let validationResults = { valid: 0, warnings: 0, errors: 0 };
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        setupEventListeners();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        
+        // Drag and drop events
+        uploadZone.addEventListener('dragover', handleDragOver);
+        uploadZone.addEventListener('dragleave', handleDragLeave);
+        uploadZone.addEventListener('drop', handleDrop);
+        
+        // File input change
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+    
+    // Select import format
+    function selectFormat(format) {
+        document.querySelectorAll('.format-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        document.querySelector(`[data-format="${format}"]`).classList.add('selected');
+        
+        selectedFormat = format;
+        document.getElementById('next-step-1').disabled = false;
+    }
+    
+    // Download template
+    function downloadTemplate(format) {
+        showNotification(`Downloading ${format.toUpperCase()} template...`, 'info');
+        
+        // Simulate template download
+        const link = document.createElement('a');
+        link.href = '#';
+        link.download = `template_import_surat.${format === 'excel' ? 'xlsx' : format}`;
+        link.click();
+        
+        setTimeout(() => {
+            showNotification(`Template ${format.toUpperCase()} berhasil didownload!`, 'success');
+        }, 1000);
+    }
+    
+    // File selection
+    function selectFile() {
+        document.getElementById('file-input').click();
+    }
+    
+    // Handle drag over
+    function handleDragOver(e) {
+        e.preventDefault();
+        document.getElementById('upload-zone').classList.add('dragover');
+    }
+    
+    // Handle drag leave
+    function handleDragLeave(e) {
+        e.preventDefault();
+        document.getElementById('upload-zone').classList.remove('dragover');
+    }
+    
+    // Handle drop
+    function handleDrop(e) {
+        e.preventDefault();
+        document.getElementById('upload-zone').classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    }
+    
+    // Handle file select
+    function handleFileSelect(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    }
+    
+    // Handle file
+    function handleFile(file) {
+        // Validate file type
+        const allowedTypes = {
+            'excel': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'csv': ['text/csv', 'application/csv'],
+            'json': ['application/json']
+        };
+        
+        const isValidType = allowedTypes[selectedFormat].includes(file.type) || 
+                           (selectedFormat === 'csv' && file.name.endsWith('.csv')) ||
+                           (selectedFormat === 'json' && file.name.endsWith('.json'));
+        
+        if (!isValidType) {
+            showNotification(`File type tidak sesuai dengan format ${selectedFormat.toUpperCase()}`, 'error');
+            document.getElementById('upload-zone').classList.add('error');
+            setTimeout(() => {
+                document.getElementById('upload-zone').classList.remove('error');
+            }, 3000);
+            return;
+        }
+        
+        uploadedFile = file;
+        simulateFileUpload(file);
+    }
+    
+    // Simulate file upload
+    function simulateFileUpload(file) {
+        document.getElementById('upload-content').classList.add('hidden');
+        document.getElementById('upload-progress').classList.remove('hidden');
+        
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += Math.random() * 20;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                completeFileUpload(file);
+            }
+            
+            updateUploadProgress(progress);
+        }, 200);
+    }
+    
+    // Update upload progress
+    function updateUploadProgress(progress) {
+        const circle = document.getElementById('progress-circle');
+        const percentage = document.getElementById('upload-percentage');
+        const status = document.getElementById('upload-status');
+        
+        const circumference = 2 * Math.PI * 28;
+        const offset = circumference - (progress / 100) * circumference;
+        
+        circle.style.strokeDashoffset = offset;
+        percentage.textContent = Math.round(progress) + '%';
+        
+        if (progress < 30) {
+            status.textContent = 'Uploading file...';
+        } else if (progress < 70) {
+            status.textContent = 'Processing data...';
+        } else {
+            status.textContent = 'Almost done...';
+        }
+    }
+    
+    // Complete file upload
+    function completeFileUpload(file) {
+        document.getElementById('upload-progress').classList.add('hidden');
+        document.getElementById('upload-success').classList.remove('hidden');
+        document.getElementById('upload-zone').classList.add('success');
+        
+        // Show file info
+        document.getElementById('file-info').textContent = `${file.name} (${formatFileSize(file.size)})`;
+        
+        // Show file details
+        document.getElementById('file-details').classList.remove('hidden');
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = formatFileSize(file.size);
+        
+        // Simulate data parsing
+        setTimeout(() => {
+            parseFileData(file);
+        }, 1000);
+    }
+    
+    // Parse file data
+    function parseFileData(file) {
+        // Simulate parsing
+        const rowCount = Math.floor(Math.random() * 500) + 100;
+        document.getElementById('file-rows').textContent = rowCount + ' baris';
+        
+        // Generate sample data based on format
+        fileData = generateSampleData(selectedFormat, rowCount);
+        
+        // Show import options
+        document.getElementById('import-options').classList.remove('hidden');
+        
+        // Enable next step
+        document.getElementById('next-step-2').disabled = false;
+        
+        showNotification('File berhasil diparse dan siap untuk mapping!', 'success');
+    }
+    
+    // Generate sample data
+    function generateSampleData(format, rowCount) {
+        const sampleData = {
+            headers: ['nomor_surat', 'jenis_surat', 'nama_pemohon', 'nik', 'tanggal', 'status'],
+            rows: []
+        };
+        
+        for (let i = 0; i < Math.min(rowCount, 10); i++) {
+            sampleData.rows.push([
+                `001/DS/${new Date().getFullYear()}/${String(i + 1).padStart(3, '0')}`,
+                ['Kependudukan', 'Perizinan', 'Keuangan', 'Umum'][Math.floor(Math.random() * 4)],
+                `Nama Pemohon ${i + 1}`,
+                `3201${String(Math.floor(Math.random() * 1000000000000)).padStart(12, '0')}`,
+                new Date().toISOString().split('T')[0],
+                ['Draft', 'Pending', 'Approved', 'Completed'][Math.floor(Math.random() * 4)]
+            ]);
+        }
+        
+        return sampleData;
+    }
+    
+    // Reset upload
+    function resetUpload() {
+        document.getElementById('upload-content').classList.remove('hidden');
+        document.getElementById('upload-success').classList.add('hidden');
+        document.getElementById('upload-zone').classList.remove('success', 'error');
+        document.getElementById('file-details').classList.add('hidden');
+        document.getElementById('import-options').classList.add('hidden');
+        document.getElementById('next-step-2').disabled = true;
+        
+        uploadedFile = null;
+        fileData = null;
+    }
+    
+    // Navigation functions
+    function nextStep(step) {
+        if (step > currentStep + 1) return;
+        
+        // Hide current step
+        document.getElementById(`step-${currentStep}-content`).classList.add('hidden');
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        document.getElementById(`step-${currentStep}`).classList.add('completed');
+        
+        // Show next step
+        currentStep = step;
+        document.getElementById(`step-${currentStep}-content`).classList.remove('hidden');
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        
+        // Initialize step-specific content
+        if (currentStep === 3) {
+            initializeFieldMapping();
+        } else if (currentStep === 4) {
+            updateImportSummary();
+        }
+    }
+    
+    function prevStep(step) {
+        if (step < currentStep - 1) return;
+        
+        // Hide current step
+        document.getElementById(`step-${currentStep}-content`).classList.add('hidden');
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        
+        // Show previous step
+        currentStep = step;
+        document.getElementById(`step-${currentStep}-content`).classList.remove('hidden');
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        document.getElementById(`step-${currentStep}`).classList.remove('completed');
+    }
+    
+    // Initialize field mapping
+    function initializeFieldMapping() {
+        const mappingContainer = document.getElementById('field-mapping');
+        const systemFields = [
+            { key: 'number', label: 'Nomor Surat', required: true },
+            { key: 'type', label: 'Jenis Surat', required: true },
+            { key: 'applicant', label: 'Nama Pemohon', required: true },
+            { key: 'nik', label: 'NIK', required: true },
+            { key: 'date', label: 'Tanggal', required: true },
+            { key: 'status', label: 'Status', required: false },
+            { key: 'content', label: 'Isi Surat', required: false },
+            { key: 'purpose', label: 'Keperluan', required: false }
+        ];
+        
+        mappingContainer.innerHTML = '';
+        
+        systemFields.forEach(field => {
+            const row = document.createElement('div');
+            row.className = 'mapping-row flex items-center justify-between p-3 border border-gray-200 rounded-lg';
+            
+            row.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="w-3 h-3 rounded-full ${field.required ? 'bg-red-500' : 'bg-gray-300'}"></div>
+                    <div>
+                        <p class="font-medium text-gray-900">${field.label}</p>
+                        <p class="text-xs text-gray-500">${field.required ? 'Required' : 'Optional'}</p>
+                    </div>
+                </div>
+                <div class="w-48">
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            onchange="updateFieldMapping('${field.key}', this.value)">
+                        <option value="">-- Pilih Field --</option>
+                        ${fileData.headers.map((header, index) => 
+                            `<option value="${index}" ${header.toLowerCase().includes(field.key) || 
+                             (field.key === 'applicant' && header.toLowerCase().includes('nama')) ||
+                             (field.key === 'type' && header.toLowerCase().includes('jenis')) ? 'selected' : ''}>
+                                ${header}
+                            </option>`
+                        ).join('')}
+                    </select>
+                </div>
+            `;
+            
+            mappingContainer.appendChild(row);
+        });
+        
+        // Auto-map fields
+        autoMapFields();
+        updateDataPreview();
+    }
+    
+    // Auto map fields
+    function autoMapFields() {
+        const autoMappings = {
+            'number': ['nomor_surat', 'nomor', 'number'],
+            'type': ['jenis_surat', 'jenis', 'type'],
+            'applicant': ['nama_pemohon', 'nama', 'applicant', 'name'],
+            'nik': ['nik', 'ktp'],
+            'date': ['tanggal', 'date', 'created'],
+            'status': ['status', 'state']
+        };
+        
+        Object.keys(autoMappings).forEach(systemField => {
+            const keywords = autoMappings[systemField];
+            const headerIndex = fileData.headers.findIndex(header => 
+                keywords.some(keyword => header.toLowerCase().includes(keyword))
+            );
+            
+            if (headerIndex !== -1) {
+                fieldMapping[systemField] = headerIndex;
+            }
+        });
+    }
+    
+    // Update field mapping
+    function updateFieldMapping(systemField, headerIndex) {
+        if (headerIndex === '') {
+            delete fieldMapping[systemField];
+        } else {
+            fieldMapping[systemField] = parseInt(headerIndex);
+        }
+        
+        updateDataPreview();
+        validateMapping();
+    }
+    
+    // Update data preview
+    function updateDataPreview() {
+        const previewHeader = document.getElementById('preview-header');
+        const previewBody = document.getElementById('preview-body');
+        const previewPlaceholder = document.getElementById('preview-placeholder');
+        const dataPreview = document.getElementById('data-preview');
+        
+        if (Object.keys(fieldMapping).length === 0) {
+            previewPlaceholder.classList.remove('hidden');
+            dataPreview.classList.add('hidden');
+            return;
+        }
+        
+        previewPlaceholder.classList.add('hidden');
+        dataPreview.classList.remove('hidden');
+        
+        // Update header
+        previewHeader.innerHTML = Object.keys(fieldMapping).map(field => 
+            `<th class="text-left py-2 px-3 text-xs font-medium text-gray-600 uppercase">${field}</th>`
+        ).join('');
+        
+        // Update body
+        previewBody.innerHTML = fileData.rows.slice(0, 5).map(row => 
+            `<tr class="border-b border-gray-100">
+                ${Object.values(fieldMapping).map(headerIndex => 
+                    `<td class="py-2 px-3 text-sm text-gray-900">${row[headerIndex] || '-'}</td>`
+                ).join('')}
+            </tr>`
+        ).join('');
+    }
+    
+    // Validate mapping
+    function validateMapping() {
+        const requiredFields = ['number', 'type', 'applicant', 'nik', 'date'];
+        const mappedRequired = requiredFields.filter(field => fieldMapping[field] !== undefined);
+        
+        // Simulate validation
+        validationResults = {
+            valid: Math.floor(fileData.rows.length * 0.8),
+            warnings: Math.floor(fileData.rows.length * 0.15),
+            errors: Math.floor(fileData.rows.length * 0.05)
+        };
+        
+        // Update validation summary
+        document.getElementById('valid-count').textContent = validationResults.valid;
+        document.getElementById('warning-count').textContent = validationResults.warnings;
+        document.getElementById('error-count').textContent = validationResults.errors;
+        
+        // Enable next step if all required fields are mapped
+        document.getElementById('next-step-3').disabled = mappedRequired.length < requiredFields.length;
+    }
+    
+    // Update import summary
+    function updateImportSummary() {
+        document.getElementById('summary-file').textContent = uploadedFile.name;
+        document.getElementById('summary-rows').textContent = fileData.rows.length;
+        document.getElementById('summary-mode').textContent = document.getElementById('import-mode').value;
+        document.getElementById('summary-valid').textContent = validationResults.valid;
+        document.getElementById('summary-warning').textContent = validationResults.warnings;
+        document.getElementById('summary-error').textContent = validationResults.errors;
+        
+        // Show validation issues if any
+        if (validationResults.warnings > 0 || validationResults.errors > 0) {
+            showValidationIssues();
+        }
+    }
+    
+    // Show validation issues
+    function showValidationIssues() {
+        document.getElementById('validation-issues').style.display = 'block';
+        const issuesList = document.getElementById('issues-list');
+        
+        // Generate sample issues
+        const sampleIssues = [
+            { type: 'error', row: 5, field: 'NIK', message: 'Format NIK tidak valid' },
+            { type: 'warning', row: 12, field: 'Tanggal', message: 'Format tanggal tidak standar' },
+            { type: 'error', row: 18, field: 'Nama', message: 'Nama pemohon kosong' },
+            { type: 'warning', row: 25, field: 'Jenis Surat', message: 'Jenis surat tidak dikenali' }
+        ];
+        
+        issuesList.innerHTML = sampleIssues.map(issue => `
+            <div class="validation-item p-3 rounded-lg ${issue.type === 'error' ? 'error-highlight' : 'warning-highlight'}">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-${issue.type === 'error' ? 'exclamation-circle text-red-600' : 'exclamation-triangle text-yellow-600'}"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Baris ${issue.row}: ${issue.field}</p>
+                            <p class="text-xs text-gray-600">${issue.message}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-1 rounded-full ${
+                        issue.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                    }">
+                        ${issue.type.toUpperCase()}
+                    </span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Start import process
+    function startImport() {
+        document.getElementById('import-btn').style.display = 'none';
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('import-progress').style.display = 'block';
+        
+        simulateImportProgress();
+    }
+    
+    // Simulate import progress
+    function simulateImportProgress() {
+        const progressBar = document.getElementById('import-progress-bar');
+        const percentage = document.getElementById('import-percentage');
+        const status = document.getElementById('import-status');
+        
+        const steps = [
+            { progress: 10, status: 'Memvalidasi data...' },
+            { progress: 30, status: 'Memproses mapping field...' },
+            { progress: 50, status: 'Mengimport data ke database...' },
+            { progress: 70, status: 'Memproses relasi data...' },
+            { progress: 90, status: 'Menyelesaikan import...' },
+            { progress: 100, status: 'Import selesai!' }
+        ];
+        
+        let currentStepIndex = 0;
+        
+        const interval = setInterval(() => {
+            if (currentStepIndex < steps.length) {
+                const step = steps[currentStepIndex];
+                progressBar.style.width = step.progress + '%';
+                percentage.textContent = step.progress + '%';
+                status.textContent = step.status;
+                currentStepIndex++;
+            } else {
+                clearInterval(interval);
+                showImportResult();
+            }
+        }, 1000);
+    }
+    
+    // Show import result
+    function showImportResult() {
+        document.getElementById('import-progress').style.display = 'none';
+        document.getElementById('import-result').style.display = 'block';
+        document.getElementById('reset-btn').style.display = 'inline-block';
+        
+        // Update result numbers
+        document.getElementById('result-inserted').textContent = validationResults.valid;
+        document.getElementById('result-updated').textContent = '0';
+        document.getElementById('result-skipped').textContent = validationResults.errors;
+        
+        document.getElementById('import-success-message').textContent = 
+            `${validationResults.valid} data berhasil diimport, ${validationResults.errors} data dilewati karena error.`;
+    }
+    
+    // Reset import
+    function resetImport() {
+        currentStep = 1;
+        selectedFormat = null;
+        uploadedFile = null;
+        fileData = null;
+        fieldMapping = {};
+        validationResults = { valid: 0, warnings: 0, errors: 0 };
+        
+        // Reset UI
+        document.querySelectorAll('.step').forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+        document.getElementById('step-1').classList.add('active');
+        
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById('step-1-content').classList.remove('hidden');
+        
+        document.querySelectorAll('.format-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        document.getElementById('next-step-1').disabled = true;
+        resetUpload();
+        
+        // Reset progress and result
+        document.getElementById('import-progress').style.display = 'none';
+        document.getElementById('import-result').style.display = 'none';
+        document.getElementById('validation-issues').style.display = 'none';
+        document.getElementById('import-btn').style.display = 'inline-block';
+        document.getElementById('back-btn').style.display = 'inline-block';
+        document.getElementById('reset-btn').style.display = 'none';
+        
+        // Reset progress
+        document.getElementById('import-progress-bar').style.width = '0%';
+        document.getElementById('import-percentage').textContent = '0%';
+        document.getElementById('import-status').textContent = 'Mempersiapkan import...';
+    }
+    
+    // Utility functions
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            'success': 'bg-green-500 text-white',
+            'error': 'bg-red-500 text-white',
+            'warning': 'bg-yellow-500 text-white',
+            'info': 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

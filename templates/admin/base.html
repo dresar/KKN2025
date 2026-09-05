@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} - Pulosarok</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS Files -->
+    {% load static %}
+   
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Additional CSS Utilities -->
+    <style>
+        /* Universal Box Styling */
+        .box, .card, .section-card, .stats-card, .info-box, .content-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .box:hover, .card:hover, .section-card:hover, .stats-card:hover, .info-box:hover, .content-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+            border-color: #d1d5db;
+        }
+        
+        /* Section Card Utilities */
+        .section-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .section-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+        .section-body {
+            padding: 2rem;
+        }
+        
+        /* Sidebar Responsive Enhancements */
+        #sidebar {
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+        }
+        
+        #sidebar.sidebar-open {
+            transform: translateX(0);
+        }
+        
+        #sidebar.sidebar-closed {
+            transform: translateX(-100%);
+        }
+        
+        /* Submenu Styling */
+        .submenu-content {
+            display: none;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .submenu-content.show {
+            display: block;
+        }
+        
+        .rotate-90 {
+            transform: rotate(90deg);
+        }
+        
+        /* Desktop Layout - Sidebar beside content */
+        @media (min-width: 1025px) {
+            #sidebar {
+                position: relative !important;
+                transform: translateX(0) !important;
+                width: 256px !important;
+                height: 100vh;
+                flex-shrink: 0;
+            }
+            
+            .main-content {
+                flex: 1;
+                margin-left: 0 !important;
+                width: auto !important;
+            }
+        }
+        
+        /* Mobile Responsive Enhancements */
+        @media (max-width: 1024px) {
+            #sidebar {
+                position: fixed !important;
+                width: 280px !important;
+                height: 100vh;
+                transform: translateX(-100%) !important;
+                z-index: 50;
+            }
+            
+            #sidebar.sidebar-open {
+                transform: translateX(0) !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                width: 100% !important;
+                flex: 1;
+            }
+            
+            /* Fix for Android touch events */
+            .submenu-button {
+                cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+                position: relative;
+                min-height: 44px;
+                padding: 12px 8px;
+            }
+            
+            .submenu-button:after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1;
+            }
+            
+            .submenu-content a {
+                min-height: 44px;
+                padding: 12px 8px !important;
+                display: flex;
+                align-items: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .section-body {
+                padding: 1rem;
+            }
+            .section-header {
+                padding: 1rem;
+            }
+            
+            #sidebar {
+                width: 100vw;
+                height: 100%;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .mobile-header-item {
+                display: none;
+            }
+            .mobile-header-item.show {
+                display: flex;
+            }
+            
+            /* Improve touch targets for mobile */
+            .submenu-button, .sidebar a {
+                padding: 12px 16px;
+                min-height: 44px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        
+        /* Sidebar Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        /* Animation utilities */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Submenu responsive positioning */
+        .submenu-container {
+            position: relative;
+        }
+        
+        .submenu-content {
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+            display: none; /* Add this to prevent content from flashing */
+        }
+        
+        .submenu-content.show {
+            max-height: 500px;
+            display: block; /* Toggling 'display' is okay when combined with max-height */
+        }
+        
+        /* Header enhancements */
+        .header-time {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        
+        .profile-avatar {
+            transition: all 0.2s ease;
+        }
+        
+        .profile-avatar:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Bootstrap Modal Compatibility with Tailwind */
+        .modal {
+            z-index: 1055 !important;
+        }
+        .modal-backdrop {
+            z-index: 1050 !important;
+        }
+        .modal-content {
+            border: none;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-header {
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .modal-footer {
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        /* Ensure Bootstrap components work with Tailwind */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+        
+        .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+        }
+        
+        /* Enhanced Minimal Pagination Styling */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            margin-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            background: white;
+        }
+        
+        .pagination-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .pagination-info span {
+            font-size: 0.875rem;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+        
+        .pagination-info .text-primary-600 {
+            color: #2563eb;
+            font-weight: 600;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .pagination-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2.5rem;
+            height: 2.5rem;
+            padding: 0 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background: white;
+            color: #374151;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .pagination-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .pagination-btn:hover::before {
+            left: 100%;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: #f3f4f6;
+            border-color: #9ca3af;
+            color: #111827;
+            transform: translateY(-1px);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f9fafb;
+            color: #9ca3af;
+            transform: none;
+        }
+        
+        .pagination-btn.active {
+            background: #2563eb;
+            border-color: #2563eb;
+            color: white;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        
+        .pagination-btn.active:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+        
+        .pagination-btn.page-number {
+            min-width: 2.5rem;
+            padding: 0 0.5rem;
+        }
+        
+        .pagination-btn.nav-btn {
+            min-width: 2.5rem;
+            padding: 0 0.5rem;
+        }
+        
+        .pagination-btn.nav-btn i {
+            font-size: 0.75rem;
+        }
+        
+        /* Mobile Responsive Pagination */
+        @media (max-width: 768px) {
+            .pagination-container {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 0.75rem 0;
+                margin-top: 0.75rem;
+            }
+            
+            .pagination-info {
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .pagination-info span {
+                font-size: 0.75rem;
+            }
+            
+            .pagination-controls {
+                justify-content: center;
+            }
+            
+            .pagination-nav {
+                gap: 0.375rem;
+            }
+            
+            .pagination-btn {
+                min-width: 2.25rem;
+                height: 2.25rem;
+                padding: 0 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .pagination-btn.page-number {
+                min-width: 2.25rem;
+                padding: 0 0.375rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .pagination-container {
+                padding: 0.5rem 0;
+                margin-top: 0.5rem;
+            }
+            
+            .pagination-info {
+                gap: 0.25rem;
+            }
+            
+            .pagination-info span {
+                font-size: 0.6875rem;
+            }
+            
+            .pagination-controls {
+                gap: 0.25rem;
+            }
+            
+            .pagination-nav {
+                gap: 0.25rem;
+            }
+            
+            .pagination-btn {
+                min-width: 2rem;
+                height: 2rem;
+                padding: 0 0.375rem;
+                font-size: 0.6875rem;
+            }
+            
+            .pagination-btn.page-number {
+                min-width: 2rem;
+                padding: 0 0.25rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .pagination-container {
+                padding: 0.375rem 0;
+            }
+            
+            .pagination-info {
+                flex-direction: column;
+                gap: 0.25rem;
+                text-align: center;
+            }
+            
+            .pagination-info span {
+                font-size: 0.625rem;
+            }
+            
+            .pagination-info .text-primary-600 {
+                display: block;
+                margin-top: 0.25rem;
+            }
+            
+            .pagination-nav {
+                gap: 0.125rem;
+            }
+            
+            .pagination-btn {
+                min-width: 1.875rem;
+                height: 1.875rem;
+                padding: 0 0.25rem;
+                font-size: 0.625rem;
+            }
+            
+            .pagination-btn.page-number {
+                min-width: 1.875rem;
+                padding: 0 0.125rem;
+            }
+        }
+        
+        /* Compact pagination variant for tables */
+        .pagination-compact {
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+            border-top: 1px solid #f3f4f6;
+        }
+        
+        .pagination-compact .pagination-btn {
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .pagination-compact .pagination-info span {
+            font-size: 0.75rem;
+        }
+        
+        /* Pagination ellipsis styling */
+        .pagination-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+            height: 2rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+            user-select: none;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <div id="sidebar" class="w-64 bg-white shadow-lg transition-transform duration-300 ease-in-out fixed inset-y-0 left-0 z-50 transform -translate-x-full lg:relative lg:translate-x-0 lg:transform-none flex flex-col">
+        <div class="flex items-center justify-between h-16 bg-primary-600 px-4">
+            <h1 class="text-white text-xl font-bold">
+                <i class="fas fa-building mr-2"></i>Admin Pulosarok
+            </h1>
+            <!-- Close button for mobile -->
+            <button type="button" class="lg:hidden text-white hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded-md p-2" onclick="toggleSidebar()">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        
+        <nav class="mt-5 px-2 flex-1 overflow-y-auto">
+            <div class="space-y-1 pb-6">
+                <!-- Dashboard -->
+                <a href="{% url 'custom_admin:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}bg-primary-100 text-primary-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                    <i class="fas fa-tachometer-alt mr-3 text-lg"></i>
+                    Dashboard
+                </a>
+                
+                <!-- Data Referensi -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="references-menu">
+                        <i class="fas fa-database mr-3 text-lg"></i>
+                        <span class="flex-1">Data Referensi</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="references-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="references-menu">
+                        <a href="{% url 'references:references_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Data Referensi
+                        </a>
+                        <a href="{% url 'references:dusun_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-map-marker-alt mr-2"></i>Input Data Dusun
+                        </a>
+                        <a href="{% url 'references:lorong_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-road mr-2"></i>Input Data Lorong
+                        </a>
+                        <a href="{% url 'references:penduduk_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-users mr-2"></i>Input Data Penduduk
+                        </a>
+                        <a href="{% url 'references:disabilitas_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-wheelchair mr-2"></i>Input Data Disabilitas
+                        </a>
+                     
+                    </div>
+                </div>
+                
+                <!-- Profil Desa -->
+                <a href="/pulosarok/village-profile/sejarah/" class="{% if 'sejarah' in request.path %}bg-primary-100 text-primary-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                    <i class="fas fa-history mr-3 text-lg"></i>
+                    Sejarah Desa
+                </a>
+                
+                <!-- Organisasi -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="organization-menu">
+                        <i class="fas fa-users mr-3 text-lg"></i>
+                        <span class="flex-1">Organisasi</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="organization-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="organization-menu">
+                        <a href="{% url 'organization:organization_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Organisasi
+                        </a>
+                        <a href="{% url 'organization:perangkat_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-user-tie mr-2"></i>Perangkat Desa
+                        </a>
+                        <a href="{% url 'organization:lembaga_adat_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-landmark mr-2"></i>Lembaga Adat
+                        </a>
+                        <a href="{% url 'organization:penggerak_pkk_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-female mr-2"></i>Penggerak PKK
+                        </a>
+                        <a href="{% url 'organization:kepemudaan_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-running mr-2"></i>Kepemudaan
+                        </a>
+                        <a href="{% url 'organization:karang_taruna_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-users-cog mr-2"></i>Karang Taruna
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Bidang Usaha -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="business-menu">
+                        <i class="fas fa-store mr-3 text-lg"></i>
+                        <span class="flex-1">Bidang Usaha</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="business-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="business-menu">
+                        <a href="{% url 'business:koperasi' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-handshake mr-2"></i>Koperasi Merah Putih
+                        </a>
+                        <a href="{% url 'business:bumg' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-building mr-2"></i>BUMG
+                        </a>
+                        <a href="{% url 'business:ukm' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-chart-line mr-2"></i>Input Data UKM
+                        </a>
+                        <a href="{% url 'business:aset' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-boxes mr-2"></i>Input Data Aset
+                        </a>
+                        <a href="{% url 'business:jasa' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tools mr-2"></i>Layanan Jasa
+                        </a>
+                        <a href="{% url 'business:category' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tags mr-2"></i>Kelola Kategori
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Data Posyandu -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="posyandu-menu">
+                        <i class="fas fa-heartbeat mr-3 text-lg"></i>
+                        <span class="flex-1">Data Posyandu</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="posyandu-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="posyandu-menu">
+                        <a href="{% url 'posyandu:posyandu_dashboard' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Posyandu
+                        </a>
+                        <a href="{% url 'posyandu:kader_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-user-nurse mr-2"></i>Input Kader Posyandu
+                        </a>
+                        <a href="{% url 'posyandu:ibu_hamil_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-user-plus mr-2"></i>Input Data Ibu Hamil
+                        </a>
+                        <a href="{% url 'posyandu:view_balita' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-baby mr-2"></i>View Data Balita
+                        </a>
+                        <a href="{% url 'posyandu:view_lansia' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-user-friends mr-2"></i>View Data Lansia
+                        </a>
+                        <a href="{% url 'posyandu:stunting_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-child mr-2"></i>Input Data Stunting
+                        </a>
+                        <a href="{% url 'posyandu:penduduk_admin' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-users mr-2"></i>Data Penduduk
+                        </a>
+                    </div>
+                </div>
+                
+
+                
+                <!-- Berita -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="news-menu">
+                        <i class="fas fa-newspaper mr-3 text-lg"></i>
+                        <span class="flex-1">Berita</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="news-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="news-menu">
+                        <a href="{% url 'custom_admin:module_view' 'news' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Berita
+                        </a>
+                        <a href="{% url 'news:news_create_view' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-plus mr-2"></i>Tambah Berita
+                        </a>
+                        <a href="{% url 'news:news_list_view' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-list mr-2"></i>Daftar Berita
+                        </a>
+                        <a href="{% url 'news:news_category_view' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tags mr-2"></i>Kategori Berita
+                        </a>
+                        <a href="{% url 'news:news_media_view' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-images mr-2"></i>Galeri Media
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Wisata -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="tourism-menu">
+                        <i class="fas fa-map-marked-alt mr-3 text-lg"></i>
+                        <span class="flex-1">Wisata Desa</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="tourism-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="tourism-menu">
+                        <a href="{% url 'tourism:admin_dashboard' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Wisata
+                        </a>
+                        <a href="{% url 'tourism:admin_dashboard' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-cogs mr-2"></i>Admin Wisata
+                        </a>
+                        <a href="{% url 'tourism:admin_location_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-map-marker-alt mr-2"></i>Kelola Lokasi Wisata
+                        </a>
+                        <a href="{% url 'tourism:admin_location_create' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-plus mr-2"></i>Tambah Lokasi Wisata
+                        </a>
+                        <a href="{% url 'tourism:category_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tags mr-2"></i>Kelola Kategori Wisata
+                        </a>
+                        <a href="{% url 'tourism:package_list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-suitcase mr-2"></i>Kelola Paket Wisata
+                        </a>
+                        <a href="{% url 'tourism:search' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-search mr-2"></i>Pencarian Wisata
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Surat Menyurat -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="letters-menu">
+                        <i class="fas fa-envelope mr-3 text-lg"></i>
+                        <span class="flex-1">Surat Menyurat</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="letters-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="letters-menu">
+                        <a href="{% url 'letters:dashboard' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard Surat
+                        </a>
+                        <a href="{% url 'letters:create' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-plus mr-2"></i>Buat Surat Baru
+                        </a>
+                        <a href="{% url 'letters:list' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-list mr-2"></i>Daftar Surat
+                        </a>
+                        <a href="{% url 'letters:settings' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-cog mr-2"></i>Pengaturan Surat
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Penerima Bantuan -->
+                <div class="space-y-1 submenu-container">
+                    <button type="button" class="submenu-button text-gray-600 hover:bg-gray-50 hover:text-gray-900 group w-full flex items-center pl-2 pr-1 py-2 text-left text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" data-menu-id="beneficiaries-menu">
+                        <i class="fas fa-hand-holding-heart mr-3 text-lg"></i>
+                        <span class="flex-1">Data Penerima Bantuan</span>
+                        <i class="fas fa-chevron-right transform transition-transform duration-200" id="beneficiaries-icon"></i>
+                    </button>
+                    <div class="space-y-1 pl-6 submenu-content" id="beneficiaries-menu">
+                        <a href="{% url 'beneficiaries:beneficiaries_dashboard' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
+                        <a href="{% url 'beneficiaries:taraf_kehidupan_page' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-users mr-2"></i>Input Data Taraf Kehidupan
+                        </a>
+                        <a href="{% url 'beneficiaries:data_bantuan_page' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-hand-holding-heart mr-2"></i>Input Data Bantuan
+                        </a>
+                        <a href="{% url 'beneficiaries:upload_dokumen_page' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-upload mr-2"></i>Upload Dokumen Gampong
+                        </a>
+                        <a href="{% url 'beneficiaries:membuat_berita_page' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-newspaper mr-2"></i>Membuat Berita
+                        </a>
+                        <a href="{% url 'beneficiaries:membuat_surat_page' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm rounded-md">
+                            <i class="fas fa-envelope mr-2"></i>Membuat Surat
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Pengaturan -->
+                <div class="border-t border-gray-200 mt-6 pt-6">
+                    <a href="{% url 'custom_admin:module_view' 'core' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-cog mr-3 text-lg"></i>
+                        Pengaturan
+                    </a>
+                    
+                    <a href="{% url 'custom_admin:profile' %}" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-user mr-3 text-lg"></i>
+                        Profil Admin
+                    </a>
+                    
+                    <a href="{% url 'custom_admin:logout' %}" class="text-red-600 hover:bg-red-50 hover:text-red-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                        <i class="fas fa-sign-out-alt mr-3 text-lg"></i>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+        </div>
+        
+        <!-- Mobile menu overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        
+        <!-- Main content -->
+        <div class="main-content flex-1 flex flex-col overflow-hidden">
+        <!-- Top navigation -->
+        <div class="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
+            <div class="px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <!-- Mobile menu button -->
+                        <button type="button" class="lg:hidden -ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500" onclick="toggleSidebar()">
+                            <i class="fas fa-bars text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 md:space-x-4">
+                        <!-- Real-time Clock -->
+                        <div class="mobile-header-item show flex items-center text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-lg">
+                            <i class="fas fa-clock mr-2 text-primary-600"></i>
+                            <span id="current-time" class="header-time">--:--:--</span>
+                        </div>
+                        
+                        <!-- User Profile -->
+                        <div class="relative">
+                            <button type="button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 profile-avatar" onclick="toggleUserMenu()">
+                                <div class="h-8 w-8 bg-gradient-to-r from-primary-600 to-primary-700 rounded-full flex items-center justify-center shadow-md">
+                                    <i class="fas fa-user text-white text-sm"></i>
+                                </div>
+                                <div class="ml-2 hidden md:block text-left">
+                                    <div class="text-sm font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</div>
+                                    <div class="text-xs text-gray-500">Administrator</div>
+                                </div>
+                                <i class="fas fa-chevron-down ml-1 text-gray-400 hidden md:block"></i>
+                            </button>
+                            
+                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50">
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ user.email|default:'admin@pulosarok.id' }}</p>
+                                </div>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user mr-2"></i>Profil Saya
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-key mr-2"></i>Ubah Password
+                                </a>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-history mr-2"></i>Aktivitas
+                                </a>
+                                <div class="border-t border-gray-100"></div>
+                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+
+            </div>
+        </div>
+        
+        <!-- Page content -->
+        <main class="flex-1 overflow-y-auto bg-gray-50">
+            <div class="min-h-screen">
+                <div class="container mx-auto px-4 py-6">
+                    <!-- Breadcrumb Block -->
+                    {% block breadcrumb %}
+                    {% if show_breadcrumb|default:True %}
+                    <nav class="flex mb-6" aria-label="Breadcrumb">
+                        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                            <li class="inline-flex items-center">
+                                <a href="{% url 'custom_admin:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                                    <i class="fas fa-home mr-2"></i>Dashboard
+                                </a>
+                            </li>
+                            {% block breadcrumb_items %}{% endblock %}
+                        </ol>
+                    </nav>
+                    {% endif %}
+                    {% endblock %}
+                    
+                    <!-- Submenu Navigation Block -->
+                    {% block submenu_navigation %}{% endblock %}
+                    
+                    <!-- Messages -->
+                    {% if messages %}
+                        <div class="mb-6">
+                            {% for message in messages %}
+                                <div class="{% if message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif message.tags == 'success' %}bg-green-100 border border-green-400 text-green-700{% elif message.tags == 'warning' %}bg-yellow-100 border border-yellow-400 text-yellow-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %} px-4 py-3 rounded mb-4 shadow-sm">
+                                    <div class="flex items-center">
+                                        <i class="{% if message.tags == 'error' %}fas fa-exclamation-circle{% elif message.tags == 'success' %}fas fa-check-circle{% elif message.tags == 'warning' %}fas fa-exclamation-triangle{% else %}fas fa-info-circle{% endif %} mr-2"></i>
+                                        {{ message }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Main Content Block -->
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </main>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        // Toggle sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (window.innerWidth <= 1024) {
+                sidebar.classList.toggle('sidebar-open');
+                sidebar.classList.toggle('sidebar-closed');
+                overlay.classList.toggle('show');
+            }
+        }
+        
+        // Toggle user menu
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        }
+        
+        // Close menus when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('user-menu');
+            
+            // Close user menu
+            const userButton = event.target.closest('button[onclick*="toggleUserMenu"]');
+            if (!userButton && userMenu) {
+                userMenu.classList.add('hidden');
+            }
+            
+            // Close sidebar when clicking overlay
+            if (event.target.id === 'sidebar-overlay' || event.target.closest('#sidebar-overlay')) {
+                toggleSidebar();
+            }
+        });
+        
+        // Real-time clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            const clockElement = document.getElementById('current-time');
+            if (clockElement) {
+                clockElement.textContent = timeString;
+            }
+        }
+        
+        // Handle window resize for responsive sidebar and pagination
+        function handleResize() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (window.innerWidth > 1024) {
+                sidebar.classList.remove('sidebar-open', 'sidebar-closed');
+                overlay.classList.remove('show');
+            } else {
+                if (!sidebar.classList.contains('sidebar-open') && !sidebar.classList.contains('sidebar-closed')) {
+                    sidebar.classList.add('sidebar-closed');
+                }
+            }
+            
+            // Trigger pagination refresh for responsive behavior
+            if (typeof window.refreshPagination === 'function') {
+                window.refreshPagination();
+            }
+        }
+        
+        // Utility functions for enhanced functionality
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg fade-in ${
+                type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+                type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
+                type === 'warning' ? 'bg-yellow-100 border border-yellow-400 text-yellow-700' :
+                'bg-blue-100 border border-blue-400 text-blue-700'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="${
+                        type === 'success' ? 'fas fa-check-circle' :
+                        type === 'error' ? 'fas fa-exclamation-circle' :
+                        type === 'warning' ? 'fas fa-exclamation-triangle' :
+                        'fas fa-info-circle'
+                    } mr-2"></i>
+                    ${message}
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+        
+        // Pagination utility functions
+        function createPaginationButton(text, onClick, isActive = false, className = '') {
+            const button = document.createElement('button');
+            button.textContent = text;
+            button.className = `pagination-btn page-number ${isActive ? 'active' : ''} ${className}`;
+            button.onclick = onClick;
+            return button;
+        }
+        
+        function createPaginationEllipsis() {
+            const ellipsis = document.createElement('span');
+            ellipsis.textContent = '...';
+            ellipsis.className = 'pagination-ellipsis';
+            return ellipsis;
+        }
+        
+        function getResponsiveMaxPages() {
+            if (window.innerWidth <= 480) return 2;
+            if (window.innerWidth <= 640) return 3;
+            if (window.innerWidth <= 768) return 4;
+            return 5;
+        }
+        
+        // Enhanced form validation
+        function validateForm(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return false;
+            
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('border-red-500');
+                    isValid = false;
+                } else {
+                    field.classList.remove('border-red-500');
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // Loading state management
+        function setLoadingState(element, isLoading) {
+            if (isLoading) {
+                element.disabled = true;
+                element.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
+            } else {
+                element.disabled = false;
+                element.innerHTML = element.getAttribute('data-original-text') || 'Submit';
+            }
+        }
+        
+        // Initialize submenu states based on localStorage
+        function initializeSubmenus() {
+            document.querySelectorAll('.submenu-content').forEach(menu => {
+                const menuId = menu.id;
+                const savedState = localStorage.getItem('submenu-' + menuId);
+                const icon = document.getElementById(menuId.replace('-menu', '-icon'));
+                
+                if (savedState === 'open') {
+                    menu.classList.add('show');
+                    if (icon) icon.classList.add('rotate-90');
+                }
+            });
+        }
+        
+        // Handle all submenu clicks
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize submenu states from localStorage
+            initializeSubmenus();
+            
+            // Initialize sidebar state for mobile
+            handleResize();
+            
+            // Update clock immediately and then every second
+            updateClock();
+            setInterval(updateClock, 1000);
+            
+            // Fix for Android touch events - use touchend for better mobile compatibility
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const clickEvent = isTouchDevice ? 'touchend' : 'click';
+            
+            // Attach event listeners to all submenu buttons directly
+            document.querySelectorAll('.submenu-button').forEach(button => {
+                button.addEventListener(clickEvent, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const menuId = this.getAttribute('data-menu-id');
+                    const menu = document.getElementById(menuId);
+                    const icon = document.getElementById(menuId.replace('-menu', '-icon'));
+                    
+                    if (menu && icon) {
+                        // Close any other open submenus first
+                        document.querySelectorAll('.submenu-content.show').forEach(openMenu => {
+                            if (openMenu.id !== menuId) {
+                                openMenu.classList.remove('show');
+                                const openIcon = document.getElementById(openMenu.id.replace('-menu', '-icon'));
+                                if (openIcon) {
+                                    openIcon.classList.remove('rotate-90');
+                                }
+                                localStorage.setItem('submenu-' + openMenu.id, 'closed');
+                            }
+                        });
+                        
+                        // Toggle the clicked menu
+                        menu.classList.toggle('show');
+                        icon.classList.toggle('rotate-90');
+                        
+                        // Update localStorage
+                        const isOpen = menu.classList.contains('show');
+                        localStorage.setItem('submenu-' + menuId, isOpen ? 'open' : 'closed');
+                    }
+                }, { passive: false });
+            });
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', handleResize);
+    </script>
+    
+    <!-- Bootstrap JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

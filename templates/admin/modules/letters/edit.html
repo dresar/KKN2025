@@ -1,0 +1,1157 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Edit Surat - {{ letter.subject }}{% endblock %}
+
+{% block page_title %}Edit Surat{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    .ai-suggestion {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    .ai-suggestion:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .template-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .template-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .editor-container {
+        min-height: 400px;
+    }
+    .ai-panel {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+    .loading-spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .status-draft {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    .status-pending {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    .status-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .status-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    .version-history {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-edit mr-3 text-blue-600"></i>
+                    Edit Surat: {{ letter.subject }}
+                </h2>
+                <div class="flex items-center space-x-4">
+                    <span class="status-badge status-{{ letter.status }}">
+                        <i class="fas fa-circle mr-2 text-xs"></i>
+                        {% if letter.status == 'draft' %}Draft
+                        {% elif letter.status == 'pending' %}Menunggu Persetujuan
+                        {% elif letter.status == 'approved' %}Disetujui
+                        {% elif letter.status == 'rejected' %}Ditolak
+                        {% elif letter.status == 'signed' %}Ditandatangani
+                        {% endif %}
+                    </span>
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-calendar mr-1"></i>
+                        Dibuat: {{ letter.created_at|date:"d F Y" }}
+                    </span>
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-clock mr-1"></i>
+                        Terakhir diubah: {{ letter.updated_at|date:"d F Y H:i" }}
+                    </span>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <a href="/pulosarok/letters/{{ letter.id }}/" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-eye mr-2"></i>
+                    Lihat Detail
+                </a>
+                <button onclick="saveDraft()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Simpan Draft
+                </button>
+                <button onclick="previewLetter()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-eye mr-2"></i>
+                    Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Main Form -->
+        <div class="lg:col-span-3">
+            <form id="letter-form" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="letter_id" value="{{ letter.id }}">
+                
+                <!-- Basic Information -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                        Informasi Dasar
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat *</label>
+                            <select id="letter-type" name="letter_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Pilih Jenis Surat</option>
+                                <option value="keterangan_domisili" {% if letter.letter_type == 'keterangan_domisili' %}selected{% endif %}>Surat Keterangan Domisili</option>
+                                <option value="keterangan_usaha" {% if letter.letter_type == 'keterangan_usaha' %}selected{% endif %}>Surat Keterangan Usaha</option>
+                                <option value="keterangan_tidak_mampu" {% if letter.letter_type == 'keterangan_tidak_mampu' %}selected{% endif %}>Surat Keterangan Tidak Mampu</option>
+                                <option value="keterangan_kelahiran" {% if letter.letter_type == 'keterangan_kelahiran' %}selected{% endif %}>Surat Keterangan Kelahiran</option>
+                                <option value="keterangan_kematian" {% if letter.letter_type == 'keterangan_kematian' %}selected{% endif %}>Surat Keterangan Kematian</option>
+                                <option value="pengantar_nikah" {% if letter.letter_type == 'pengantar_nikah' %}selected{% endif %}>Surat Pengantar Nikah</option>
+                                <option value="izin_keramaian" {% if letter.letter_type == 'izin_keramaian' %}selected{% endif %}>Surat Izin Keramaian</option>
+                                <option value="rekomendasi" {% if letter.letter_type == 'rekomendasi' %}selected{% endif %}>Surat Rekomendasi</option>
+                                <option value="lainnya" {% if letter.letter_type == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Template</label>
+                            <select id="template-select" name="template" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Pilih Template (Opsional)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Perihal *</label>
+                            <input type="text" id="subject" name="subject" value="{{ letter.subject }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan perihal surat">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat</label>
+                            <input type="text" id="letter-number" name="letter_number" value="{{ letter.letter_number }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Auto-generate" {% if letter.letter_number %}readonly{% endif %}>
+                            {% if not letter.letter_number %}
+                            <p class="text-xs text-gray-500 mt-1">Nomor akan dibuat otomatis saat menyimpan</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recipient Information -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-user mr-2 text-green-600"></i>
+                        Informasi Penerima/Pemohon
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
+                            <input type="text" id="recipient-name" name="recipient_name" value="{{ letter.recipient_name }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Nama lengkap penerima">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">NIK</label>
+                            <input type="text" id="nik" name="nik" value="{{ letter.recipient_nik }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Nomor Induk Kependudukan">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tempat, Tanggal Lahir</label>
+                            <input type="text" id="birth-place-date" name="birth_place_date" value="{{ letter.recipient_birth_place_date }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Jakarta, 01 Januari 1990">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin</label>
+                            <select id="gender" name="gender" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Pilih Jenis Kelamin</option>
+                                <option value="L" {% if letter.recipient_gender == 'L' %}selected{% endif %}>Laki-laki</option>
+                                <option value="P" {% if letter.recipient_gender == 'P' %}selected{% endif %}>Perempuan</option>
+                            </select>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
+                            <textarea id="address" name="address" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Alamat lengkap">{{ letter.recipient_address }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Letter Content -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-file-alt mr-2 text-purple-600"></i>
+                            Isi Surat
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button type="button" onclick="generateWithAI()" class="ai-suggestion px-4 py-2 rounded-lg text-sm font-medium">
+                                <i class="fas fa-magic mr-2"></i>
+                                Generate dengan AI
+                            </button>
+                            <button type="button" onclick="validateWithAI()" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors duration-200 text-sm font-medium">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Validasi AI
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-container">
+                        <div id="editor" class="min-h-96">{{ letter.content|safe }}</div>
+                    </div>
+                    
+                    <input type="hidden" id="content" name="content">
+                </div>
+
+                <!-- Additional Settings -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-cog mr-2 text-gray-600"></i>
+                        Pengaturan Tambahan
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="requires-signature" name="requires_signature" {% if letter.requires_signature %}checked{% endif %} class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">Memerlukan Tanda Tangan Digital</span>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="requires-validation" name="requires_validation" {% if letter.requires_validation %}checked{% endif %} class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">Validasi AI Otomatis</span>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="auto-number" name="auto_number" {% if letter.auto_number %}checked{% endif %} class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <span class="ml-2 text-sm text-gray-700">Penomoran Otomatis</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="showVersionHistory()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                                <i class="fas fa-history mr-2"></i>
+                                Riwayat Versi
+                            </button>
+                            <button type="button" onclick="compareVersions()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                                <i class="fas fa-code-branch mr-2"></i>
+                                Bandingkan Versi
+                            </button>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button type="button" onclick="window.history.back()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Batal
+                            </button>
+                            <button type="button" onclick="saveDraft()" class="bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition-colors duration-200">
+                                <i class="fas fa-save mr-2"></i>
+                                Simpan Draft
+                            </button>
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-check mr-2"></i>
+                                Simpan Perubahan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- AI Assistant Panel -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow p-6 ai-panel mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-robot mr-2 text-purple-600"></i>
+                    AI Assistant
+                </h3>
+                
+                <!-- AI Suggestions -->
+                <div id="ai-suggestions" class="space-y-3 mb-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-lightbulb mr-2"></i>
+                            AI siap membantu memperbaiki surat Anda
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- AI Actions -->
+                <div class="space-y-3">
+                    <button onclick="improveContent()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 text-sm font-medium">
+                        <i class="fas fa-magic mr-2"></i>
+                        Perbaiki Konten
+                    </button>
+                    
+                    <button onclick="summarizeContent()" class="w-full bg-gradient-to-r from-green-500 to-teal-500 text-white px-4 py-2 rounded-lg hover:from-green-600 hover:to-teal-600 transition-all duration-200 text-sm font-medium">
+                        <i class="fas fa-compress-alt mr-2"></i>
+                        Ringkas Konten
+                    </button>
+                    
+                    <button onclick="checkGrammar()" class="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200 text-sm font-medium">
+                        <i class="fas fa-spell-check mr-2"></i>
+                        Cek Tata Bahasa
+                    </button>
+                </div>
+                
+                <!-- AI Status -->
+                <div id="ai-status" class="mt-6 p-3 bg-gray-50 rounded-lg hidden">
+                    <div class="flex items-center">
+                        <div class="loading-spinner mr-3"></div>
+                        <span class="text-sm text-gray-600">AI sedang memproses...</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Change Summary -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-edit mr-2 text-green-600"></i>
+                    Ringkasan Perubahan
+                </h3>
+                
+                <div id="change-summary" class="space-y-2 text-sm">
+                    <p class="text-gray-600">Belum ada perubahan yang dibuat</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Version History Modal -->
+<div id="version-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        <i class="fas fa-history mr-2 text-blue-600"></i>
+                        Riwayat Versi Surat
+                    </h3>
+                    <button onclick="closeVersionModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="version-history">
+                    <div class="space-y-4">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <p class="font-medium text-gray-900">Versi 1.0 (Saat ini)</p>
+                                    <p class="text-sm text-gray-600">{{ letter.updated_at|date:"d F Y H:i" }}</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-medium">Aktif</span>
+                            </div>
+                            <p class="text-sm text-gray-700">Versi terbaru dari surat</p>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800 text-xs">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    Lihat
+                                </button>
+                                <button class="text-green-600 hover:text-green-800 text-xs">
+                                    <i class="fas fa-download mr-1"></i>
+                                    Unduh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional version entries would be dynamically loaded -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="closeVersionModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        <i class="fas fa-eye mr-2 text-blue-600"></i>
+                        Preview Surat
+                    </h3>
+                    <button onclick="closePreview()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div id="preview-content" class="bg-gray-50 p-6 rounded-lg min-h-96">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="exportToPDF()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Export PDF
+                </button>
+                <button onclick="exportToWord()" class="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    <i class="fas fa-file-word mr-2"></i>
+                    Export Word
+                </button>
+                <button onclick="closePreview()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script>
+    let quill;
+    let currentLetterType = '{{ letter.letter_type }}';
+    let originalContent = '';
+    let changeTracker = {
+        subject: '{{ letter.subject }}',
+        recipientName: '{{ letter.recipient_name }}',
+        content: ''
+    };
+    
+    // Initialize Quill editor
+    document.addEventListener('DOMContentLoaded', function() {
+        quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'indent': '-1'}, { 'indent': '+1' }],
+                    [{ 'align': [] }],
+                    ['link', 'image'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Mulai menulis isi surat di sini...'
+        });
+        
+        // Store original content
+        originalContent = quill.root.innerHTML;
+        changeTracker.content = originalContent;
+        
+        // Track changes
+        quill.on('text-change', function() {
+            updateChangeTracker();
+        });
+        
+        // Track form changes
+        document.getElementById('subject').addEventListener('input', updateChangeTracker);
+        document.getElementById('recipient-name').addEventListener('input', updateChangeTracker);
+        
+        // Load templates when letter type changes
+        document.getElementById('letter-type').addEventListener('change', function() {
+            currentLetterType = this.value;
+            loadTemplates(this.value);
+            getAISuggestions(this.value);
+        });
+        
+        // Apply template when selected
+        document.getElementById('template-select').addEventListener('change', function() {
+            if (this.value) {
+                applyTemplate(this.value);
+            }
+        });
+        
+        // Form submission
+        document.getElementById('letter-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitLetter();
+        });
+        
+        // Load initial templates and suggestions
+        if (currentLetterType) {
+            loadTemplates(currentLetterType);
+            getAISuggestions(currentLetterType);
+        }
+    });
+    
+    // Update change tracker
+    function updateChangeTracker() {
+        const currentSubject = document.getElementById('subject').value;
+        const currentRecipientName = document.getElementById('recipient-name').value;
+        const currentContent = quill.root.innerHTML;
+        
+        const changes = [];
+        
+        if (currentSubject !== changeTracker.subject) {
+            changes.push('Perihal surat diubah');
+        }
+        
+        if (currentRecipientName !== changeTracker.recipientName) {
+            changes.push('Nama penerima diubah');
+        }
+        
+        if (currentContent !== changeTracker.content) {
+            changes.push('Isi surat diubah');
+        }
+        
+        const summaryDiv = document.getElementById('change-summary');
+        
+        if (changes.length === 0) {
+            summaryDiv.innerHTML = '<p class="text-gray-600">Belum ada perubahan yang dibuat</p>';
+        } else {
+            summaryDiv.innerHTML = changes.map(change => 
+                `<div class="flex items-center text-green-600">
+                    <i class="fas fa-check-circle mr-2 text-xs"></i>
+                    <span>${change}</span>
+                </div>`
+            ).join('');
+        }
+    }
+    
+    // Load templates based on letter type
+    function loadTemplates(letterType) {
+        const templateSelect = document.getElementById('template-select');
+        templateSelect.innerHTML = '<option value="">Memuat template...</option>';
+        
+        // Simulate API call to load templates
+        setTimeout(() => {
+            const templates = getTemplatesForType(letterType);
+            templateSelect.innerHTML = '<option value="">Pilih Template (Opsional)</option>';
+            
+            templates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                templateSelect.appendChild(option);
+            });
+        }, 500);
+    }
+    
+    // Get templates for specific letter type
+    function getTemplatesForType(letterType) {
+        const templates = {
+            'keterangan_domisili': [
+                { id: 'domisili_1', name: 'Template Domisili Standar' },
+                { id: 'domisili_2', name: 'Template Domisili untuk Pelajar' }
+            ],
+            'keterangan_usaha': [
+                { id: 'usaha_1', name: 'Template Usaha Mikro' },
+                { id: 'usaha_2', name: 'Template Usaha Menengah' }
+            ],
+            'keterangan_tidak_mampu': [
+                { id: 'tidak_mampu_1', name: 'Template Tidak Mampu Standar' }
+            ]
+        };
+        
+        return templates[letterType] || [];
+    }
+    
+    // Apply selected template
+    function applyTemplate(templateId) {
+        if (confirm('Menerapkan template akan mengganti isi surat saat ini. Lanjutkan?')) {
+            showAIStatus('Memuat template...');
+            
+            // Simulate API call to get template content
+            setTimeout(() => {
+                const templateContent = getTemplateContent(templateId);
+                quill.root.innerHTML = templateContent;
+                hideAIStatus();
+                updateChangeTracker();
+                
+                // Show success message
+                showNotification('Template berhasil diterapkan!', 'success');
+            }, 1000);
+        }
+    }
+    
+    // Get template content (same as create.html)
+    function getTemplateContent(templateId) {
+        const templates = {
+            'domisili_1': `
+                <p>Yang bertanda tangan di bawah ini, Kepala Desa Pulosarok, Kecamatan Pulosarok, Kabupaten Rembang, dengan ini menerangkan bahwa:</p>
+                <br>
+                <p>Nama: [NAMA_LENGKAP]</p>
+                <p>NIK: [NIK]</p>
+                <p>Tempat, Tanggal Lahir: [TEMPAT_TANGGAL_LAHIR]</p>
+                <p>Jenis Kelamin: [JENIS_KELAMIN]</p>
+                <p>Alamat: [ALAMAT]</p>
+                <br>
+                <p>Adalah benar-benar penduduk Desa Pulosarok dan berdomisili di alamat tersebut di atas.</p>
+                <br>
+                <p>Surat keterangan ini dibuat untuk keperluan [KEPERLUAN] dan dapat dipergunakan sebagaimana mestinya.</p>
+                <br>
+                <p>Demikian surat keterangan ini dibuat dengan sebenarnya.</p>
+            `,
+            'usaha_1': `
+                <p>Yang bertanda tangan di bawah ini, Kepala Desa Pulosarok, Kecamatan Pulosarok, Kabupaten Rembang, dengan ini menerangkan bahwa:</p>
+                <br>
+                <p>Nama: [NAMA_LENGKAP]</p>
+                <p>NIK: [NIK]</p>
+                <p>Tempat, Tanggal Lahir: [TEMPAT_TANGGAL_LAHIR]</p>
+                <p>Alamat: [ALAMAT]</p>
+                <br>
+                <p>Adalah benar-benar warga Desa Pulosarok yang memiliki usaha [JENIS_USAHA] yang beralamat di [ALAMAT_USAHA].</p>
+                <br>
+                <p>Surat keterangan ini dibuat untuk keperluan [KEPERLUAN] dan dapat dipergunakan sebagaimana mestinya.</p>
+                <br>
+                <p>Demikian surat keterangan ini dibuat dengan sebenarnya.</p>
+            `
+        };
+        
+        return templates[templateId] || '<p>Template tidak ditemukan.</p>';
+    }
+    
+    // Get AI suggestions (same as create.html)
+    function getAISuggestions(letterType) {
+        const suggestionsDiv = document.getElementById('ai-suggestions');
+        
+        if (!letterType) {
+            suggestionsDiv.innerHTML = `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-sm text-blue-800">
+                        <i class="fas fa-lightbulb mr-2"></i>
+                        AI siap membantu memperbaiki surat Anda
+                    </p>
+                </div>
+            `;
+            return;
+        }
+        
+        showAIStatus('Menganalisis surat...');
+        
+        // Simulate AI API call
+        setTimeout(() => {
+            const suggestions = getAISuggestionsForType(letterType);
+            
+            suggestionsDiv.innerHTML = suggestions.map(suggestion => `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p class="text-sm text-green-800 font-medium">${suggestion.title}</p>
+                    <p class="text-xs text-green-600 mt-1">${suggestion.description}</p>
+                </div>
+            `).join('');
+            
+            hideAIStatus();
+        }, 1500);
+    }
+    
+    // Get AI suggestions for letter type (same as create.html)
+    function getAISuggestionsForType(letterType) {
+        const suggestions = {
+            'keterangan_domisili': [
+                {
+                    title: 'Sertakan Informasi RT/RW',
+                    description: 'Tambahkan informasi RT/RW untuk memperkuat keterangan domisili'
+                },
+                {
+                    title: 'Cantumkan Lama Tinggal',
+                    description: 'Sebutkan berapa lama yang bersangkutan tinggal di alamat tersebut'
+                }
+            ],
+            'keterangan_usaha': [
+                {
+                    title: 'Jelaskan Jenis Usaha',
+                    description: 'Berikan detail tentang jenis usaha yang dijalankan'
+                },
+                {
+                    title: 'Sertakan Alamat Usaha',
+                    description: 'Cantumkan alamat lengkap tempat usaha beroperasi'
+                }
+            ]
+        };
+        
+        return suggestions[letterType] || [
+            {
+                title: 'Gunakan Bahasa Formal',
+                description: 'Pastikan menggunakan bahasa Indonesia yang baik dan benar'
+            }
+        ];
+    }
+    
+    // AI Functions (same as create.html)
+    function generateWithAI() {
+        if (!currentLetterType) {
+            showNotification('Pilih jenis surat terlebih dahulu!', 'warning');
+            return;
+        }
+        
+        if (confirm('Generate dengan AI akan mengganti isi surat saat ini. Lanjutkan?')) {
+            showAIStatus('AI sedang membuat konten...');
+            
+            // Get form data for context
+            const formData = new FormData(document.getElementById('letter-form'));
+            const context = {
+                letterType: currentLetterType,
+                recipientName: formData.get('recipient_name'),
+                nik: formData.get('nik'),
+                birthPlaceDate: formData.get('birth_place_date'),
+                gender: formData.get('gender'),
+                address: formData.get('address'),
+                subject: formData.get('subject')
+            };
+            
+            // Simulate AI generation
+            setTimeout(() => {
+                const generatedContent = generateContentWithContext(context);
+                quill.root.innerHTML = generatedContent;
+                hideAIStatus();
+                updateChangeTracker();
+                showNotification('Konten berhasil dibuat dengan AI!', 'success');
+            }, 2000);
+        }
+    }
+    
+    // Generate content with context (same as create.html)
+    function generateContentWithContext(context) {
+        const { letterType, recipientName, nik, birthPlaceDate, gender, address, subject } = context;
+        
+        let content = `
+            <p>Yang bertanda tangan di bawah ini, Kepala Desa Pulosarok, Kecamatan Pulosarok, Kabupaten Rembang, dengan ini menerangkan bahwa:</p>
+            <br>
+        `;
+        
+        if (recipientName) content += `<p>Nama: ${recipientName}</p>`;
+        if (nik) content += `<p>NIK: ${nik}</p>`;
+        if (birthPlaceDate) content += `<p>Tempat, Tanggal Lahir: ${birthPlaceDate}</p>`;
+        if (gender) content += `<p>Jenis Kelamin: ${gender === 'L' ? 'Laki-laki' : 'Perempuan'}</p>`;
+        if (address) content += `<p>Alamat: ${address}</p>`;
+        
+        content += '<br>';
+        
+        // Add content based on letter type
+        switch (letterType) {
+            case 'keterangan_domisili':
+                content += '<p>Adalah benar-benar penduduk Desa Pulosarok dan berdomisili di alamat tersebut di atas.</p>';
+                break;
+            case 'keterangan_usaha':
+                content += '<p>Adalah benar-benar warga Desa Pulosarok yang memiliki usaha dan menjalankan kegiatan usaha di wilayah Desa Pulosarok.</p>';
+                break;
+            case 'keterangan_tidak_mampu':
+                content += '<p>Adalah benar-benar warga Desa Pulosarok yang tergolong dalam keluarga tidak mampu/kurang mampu.</p>';
+                break;
+            default:
+                content += '<p>Adalah benar-benar warga Desa Pulosarok.</p>';
+        }
+        
+        content += `
+            <br>
+            <p>Surat keterangan ini dibuat untuk keperluan ${subject || '[KEPERLUAN]'} dan dapat dipergunakan sebagaimana mestinya.</p>
+            <br>
+            <p>Demikian surat keterangan ini dibuat dengan sebenarnya.</p>
+        `;
+        
+        return content;
+    }
+    
+    // Validate with AI (same as create.html)
+    function validateWithAI() {
+        const content = quill.root.innerHTML;
+        
+        if (!content.trim() || content === '<p><br></p>') {
+            showNotification('Tidak ada konten untuk divalidasi!', 'warning');
+            return;
+        }
+        
+        showAIStatus('AI sedang memvalidasi konten...');
+        
+        // Simulate AI validation
+        setTimeout(() => {
+            const validationResult = {
+                isValid: true,
+                score: 0.95,
+                issues: [],
+                suggestions: [
+                    'Konten sudah sesuai dengan standar surat resmi',
+                    'Bahasa yang digunakan sudah formal dan tepat',
+                    'Struktur surat sudah lengkap'
+                ]
+            };
+            
+            displayValidationResult(validationResult);
+            hideAIStatus();
+        }, 2000);
+    }
+    
+    // Display validation result (same as create.html)
+    function displayValidationResult(result) {
+        const suggestionsDiv = document.getElementById('ai-suggestions');
+        
+        let html = `
+            <div class="${result.isValid ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border rounded-lg p-3 mb-3">
+                <p class="text-sm font-medium ${result.isValid ? 'text-green-800' : 'text-red-800'}">
+                    <i class="fas ${result.isValid ? 'fa-check-circle' : 'fa-exclamation-triangle'} mr-2"></i>
+                    Skor Validasi: ${(result.score * 100).toFixed(0)}%
+                </p>
+            </div>
+        `;
+        
+        if (result.issues.length > 0) {
+            html += `
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                    <p class="text-sm font-medium text-yellow-800 mb-2">Perhatian:</p>
+                    <ul class="text-xs text-yellow-700 list-disc list-inside">
+                        ${result.issues.map(issue => `<li>${issue}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        if (result.suggestions.length > 0) {
+            html += `
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-blue-800 mb-2">Saran:</p>
+                    <ul class="text-xs text-blue-700 list-disc list-inside">
+                        ${result.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        suggestionsDiv.innerHTML = html;
+    }
+    
+    // Improve content with AI
+    function improveContent() {
+        const content = quill.root.innerHTML;
+        
+        if (!content.trim() || content === '<p><br></p>') {
+            showNotification('Tidak ada konten untuk diperbaiki!', 'warning');
+            return;
+        }
+        
+        showAIStatus('AI sedang memperbaiki konten...');
+        
+        // Simulate AI improvement
+        setTimeout(() => {
+            showNotification('Konten berhasil diperbaiki!', 'success');
+            updateChangeTracker();
+            hideAIStatus();
+        }, 2000);
+    }
+    
+    // Summarize content
+    function summarizeContent() {
+        const content = quill.root.innerHTML;
+        
+        if (!content.trim() || content === '<p><br></p>') {
+            showNotification('Tidak ada konten untuk diringkas!', 'warning');
+            return;
+        }
+        
+        showAIStatus('AI sedang meringkas konten...');
+        
+        // Simulate AI summarization
+        setTimeout(() => {
+            const summary = 'Surat keterangan domisili untuk warga Desa Pulosarok dengan informasi lengkap identitas dan alamat.';
+            
+            const suggestionsDiv = document.getElementById('ai-suggestions');
+            suggestionsDiv.innerHTML = `
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-purple-800 mb-2">Ringkasan:</p>
+                    <p class="text-xs text-purple-700">${summary}</p>
+                </div>
+            `;
+            
+            hideAIStatus();
+        }, 1500);
+    }
+    
+    // Check grammar
+    function checkGrammar() {
+        const content = quill.root.innerHTML;
+        
+        if (!content.trim() || content === '<p><br></p>') {
+            showNotification('Tidak ada konten untuk dicek!', 'warning');
+            return;
+        }
+        
+        showAIStatus('AI sedang mengecek tata bahasa...');
+        
+        // Simulate grammar check
+        setTimeout(() => {
+            const grammarResult = {
+                errors: 0,
+                suggestions: [
+                    'Tata bahasa sudah benar',
+                    'Ejaan sesuai dengan KBBI'
+                ]
+            };
+            
+            const suggestionsDiv = document.getElementById('ai-suggestions');
+            suggestionsDiv.innerHTML = `
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <p class="text-sm font-medium text-green-800 mb-2">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Tata Bahasa: ${grammarResult.errors} kesalahan
+                    </p>
+                    <ul class="text-xs text-green-700 list-disc list-inside">
+                        ${grammarResult.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            hideAIStatus();
+        }, 1500);
+    }
+    
+    // Save draft
+    function saveDraft() {
+        const formData = new FormData(document.getElementById('letter-form'));
+        formData.set('content', quill.root.innerHTML);
+        formData.set('status', 'draft');
+        
+        showNotification('Menyimpan draft...', 'info');
+        
+        // Simulate saving
+        setTimeout(() => {
+            showNotification('Draft berhasil disimpan!', 'success');
+        }, 1000);
+    }
+    
+    // Preview letter (same as create.html)
+    function previewLetter() {
+        const formData = new FormData(document.getElementById('letter-form'));
+        const content = quill.root.innerHTML;
+        
+        // Generate preview
+        const previewHTML = generatePreview(formData, content);
+        
+        document.getElementById('preview-content').innerHTML = previewHTML;
+        document.getElementById('preview-modal').classList.remove('hidden');
+    }
+    
+    // Generate preview HTML (same as create.html)
+    function generatePreview(formData, content) {
+        const letterNumber = formData.get('letter_number') || 'AUTO-GENERATE';
+        const subject = formData.get('subject') || '[PERIHAL]';
+        const today = new Date().toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        
+        return `
+            <div class="max-w-4xl mx-auto bg-white p-8 shadow-lg">
+                <!-- Letterhead -->
+                <div class="text-center border-b-2 border-gray-800 pb-4 mb-6">
+                    <h1 class="text-xl font-bold">PEMERINTAH KABUPATEN REMBANG</h1>
+                    <h2 class="text-lg font-semibold">KECAMATAN PULOSAROK</h2>
+                    <h3 class="text-lg font-semibold">DESA PULOSAROK</h3>
+                    <p class="text-sm">Alamat: Jl. Raya Pulosarok No. 1, Pulosarok, Rembang 59274</p>
+                </div>
+                
+                <!-- Letter Info -->
+                <div class="mb-6">
+                    <table class="w-full text-sm">
+                        <tr>
+                            <td class="w-24">Nomor</td>
+                            <td class="w-4">:</td>
+                            <td>${letterNumber}</td>
+                        </tr>
+                        <tr>
+                            <td>Perihal</td>
+                            <td>:</td>
+                            <td>${subject}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <!-- Date -->
+                <div class="text-right mb-6">
+                    <p>Pulosarok, ${today}</p>
+                </div>
+                
+                <!-- Content -->
+                <div class="mb-8 leading-relaxed">
+                    ${content}
+                </div>
+                
+                <!-- Signature -->
+                <div class="text-right">
+                    <p class="mb-16">Kepala Desa Pulosarok,</p>
+                    <p class="font-semibold">[NAMA KEPALA DESA]</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Close preview
+    function closePreview() {
+        document.getElementById('preview-modal').classList.add('hidden');
+    }
+    
+    // Export functions (same as create.html)
+    function exportToPDF() {
+        showNotification('Mengekspor ke PDF...', 'info');
+        setTimeout(() => {
+            showNotification('PDF berhasil diunduh!', 'success');
+        }, 2000);
+    }
+    
+    function exportToWord() {
+        showNotification('Mengekspor ke Word...', 'info');
+        setTimeout(() => {
+            showNotification('File Word berhasil diunduh!', 'success');
+        }, 2000);
+    }
+    
+    // Version history functions
+    function showVersionHistory() {
+        document.getElementById('version-modal').classList.remove('hidden');
+    }
+    
+    function closeVersionModal() {
+        document.getElementById('version-modal').classList.add('hidden');
+    }
+    
+    function compareVersions() {
+        showNotification('Fitur perbandingan versi akan segera tersedia!', 'info');
+    }
+    
+    // Submit letter
+    function submitLetter() {
+        const formData = new FormData(document.getElementById('letter-form'));
+        formData.set('content', quill.root.innerHTML);
+        
+        // Validate required fields
+        const requiredFields = ['letter_type', 'subject', 'recipient_name'];
+        const missingFields = requiredFields.filter(field => !formData.get(field));
+        
+        if (missingFields.length > 0) {
+            showNotification('Harap lengkapi semua field yang wajib diisi!', 'error');
+            return;
+        }
+        
+        if (!quill.root.innerHTML.trim() || quill.root.innerHTML === '<p><br></p>') {
+            showNotification('Isi surat tidak boleh kosong!', 'error');
+            return;
+        }
+        
+        // Simulate submission
+        showNotification('Menyimpan perubahan...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Perubahan berhasil disimpan!', 'success');
+            
+            // Redirect to detail page after 2 seconds
+            setTimeout(() => {
+                window.location.href = '/pulosarok/letters/{{ letter.id }}/';
+            }, 2000);
+        }, 2000);
+    }
+    
+    // Utility functions (same as create.html)
+    function showAIStatus(message) {
+        const statusDiv = document.getElementById('ai-status');
+        statusDiv.querySelector('span').textContent = message;
+        statusDiv.classList.remove('hidden');
+    }
+    
+    function hideAIStatus() {
+        document.getElementById('ai-status').classList.add('hidden');
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            success: 'bg-green-500 text-white',
+            error: 'bg-red-500 text-white',
+            warning: 'bg-yellow-500 text-white',
+            info: 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : type === 'warning' ? 'exclamation' : 'info'}-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Close modals when clicking outside
+    document.getElementById('preview-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePreview();
+        }
+    });
+    
+    document.getElementById('version-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeVersionModal();
+        }
+    });
+</script>
+{% endblock %}

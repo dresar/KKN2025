@@ -1,0 +1,1478 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Backup & Restore{% endblock %}
+
+{% block page_title %}Backup & Restore{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backup-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .backup-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    .backup-status {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .backup-type-badge {
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+    }
+    .schedule-item {
+        transition: all 0.2s ease;
+    }
+    .schedule-item:hover {
+        background-color: #f9fafb;
+    }
+    .backup-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .restore-options {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    .schedule-config {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    .storage-info {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
+    .file-drop-zone {
+        border: 2px dashed #d1d5db;
+        transition: all 0.3s ease;
+    }
+    .file-drop-zone.dragover {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    .backup-timeline {
+        position: relative;
+    }
+    .backup-timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e5e7eb;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 3rem;
+        margin-bottom: 1.5rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0.5rem;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background-color: #3b82f6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-shield-alt mr-3 text-blue-600"></i>
+                Backup & Restore
+            </h1>
+            <p class="text-gray-600">Kelola backup data surat dan pengaturan restore</p>
+        </div>
+        <div class="flex space-x-3 mt-4 lg:mt-0">
+            <button onclick="openScheduleModal()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                <i class="fas fa-clock mr-2"></i>
+                Jadwal Backup
+            </button>
+            <button onclick="createBackup()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>
+                Buat Backup
+            </button>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="backup-stats rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Total Backup</p>
+                    <p class="text-3xl font-bold text-white" id="total-backups">24</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-database text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span>+3 backup bulan ini</span>
+            </div>
+        </div>
+        
+        <div class="restore-options rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Backup Terakhir</p>
+                    <p class="text-lg font-bold text-white" id="last-backup">2 jam lalu</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clock text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-check-circle mr-1"></i>
+                <span>Backup otomatis aktif</span>
+            </div>
+        </div>
+        
+        <div class="schedule-config rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Ukuran Total</p>
+                    <p class="text-3xl font-bold text-white" id="total-size">1.2 GB</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-hdd text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-chart-line mr-1"></i>
+                <span>Rata-rata 50MB per backup</span>
+            </div>
+        </div>
+        
+        <div class="storage-info rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Storage Tersisa</p>
+                    <p class="text-3xl font-bold text-white" id="storage-left">8.8 GB</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-server text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="w-full bg-white/20 rounded-full h-2">
+                    <div class="bg-white h-2 rounded-full" style="width: 88%"></div>
+                </div>
+                <p class="text-white/80 text-xs mt-1">88% tersedia</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Backup List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">
+                            <i class="fas fa-list mr-2 text-blue-600"></i>
+                            Daftar Backup
+                        </h2>
+                        <div class="flex space-x-2">
+                            <select id="backup-filter" onchange="filterBackups()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="all">Semua Backup</option>
+                                <option value="manual">Manual</option>
+                                <option value="automatic">Otomatis</option>
+                                <option value="scheduled">Terjadwal</option>
+                            </select>
+                            <button onclick="refreshBackups()" class="text-gray-600 hover:text-gray-800 p-2">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <div id="backup-list" class="space-y-4">
+                        <!-- Backup items will be dynamically generated -->
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="backup-empty" class="text-center py-8 hidden">
+                        <i class="fas fa-database text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-600 mb-2">Belum ada backup</h3>
+                        <p class="text-gray-500 mb-4">Buat backup pertama Anda untuk melindungi data</p>
+                        <button onclick="createBackup()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <i class="fas fa-plus mr-2"></i>
+                            Buat Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-bolt mr-2 text-yellow-600"></i>
+                    Aksi Cepat
+                </h3>
+                <div class="space-y-3">
+                    <button onclick="createBackup()" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center">
+                        <i class="fas fa-plus mr-2"></i>
+                        Buat Backup Manual
+                    </button>
+                    <button onclick="openRestoreModal()" class="w-full bg-green-600 text-white px-4 py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center">
+                        <i class="fas fa-undo mr-2"></i>
+                        Restore Data
+                    </button>
+                    <button onclick="downloadBackup()" class="w-full bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center">
+                        <i class="fas fa-download mr-2"></i>
+                        Download Backup
+                    </button>
+                    <button onclick="cleanupBackups()" class="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center justify-center">
+                        <i class="fas fa-trash mr-2"></i>
+                        Bersihkan Backup Lama
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Backup Schedule -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-calendar-alt mr-2 text-purple-600"></i>
+                    Jadwal Backup
+                </h3>
+                <div class="space-y-3" id="schedule-list">
+                    <!-- Schedule items will be dynamically generated -->
+                </div>
+                <button onclick="openScheduleModal()" class="w-full mt-4 border-2 border-dashed border-gray-300 text-gray-600 px-4 py-3 rounded-lg hover:border-purple-500 hover:text-purple-600 transition-colors duration-200 flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Jadwal
+                </button>
+            </div>
+            
+            <!-- Storage Info -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-pie mr-2 text-green-600"></i>
+                    Informasi Storage
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Backup Data</span>
+                            <span>1.2 GB</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 12%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Storage Tersisa</span>
+                            <span>8.8 GB</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-gray-200">
+                        <p class="text-xs text-gray-500">Total Kapasitas: 10 GB</p>
+                        <p class="text-xs text-gray-500">Backup otomatis akan berhenti jika storage < 500MB</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Backup Modal -->
+<div id="create-backup-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-plus mr-2 text-blue-600"></i>
+                        Buat Backup Baru
+                    </h3>
+                    <button onclick="closeCreateBackupModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Backup</label>
+                        <input type="text" id="backup-name" placeholder="Backup Manual - [Tanggal]" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Backup</label>
+                        <select id="backup-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="full">Full Backup (Semua Data)</option>
+                            <option value="letters">Data Surat Saja</option>
+                            <option value="settings">Pengaturan Saja</option>
+                            <option value="templates">Template Saja</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi (Opsional)</label>
+                        <textarea id="backup-description" rows="3" placeholder="Deskripsi backup..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="compress-backup" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Kompres backup (menghemat ruang)</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="encrypt-backup" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="text-sm text-gray-700">Enkripsi backup (keamanan ekstra)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeCreateBackupModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        Batal
+                    </button>
+                    <button onclick="startBackupProcess()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-play mr-2"></i>
+                        Mulai Backup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Modal -->
+<div id="restore-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-undo mr-2 text-green-600"></i>
+                        Restore Data
+                    </h3>
+                    <button onclick="closeRestoreModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-6">
+                    <div class="flex space-x-4 border-b border-gray-200">
+                        <button onclick="switchRestoreTab('existing')" id="existing-tab" class="px-4 py-2 text-sm font-medium border-b-2 border-green-600 text-green-600">
+                            Backup Tersimpan
+                        </button>
+                        <button onclick="switchRestoreTab('upload')" id="upload-tab" class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            Upload File
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Existing Backups Tab -->
+                <div id="existing-restore" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Backup</label>
+                        <select id="restore-backup" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">Pilih backup untuk restore...</option>
+                        </select>
+                    </div>
+                    
+                    <div id="backup-info" class="hidden bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Informasi Backup</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Tanggal:</span>
+                                <span id="backup-date" class="font-medium"></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Ukuran:</span>
+                                <span id="backup-size" class="font-medium"></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Jenis:</span>
+                                <span id="backup-type-info" class="font-medium"></span>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Status:</span>
+                                <span id="backup-status" class="font-medium"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Upload File Tab -->
+                <div id="upload-restore" class="hidden">
+                    <div class="file-drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <h4 class="text-lg font-medium text-gray-900 mb-2">Upload File Backup</h4>
+                        <p class="text-gray-600 mb-4">Drag & drop file backup atau klik untuk memilih</p>
+                        <input type="file" id="backup-file" accept=".zip,.sql,.json" class="hidden" onchange="handleFileSelect(event)">
+                        <button onclick="document.getElementById('backup-file').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                            <i class="fas fa-folder-open mr-2"></i>
+                            Pilih File
+                        </button>
+                        <p class="text-xs text-gray-500 mt-2">Format yang didukung: .zip, .sql, .json (Maks. 100MB)</p>
+                    </div>
+                    
+                    <div id="upload-info" class="hidden mt-4 bg-blue-50 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-file-archive text-blue-600"></i>
+                            <div class="flex-1">
+                                <p id="upload-filename" class="text-sm font-medium text-gray-900"></p>
+                                <p id="upload-filesize" class="text-xs text-gray-600"></p>
+                            </div>
+                            <button onclick="clearUploadFile()" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Restore Options -->
+                <div class="mt-6">
+                    <h4 class="text-sm font-medium text-gray-900 mb-3">Opsi Restore</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="restore-mode" value="full" checked class="text-green-600 focus:ring-green-500">
+                            <span class="text-sm text-gray-700">Restore Penuh (Mengganti semua data)</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="restore-mode" value="merge" class="text-green-600 focus:ring-green-500">
+                            <span class="text-sm text-gray-700">Merge Data (Gabungkan dengan data existing)</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="restore-mode" value="selective" class="text-green-600 focus:ring-green-500">
+                            <span class="text-sm text-gray-700">Restore Selektif (Pilih data tertentu)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 space-y-2">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="backup-before-restore" checked class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span class="text-sm text-gray-700">Buat backup sebelum restore (Direkomendasikan)</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="verify-backup" checked class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                        <span class="text-sm text-gray-700">Verifikasi integritas backup</span>
+                    </label>
+                </div>
+                
+                <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-yellow-800">Peringatan</h4>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                Proses restore akan mengganti data yang ada. Pastikan Anda telah membuat backup terlebih dahulu.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeRestoreModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        Batal
+                    </button>
+                    <button onclick="startRestoreProcess()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                        <i class="fas fa-play mr-2"></i>
+                        Mulai Restore
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Modal -->
+<div id="schedule-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-clock mr-2 text-purple-600"></i>
+                        Jadwal Backup Otomatis
+                    </h3>
+                    <button onclick="closeScheduleModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Jadwal</label>
+                        <input type="text" id="schedule-name" placeholder="Backup Harian" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Frekuensi</label>
+                        <select id="schedule-frequency" onchange="updateScheduleOptions()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="daily">Harian</option>
+                            <option value="weekly">Mingguan</option>
+                            <option value="monthly">Bulanan</option>
+                            <option value="custom">Custom</option>
+                        </select>
+                    </div>
+                    
+                    <div id="schedule-time">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Waktu</label>
+                        <input type="time" id="backup-time" value="02:00" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    </div>
+                    
+                    <div id="schedule-day" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hari</label>
+                        <select id="backup-day" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="1">Senin</option>
+                            <option value="2">Selasa</option>
+                            <option value="3">Rabu</option>
+                            <option value="4">Kamis</option>
+                            <option value="5">Jumat</option>
+                            <option value="6">Sabtu</option>
+                            <option value="0">Minggu</option>
+                        </select>
+                    </div>
+                    
+                    <div id="schedule-date" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
+                        <select id="backup-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <!-- Options 1-31 will be generated dynamically -->
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Backup</label>
+                        <select id="schedule-backup-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="full">Full Backup</option>
+                            <option value="letters">Data Surat Saja</option>
+                            <option value="incremental">Incremental</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Retensi (Hari)</label>
+                        <input type="number" id="backup-retention" value="30" min="1" max="365" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <p class="text-xs text-gray-500 mt-1">Backup lama akan dihapus otomatis setelah periode ini</p>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="schedule-active" checked class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm text-gray-700">Aktifkan jadwal</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="schedule-notify" checked class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm text-gray-700">Kirim notifikasi setelah backup</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeScheduleModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        Batal
+                    </button>
+                    <button onclick="saveSchedule()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan Jadwal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div id="progress-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i id="progress-icon" class="fas fa-cog fa-spin text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 id="progress-title" class="text-lg font-semibold text-gray-900 mb-2">Memproses...</h3>
+                    <p id="progress-message" class="text-gray-600 mb-4">Mohon tunggu, proses sedang berlangsung</p>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+                        <div id="progress-bar" class="progress-bar bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    
+                    <p id="progress-percentage" class="text-sm text-gray-500 mb-4">0%</p>
+                    
+                    <div id="progress-details" class="text-left bg-gray-50 rounded-lg p-3 text-xs text-gray-600 hidden">
+                        <div id="progress-log"></div>
+                    </div>
+                    
+                    <button id="progress-cancel" onclick="cancelProcess()" class="mt-4 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let backupData = [];
+    let scheduleData = [];
+    let currentProcess = null;
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        generateSampleBackupData();
+        generateSampleScheduleData();
+        renderBackupList();
+        renderScheduleList();
+        populateRestoreOptions();
+        populateDateOptions();
+    });
+    
+    // Generate sample backup data
+    function generateSampleBackupData() {
+        const types = ['full', 'letters', 'settings', 'templates'];
+        const statuses = ['completed', 'failed', 'in_progress'];
+        
+        backupData = [];
+        
+        for (let i = 0; i < 24; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+            
+            const type = types[Math.floor(Math.random() * types.length)];
+            const status = i === 0 ? 'completed' : statuses[Math.floor(Math.random() * statuses.length)];
+            
+            backupData.push({
+                id: i + 1,
+                name: `Backup ${type === 'full' ? 'Lengkap' : type === 'letters' ? 'Surat' : type === 'settings' ? 'Pengaturan' : 'Template'} - ${date.toLocaleDateString('id-ID')}`,
+                type: type,
+                date: date.toISOString(),
+                size: Math.floor(Math.random() * 100) + 10, // MB
+                status: status,
+                description: `Backup ${type} dibuat secara ${i % 3 === 0 ? 'otomatis' : 'manual'}`,
+                compressed: Math.random() > 0.3,
+                encrypted: Math.random() > 0.7,
+                source: i % 3 === 0 ? 'automatic' : i % 3 === 1 ? 'manual' : 'scheduled'
+            });
+        }
+    }
+    
+    // Generate sample schedule data
+    function generateSampleScheduleData() {
+        scheduleData = [
+            {
+                id: 1,
+                name: 'Backup Harian',
+                frequency: 'daily',
+                time: '02:00',
+                type: 'full',
+                active: true,
+                lastRun: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                nextRun: new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString()
+            },
+            {
+                id: 2,
+                name: 'Backup Mingguan Lengkap',
+                frequency: 'weekly',
+                time: '01:00',
+                day: 0, // Sunday
+                type: 'full',
+                active: true,
+                lastRun: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+                nextRun: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString()
+            }
+        ];
+    }
+    
+    // Render backup list
+    function renderBackupList() {
+        const container = document.getElementById('backup-list');
+        const filter = document.getElementById('backup-filter').value;
+        
+        let filtered = backupData;
+        if (filter !== 'all') {
+            filtered = backupData.filter(backup => backup.source === filter);
+        }
+        
+        if (filtered.length === 0) {
+            document.getElementById('backup-empty').classList.remove('hidden');
+            container.classList.add('hidden');
+            return;
+        }
+        
+        document.getElementById('backup-empty').classList.add('hidden');
+        container.classList.remove('hidden');
+        
+        container.innerHTML = filtered.map(backup => `
+            <div class="backup-card bg-white border rounded-lg p-4">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900">${backup.name}</h3>
+                            <span class="backup-status ${getBackupStatusClass(backup.status)}">
+                                ${getBackupStatusText(backup.status)}
+                            </span>
+                            <span class="backup-type-badge ${getBackupTypeClass(backup.type)}">
+                                ${getBackupTypeText(backup.type)}
+                            </span>
+                        </div>
+                        
+                        <p class="text-sm text-gray-600 mb-3">${backup.description}</p>
+                        
+                        <div class="flex items-center space-x-4 text-sm text-gray-500">
+                            <span>
+                                <i class="fas fa-calendar mr-1"></i>
+                                ${formatDateTime(backup.date)}
+                            </span>
+                            <span>
+                                <i class="fas fa-hdd mr-1"></i>
+                                ${backup.size} MB
+                            </span>
+                            <span>
+                                <i class="fas fa-${backup.source === 'automatic' ? 'robot' : backup.source === 'manual' ? 'user' : 'clock'} mr-1"></i>
+                                ${backup.source === 'automatic' ? 'Otomatis' : backup.source === 'manual' ? 'Manual' : 'Terjadwal'}
+                            </span>
+                            ${backup.compressed ? '<span><i class="fas fa-compress mr-1"></i>Terkompresi</span>' : ''}
+                            ${backup.encrypted ? '<span><i class="fas fa-lock mr-1"></i>Terenkripsi</span>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 ml-4">
+                        ${backup.status === 'completed' ? `
+                            <button onclick="restoreBackup(${backup.id})" class="text-green-600 hover:text-green-800 p-2" title="Restore">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button onclick="downloadBackupFile(${backup.id})" class="text-blue-600 hover:text-blue-800 p-2" title="Download">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        ` : ''}
+                        <button onclick="viewBackupDetails(${backup.id})" class="text-purple-600 hover:text-purple-800 p-2" title="Detail">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                        <button onclick="deleteBackup(${backup.id})" class="text-red-600 hover:text-red-800 p-2" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                ${backup.status === 'in_progress' ? `
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Progress</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: 65%"></div>
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+    
+    // Render schedule list
+    function renderScheduleList() {
+        const container = document.getElementById('schedule-list');
+        
+        if (scheduleData.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Belum ada jadwal backup</p>';
+            return;
+        }
+        
+        container.innerHTML = scheduleData.map(schedule => `
+            <div class="schedule-item bg-gray-50 rounded-lg p-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h4 class="text-sm font-medium text-gray-900">${schedule.name}</h4>
+                        <p class="text-xs text-gray-600">
+                            ${getScheduleDescription(schedule)}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Selanjutnya: ${formatDateTime(schedule.nextRun)}
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 rounded-full ${schedule.active ? 'bg-green-500' : 'bg-gray-400'}"></span>
+                        <button onclick="editSchedule(${schedule.id})" class="text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button onclick="deleteSchedule(${schedule.id})" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Filter backups
+    function filterBackups() {
+        renderBackupList();
+    }
+    
+    // Refresh backups
+    function refreshBackups() {
+        showNotification('Memperbarui daftar backup...', 'info');
+        setTimeout(() => {
+            generateSampleBackupData();
+            renderBackupList();
+            showNotification('Daftar backup berhasil diperbarui!', 'success');
+        }, 1000);
+    }
+    
+    // Create backup modal functions
+    function createBackup() {
+        document.getElementById('create-backup-modal').classList.remove('hidden');
+        
+        // Set default name
+        const now = new Date();
+        document.getElementById('backup-name').value = `Backup Manual - ${now.toLocaleDateString('id-ID')}`;
+    }
+    
+    function closeCreateBackupModal() {
+        document.getElementById('create-backup-modal').classList.add('hidden');
+    }
+    
+    function startBackupProcess() {
+        const name = document.getElementById('backup-name').value;
+        const type = document.getElementById('backup-type').value;
+        const description = document.getElementById('backup-description').value;
+        const compress = document.getElementById('compress-backup').checked;
+        const encrypt = document.getElementById('encrypt-backup').checked;
+        
+        if (!name.trim()) {
+            showNotification('Nama backup harus diisi!', 'error');
+            return;
+        }
+        
+        closeCreateBackupModal();
+        showProgressModal('Membuat Backup', 'Mempersiapkan proses backup...');
+        
+        simulateBackupProcess(name, type, description, compress, encrypt);
+    }
+    
+    // Simulate backup process
+    function simulateBackupProcess(name, type, description, compress, encrypt) {
+        const steps = [
+            'Mempersiapkan data...',
+            'Mengumpulkan file...',
+            'Memproses data surat...',
+            compress ? 'Mengkompresi backup...' : null,
+            encrypt ? 'Mengenkripsi backup...' : null,
+            'Menyimpan backup...',
+            'Memverifikasi integritas...',
+            'Selesai!'
+        ].filter(Boolean);
+        
+        let currentStep = 0;
+        const totalSteps = steps.length;
+        
+        const interval = setInterval(() => {
+            const progress = ((currentStep + 1) / totalSteps) * 100;
+            updateProgress(progress, steps[currentStep]);
+            
+            currentStep++;
+            
+            if (currentStep >= totalSteps) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    hideProgressModal();
+                    
+                    // Add new backup to data
+                    const newBackup = {
+                        id: backupData.length + 1,
+                        name: name,
+                        type: type,
+                        date: new Date().toISOString(),
+                        size: Math.floor(Math.random() * 50) + 20,
+                        status: 'completed',
+                        description: description || `Backup ${type} dibuat secara manual`,
+                        compressed: compress,
+                        encrypted: encrypt,
+                        source: 'manual'
+                    };
+                    
+                    backupData.unshift(newBackup);
+                    renderBackupList();
+                    
+                    showNotification('Backup berhasil dibuat!', 'success');
+                }, 1000);
+            }
+        }, 1500);
+        
+        currentProcess = interval;
+    }
+    
+    // Restore modal functions
+    function openRestoreModal() {
+        document.getElementById('restore-modal').classList.remove('hidden');
+        populateRestoreOptions();
+    }
+    
+    function closeRestoreModal() {
+        document.getElementById('restore-modal').classList.add('hidden');
+        clearUploadFile();
+    }
+    
+    function switchRestoreTab(tab) {
+        document.getElementById('existing-tab').className = `px-4 py-2 text-sm font-medium border-b-2 ${
+            tab === 'existing' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+        }`;
+        
+        document.getElementById('upload-tab').className = `px-4 py-2 text-sm font-medium border-b-2 ${
+            tab === 'upload' ? 'border-green-600 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+        }`;
+        
+        if (tab === 'existing') {
+            document.getElementById('existing-restore').classList.remove('hidden');
+            document.getElementById('upload-restore').classList.add('hidden');
+        } else {
+            document.getElementById('existing-restore').classList.add('hidden');
+            document.getElementById('upload-restore').classList.remove('hidden');
+        }
+    }
+    
+    function populateRestoreOptions() {
+        const select = document.getElementById('restore-backup');
+        const completedBackups = backupData.filter(backup => backup.status === 'completed');
+        
+        select.innerHTML = '<option value="">Pilih backup untuk restore...</option>' +
+            completedBackups.map(backup => 
+                `<option value="${backup.id}">${backup.name} (${backup.size} MB)</option>`
+            ).join('');
+        
+        select.addEventListener('change', function() {
+            const backupId = parseInt(this.value);
+            if (backupId) {
+                const backup = backupData.find(b => b.id === backupId);
+                showBackupInfo(backup);
+            } else {
+                hideBackupInfo();
+            }
+        });
+    }
+    
+    function showBackupInfo(backup) {
+        document.getElementById('backup-info').classList.remove('hidden');
+        document.getElementById('backup-date').textContent = formatDateTime(backup.date);
+        document.getElementById('backup-size').textContent = backup.size + ' MB';
+        document.getElementById('backup-type-info').textContent = getBackupTypeText(backup.type);
+        document.getElementById('backup-status').textContent = getBackupStatusText(backup.status);
+    }
+    
+    function hideBackupInfo() {
+        document.getElementById('backup-info').classList.add('hidden');
+    }
+    
+    // File upload functions
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('dragover');
+    }
+    
+    function handleDragLeave(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+    }
+    
+    function handleFileDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    }
+    
+    function handleFileSelect(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    }
+    
+    function handleFile(file) {
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        const allowedTypes = ['.zip', '.sql', '.json'];
+        const fileExt = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (file.size > maxSize) {
+            showNotification('File terlalu besar! Maksimal 100MB.', 'error');
+            return;
+        }
+        
+        if (!allowedTypes.includes(fileExt)) {
+            showNotification('Format file tidak didukung!', 'error');
+            return;
+        }
+        
+        document.getElementById('upload-filename').textContent = file.name;
+        document.getElementById('upload-filesize').textContent = formatFileSize(file.size);
+        document.getElementById('upload-info').classList.remove('hidden');
+    }
+    
+    function clearUploadFile() {
+        document.getElementById('backup-file').value = '';
+        document.getElementById('upload-info').classList.add('hidden');
+    }
+    
+    function startRestoreProcess() {
+        const activeTab = document.getElementById('existing-restore').classList.contains('hidden') ? 'upload' : 'existing';
+        const restoreMode = document.querySelector('input[name="restore-mode"]:checked').value;
+        const backupBeforeRestore = document.getElementById('backup-before-restore').checked;
+        const verifyBackup = document.getElementById('verify-backup').checked;
+        
+        let backupSource;
+        
+        if (activeTab === 'existing') {
+            const backupId = document.getElementById('restore-backup').value;
+            if (!backupId) {
+                showNotification('Pilih backup yang akan di-restore!', 'error');
+                return;
+            }
+            backupSource = backupData.find(b => b.id === parseInt(backupId));
+        } else {
+            const fileInput = document.getElementById('backup-file');
+            if (!fileInput.files.length) {
+                showNotification('Pilih file backup yang akan di-upload!', 'error');
+                return;
+            }
+            backupSource = { name: fileInput.files[0].name };
+        }
+        
+        closeRestoreModal();
+        showProgressModal('Restore Data', 'Mempersiapkan proses restore...');
+        
+        simulateRestoreProcess(backupSource, restoreMode, backupBeforeRestore, verifyBackup);
+    }
+    
+    // Simulate restore process
+    function simulateRestoreProcess(backup, mode, createBackup, verify) {
+        const steps = [
+            createBackup ? 'Membuat backup sebelum restore...' : null,
+            verify ? 'Memverifikasi integritas backup...' : null,
+            'Mempersiapkan restore...',
+            'Mengekstrak data backup...',
+            'Memproses data surat...',
+            mode === 'full' ? 'Mengganti semua data...' : mode === 'merge' ? 'Menggabungkan data...' : 'Memilih data untuk restore...',
+            'Memperbarui database...',
+            'Memverifikasi hasil restore...',
+            'Selesai!'
+        ].filter(Boolean);
+        
+        let currentStep = 0;
+        const totalSteps = steps.length;
+        
+        const interval = setInterval(() => {
+            const progress = ((currentStep + 1) / totalSteps) * 100;
+            updateProgress(progress, steps[currentStep]);
+            
+            currentStep++;
+            
+            if (currentStep >= totalSteps) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    hideProgressModal();
+                    showNotification(`Restore dari ${backup.name} berhasil!`, 'success');
+                }, 1000);
+            }
+        }, 2000);
+        
+        currentProcess = interval;
+    }
+    
+    // Schedule modal functions
+    function openScheduleModal() {
+        document.getElementById('schedule-modal').classList.remove('hidden');
+        populateDateOptions();
+    }
+    
+    function closeScheduleModal() {
+        document.getElementById('schedule-modal').classList.add('hidden');
+    }
+    
+    function updateScheduleOptions() {
+        const frequency = document.getElementById('schedule-frequency').value;
+        const dayDiv = document.getElementById('schedule-day');
+        const dateDiv = document.getElementById('schedule-date');
+        
+        if (frequency === 'weekly') {
+            dayDiv.classList.remove('hidden');
+            dateDiv.classList.add('hidden');
+        } else if (frequency === 'monthly') {
+            dayDiv.classList.add('hidden');
+            dateDiv.classList.remove('hidden');
+        } else {
+            dayDiv.classList.add('hidden');
+            dateDiv.classList.add('hidden');
+        }
+    }
+    
+    function populateDateOptions() {
+        const select = document.getElementById('backup-date');
+        select.innerHTML = '';
+        
+        for (let i = 1; i <= 31; i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i;
+            select.appendChild(option);
+        }
+    }
+    
+    function saveSchedule() {
+        const name = document.getElementById('schedule-name').value;
+        const frequency = document.getElementById('schedule-frequency').value;
+        const time = document.getElementById('backup-time').value;
+        const type = document.getElementById('schedule-backup-type').value;
+        const retention = document.getElementById('backup-retention').value;
+        const active = document.getElementById('schedule-active').checked;
+        const notify = document.getElementById('schedule-notify').checked;
+        
+        if (!name.trim()) {
+            showNotification('Nama jadwal harus diisi!', 'error');
+            return;
+        }
+        
+        const newSchedule = {
+            id: scheduleData.length + 1,
+            name: name,
+            frequency: frequency,
+            time: time,
+            type: type,
+            retention: parseInt(retention),
+            active: active,
+            notify: notify,
+            lastRun: null,
+            nextRun: calculateNextRun(frequency, time)
+        };
+        
+        if (frequency === 'weekly') {
+            newSchedule.day = parseInt(document.getElementById('backup-day').value);
+        } else if (frequency === 'monthly') {
+            newSchedule.date = parseInt(document.getElementById('backup-date').value);
+        }
+        
+        scheduleData.push(newSchedule);
+        renderScheduleList();
+        closeScheduleModal();
+        
+        showNotification('Jadwal backup berhasil disimpan!', 'success');
+    }
+    
+    function calculateNextRun(frequency, time) {
+        const now = new Date();
+        const [hours, minutes] = time.split(':').map(Number);
+        const nextRun = new Date();
+        
+        nextRun.setHours(hours, minutes, 0, 0);
+        
+        if (frequency === 'daily') {
+            if (nextRun <= now) {
+                nextRun.setDate(nextRun.getDate() + 1);
+            }
+        } else if (frequency === 'weekly') {
+            nextRun.setDate(nextRun.getDate() + 7);
+        } else if (frequency === 'monthly') {
+            nextRun.setMonth(nextRun.getMonth() + 1);
+        }
+        
+        return nextRun.toISOString();
+    }
+    
+    // Progress modal functions
+    function showProgressModal(title, message) {
+        document.getElementById('progress-title').textContent = title;
+        document.getElementById('progress-message').textContent = message;
+        document.getElementById('progress-bar').style.width = '0%';
+        document.getElementById('progress-percentage').textContent = '0%';
+        document.getElementById('progress-modal').classList.remove('hidden');
+    }
+    
+    function hideProgressModal() {
+        document.getElementById('progress-modal').classList.add('hidden');
+    }
+    
+    function updateProgress(percentage, message) {
+        document.getElementById('progress-bar').style.width = percentage + '%';
+        document.getElementById('progress-percentage').textContent = Math.round(percentage) + '%';
+        if (message) {
+            document.getElementById('progress-message').textContent = message;
+        }
+    }
+    
+    function cancelProcess() {
+        if (currentProcess) {
+            clearInterval(currentProcess);
+            currentProcess = null;
+        }
+        hideProgressModal();
+        showNotification('Proses dibatalkan', 'info');
+    }
+    
+    // Backup actions
+    function restoreBackup(id) {
+        const backup = backupData.find(b => b.id === id);
+        if (backup) {
+            document.getElementById('restore-backup').value = id;
+            showBackupInfo(backup);
+            openRestoreModal();
+        }
+    }
+    
+    function downloadBackupFile(id) {
+        const backup = backupData.find(b => b.id === id);
+        if (backup) {
+            showNotification(`Mengunduh ${backup.name}...`, 'info');
+            // Simulate download
+            setTimeout(() => {
+                showNotification('Download selesai!', 'success');
+            }, 2000);
+        }
+    }
+    
+    function viewBackupDetails(id) {
+        const backup = backupData.find(b => b.id === id);
+        if (backup) {
+            alert(`Detail Backup:\n\nNama: ${backup.name}\nTipe: ${getBackupTypeText(backup.type)}\nTanggal: ${formatDateTime(backup.date)}\nUkuran: ${backup.size} MB\nStatus: ${getBackupStatusText(backup.status)}\nDeskripsi: ${backup.description}`);
+        }
+    }
+    
+    function deleteBackup(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus backup ini?')) {
+            backupData = backupData.filter(b => b.id !== id);
+            renderBackupList();
+            showNotification('Backup berhasil dihapus!', 'success');
+        }
+    }
+    
+    function downloadBackup() {
+        showNotification('Mempersiapkan download backup terbaru...', 'info');
+        setTimeout(() => {
+            showNotification('Download backup berhasil!', 'success');
+        }, 2000);
+    }
+    
+    function cleanupBackups() {
+        if (confirm('Hapus backup yang lebih lama dari 30 hari?')) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const oldCount = backupData.length;
+            backupData = backupData.filter(backup => new Date(backup.date) > thirtyDaysAgo);
+            const deletedCount = oldCount - backupData.length;
+            
+            renderBackupList();
+            showNotification(`${deletedCount} backup lama berhasil dihapus!`, 'success');
+        }
+    }
+    
+    // Schedule actions
+    function editSchedule(id) {
+        const schedule = scheduleData.find(s => s.id === id);
+        if (schedule) {
+            document.getElementById('schedule-name').value = schedule.name;
+            document.getElementById('schedule-frequency').value = schedule.frequency;
+            document.getElementById('backup-time').value = schedule.time;
+            document.getElementById('schedule-backup-type').value = schedule.type;
+            document.getElementById('backup-retention').value = schedule.retention || 30;
+            document.getElementById('schedule-active').checked = schedule.active;
+            document.getElementById('schedule-notify').checked = schedule.notify;
+            
+            if (schedule.day !== undefined) {
+                document.getElementById('backup-day').value = schedule.day;
+            }
+            if (schedule.date !== undefined) {
+                document.getElementById('backup-date').value = schedule.date;
+            }
+            
+            updateScheduleOptions();
+            openScheduleModal();
+        }
+    }
+    
+    function deleteSchedule(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus jadwal ini?')) {
+            scheduleData = scheduleData.filter(s => s.id !== id);
+            renderScheduleList();
+            showNotification('Jadwal backup berhasil dihapus!', 'success');
+        }
+    }
+    
+    // Utility functions
+    function getBackupStatusClass(status) {
+        switch (status) {
+            case 'completed':
+                return 'bg-green-100 text-green-800';
+            case 'failed':
+                return 'bg-red-100 text-red-800';
+            case 'in_progress':
+                return 'bg-blue-100 text-blue-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    function getBackupStatusText(status) {
+        switch (status) {
+            case 'completed':
+                return 'Selesai';
+            case 'failed':
+                return 'Gagal';
+            case 'in_progress':
+                return 'Proses';
+            default:
+                return 'Unknown';
+        }
+    }
+    
+    function getBackupTypeClass(type) {
+        switch (type) {
+            case 'full':
+                return 'bg-purple-100 text-purple-800';
+            case 'letters':
+                return 'bg-blue-100 text-blue-800';
+            case 'settings':
+                return 'bg-green-100 text-green-800';
+            case 'templates':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    function getBackupTypeText(type) {
+        switch (type) {
+            case 'full':
+                return 'Full Backup';
+            case 'letters':
+                return 'Data Surat';
+            case 'settings':
+                return 'Pengaturan';
+            case 'templates':
+                return 'Template';
+            default:
+                return 'Unknown';
+        }
+    }
+    
+    function getScheduleDescription(schedule) {
+        let desc = '';
+        
+        if (schedule.frequency === 'daily') {
+            desc = `Setiap hari pukul ${schedule.time}`;
+        } else if (schedule.frequency === 'weekly') {
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            desc = `Setiap ${days[schedule.day]} pukul ${schedule.time}`;
+        } else if (schedule.frequency === 'monthly') {
+            desc = `Setiap tanggal ${schedule.date} pukul ${schedule.time}`;
+        }
+        
+        return desc + ` (${getBackupTypeText(schedule.type)})`;
+    }
+    
+    function formatDateTime(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 transform translate-x-full`;
+        
+        // Set notification style based on type
+        switch (type) {
+            case 'success':
+                notification.className += ' bg-green-500 text-white';
+                break;
+            case 'error':
+                notification.className += ' bg-red-500 text-white';
+                break;
+            case 'warning':
+                notification.className += ' bg-yellow-500 text-white';
+                break;
+            default:
+                notification.className += ' bg-blue-500 text-white';
+        }
+        
+        notification.innerHTML = `
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 5000);
+    }
+</script>
+{% endblock %}

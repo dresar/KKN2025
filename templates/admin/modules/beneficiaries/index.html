@@ -1,0 +1,1002 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard Penerima Bantuan{% endblock title %}
+{% block page_title %}Dashboard Penerima Bantuan{% endblock page_title %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock extra_css %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Dashboard Penerima Bantuan</h1>
+                <p class="text-gray-600 mt-1">Kelola dan pantau data penerima bantuan sosial</p>
+            </div>
+            <div class="flex space-x-3">
+                <button id="btnTambahData" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>Tambah Data Baru
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i>Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100">
+                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Penerima</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_penerima|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100">
+                    <i class="fas fa-hand-holding-heart text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Bantuan Aktif</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ bantuan_aktif|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Menunggu Verifikasi</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ menunggu_verifikasi|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-red-100">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Perlu Perhatian</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ perlu_perhatian|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Grafik Jenis Bantuan -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribusi Jenis Bantuan</h3>
+            <div class="chart-container">
+                <canvas id="jenisbantuanChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Grafik Taraf Kehidupan -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribusi Taraf Kehidupan</h3>
+            <div class="chart-container">
+                <canvas id="tarafkehidupanChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Data Penerima Bantuan -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Data Penerima Bantuan</h3>
+            <div class="flex space-x-2">
+                <div class="relative">
+                    <input type="text" id="searchDataTable" class="pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring focus:ring-primary-500 focus:border-primary-500" placeholder="Cari...">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <select id="filterCategory" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Kategori</option>
+                    <!-- Options will be loaded via JavaScript -->
+                </select>
+                <select id="filterStatus" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Status</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="tidak_aktif">Tidak Aktif</option>
+                    <option value="lulus">Lulus</option>
+                    <option value="meninggal">Meninggal</option>
+                    <option value="pindah">Pindah</option>
+                </select>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NIK</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Ekonomi</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Registrasi</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="beneficiaryTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be loaded via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        <div class="flex justify-between items-center mt-4">
+            <div class="text-sm text-gray-700">
+                Menampilkan <span id="dataStart">0</span> - <span id="dataEnd">0</span> dari <span id="dataTotal">0</span> data
+            </div>
+            <div class="flex space-x-2">
+                <button id="prevPage" class="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="nextPage" class="px-3 py-1 border border-gray-300 rounded-md bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Aktivitas Terbaru -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Aktivitas Terbaru</h3>
+                <a href="#" class="text-primary-600 hover:text-primary-700 text-sm font-medium">Lihat Semua</a>
+            </div>
+            <div class="space-y-3">
+                {% if recent_activities %}
+                    {% for activity in recent_activities %}
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="p-2 bg-blue-100 rounded-full">
+                            <i class="fas fa-{{ activity.icon|default:'info' }} text-blue-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
+                            <p class="text-xs text-gray-500">{{ activity.created_at|timesince }} yang lalu</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-gray-500 text-center py-4">
+                    <i class="fas fa-clock text-2xl mb-2"></i>
+                    <p>Belum ada aktivitas terbaru</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <a href="{% url 'beneficiaries:taraf_kehidupan_page' %}" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <i class="fas fa-users text-2xl text-blue-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Data Taraf Kehidupan</p>
+                    </div>
+                </a>
+                <a href="{% url 'beneficiaries:data_bantuan_page' %}" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <i class="fas fa-hand-holding-heart text-2xl text-green-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Data Bantuan</p>
+                    </div>
+                </a>
+                <a href="{% url 'beneficiaries:upload_dokumen_page' %}" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <i class="fas fa-upload text-2xl text-purple-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Upload Dokumen</p>
+                    </div>
+                </a>
+                <a href="{% url 'beneficiaries:membuat_berita_page' %}" class="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="text-center">
+                        <i class="fas fa-newspaper text-2xl text-yellow-600 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-900">Buat Berita</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Modal untuk delete tetap dipertahankan -->
+
+<script>
+    // Variabel global untuk menyimpan data
+    let beneficiaryCategories = [];
+    let beneficiaryData = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let perPage = 10;
+    let searchQuery = '';
+    let categoryFilter = '';
+    let statusFilter = '';
+
+    // Fungsi untuk memuat data kategori bantuan
+    function loadCategories() {
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch('/pulosarok/api/beneficiaries/categories/dropdown/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(response => {
+                // Check if response has success property and it's false
+                if (response.hasOwnProperty('success') && !response.success) {
+                    throw new Error(response.message || 'Error loading categories');
+                }
+                
+                // Handle different response formats
+                let data = [];
+                if (response.hasOwnProperty('data') && Array.isArray(response.data)) {
+                    data = response.data;
+                } else if (Array.isArray(response)) {
+                    data = response;
+                } else {
+                    console.warn('Unexpected data format:', response);
+                    // Try to use the response directly if it's an object
+                    data = [response];
+                }
+                
+                beneficiaryCategories = data;
+                
+                // Populate category dropdown in filter
+                const filterCategorySelect = document.getElementById('filterCategory');
+                const categorySelect = document.getElementById('category');
+                
+                // Clear existing options except the first one
+                while (filterCategorySelect.options.length > 1) {
+                    filterCategorySelect.remove(1);
+                }
+                
+                while (categorySelect.options.length > 1) {
+                    categorySelect.remove(1);
+                }
+                
+                if (Array.isArray(data)) {
+                    data.forEach(category => {
+                        // Add to filter dropdown
+                        const filterOption = document.createElement('option');
+                        filterOption.value = category.id;
+                        filterOption.textContent = category.name;
+                        filterCategorySelect.appendChild(filterOption);
+                        
+                        // Add to form dropdown
+                        const formOption = document.createElement('option');
+                        formOption.value = category.id;
+                        formOption.textContent = category.name;
+                        categorySelect.appendChild(formOption);
+                    });
+                } else {
+                    console.error('Categories data is not an array:', data);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading categories:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memuat data',
+                    text: 'Error loading categories: ' + error.message
+                });
+            });}
+    }
+
+    // Fungsi untuk memuat data penerima bantuan
+    function loadBeneficiaries() {
+        const url = `/pulosarok/api/beneficiaries/?page=${currentPage}&per_page=${perPage}&search=${searchQuery}&category=${categoryFilter}&status=${statusFilter}`;
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(response => {
+                // Handle different response formats
+                let results = [];
+                let pagination = null;
+                
+                if (response.hasOwnProperty('results') && Array.isArray(response.results)) {
+                    // Standard format with results and pagination
+                    results = response.results;
+                    pagination = response.pagination;
+                } else if (response.hasOwnProperty('data') && Array.isArray(response.data)) {
+                    // Alternative format with data property
+                    results = response.data;
+                    pagination = response.pagination || null;
+                } else if (Array.isArray(response)) {
+                    // Direct array response
+                    results = response;
+                } else {
+                    console.error('Invalid response format:', response);
+                    throw new Error('Invalid response format');
+                }
+                
+                beneficiaryData = results;
+                
+                if (pagination) {
+                    totalPages = pagination.total_pages;
+                    const totalItems = pagination.total_items;
+                    
+                    // Update pagination info
+                    document.getElementById('dataStart').textContent = totalItems > 0 ? (currentPage - 1) * perPage + 1 : 0;
+                    document.getElementById('dataEnd').textContent = Math.min(currentPage * perPage, totalItems);
+                    document.getElementById('dataTotal').textContent = totalItems;
+                    
+                    // Update pagination buttons
+                    document.getElementById('prevPage').disabled = !pagination.has_previous;
+                    document.getElementById('nextPage').disabled = !pagination.has_next;
+                } else {
+                    // Basic pagination if not provided
+                    document.getElementById('dataStart').textContent = results.length > 0 ? 1 : 0;
+                    document.getElementById('dataEnd').textContent = results.length;
+                    document.getElementById('dataTotal').textContent = results.length;
+                    
+                    document.getElementById('prevPage').disabled = true;
+                    document.getElementById('nextPage').disabled = true;
+                }
+                
+                // Render table
+                renderBeneficiaryTable(beneficiaryData);
+            })
+            .catch(error => {
+                console.error('Error loading beneficiaries:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memuat data',
+                    text: 'Error loading beneficiaries: ' + error.message
+                });
+            });}
+    }
+
+    // Fungsi untuk merender tabel penerima bantuan
+    function renderBeneficiaryTable(data) {
+        const tableBody = document.getElementById('beneficiaryTableBody');
+        tableBody.innerHTML = '';
+        
+        if (data.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `
+                <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                    <i class="fas fa-info-circle mr-2"></i>Tidak ada data yang ditemukan
+                </td>
+            `;
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+        
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            
+            // Get category name from ID
+            const category = beneficiaryCategories.find(cat => cat.id === item.category);
+            const categoryName = category ? category.name : 'Tidak diketahui';
+            
+            // Format status
+            let statusBadge = '';
+            switch(item.status) {
+                case 'aktif':
+                    statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Aktif</span>';
+                    break;
+                case 'tidak_aktif':
+                    statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Tidak Aktif</span>';
+                    break;
+                case 'lulus':
+                    statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">Lulus</span>';
+                    break;
+                case 'meninggal':
+                    statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Meninggal</span>';
+                    break;
+                case 'pindah':
+                    statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pindah</span>';
+                    break;
+                default:
+                    statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Tidak diketahui</span>';
+            }
+            
+            // Format economic status
+            let economicStatusText = '';
+            switch(item.economic_status) {
+                case 'sangat_miskin':
+                    economicStatusText = 'Sangat Miskin';
+                    break;
+                case 'miskin':
+                    economicStatusText = 'Miskin';
+                    break;
+                case 'rentan_miskin':
+                    economicStatusText = 'Rentan Miskin';
+                    break;
+                case 'tidak_miskin':
+                    economicStatusText = 'Tidak Miskin';
+                    break;
+                default:
+                    economicStatusText = 'Tidak diketahui';
+            }
+            
+            // Format date
+            const registrationDate = new Date(item.registration_date).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${item.person_name}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${item.person_nik}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${categoryName}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${statusBadge}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${economicStatusText}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">${registrationDate}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end space-x-2">
+                        <button data-id="${item.id}" class="view-btn text-primary-600 hover:text-primary-900">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button data-id="${item.id}" class="edit-btn text-yellow-600 hover:text-yellow-900">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button data-id="${item.id}" class="delete-btn text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            tableBody.appendChild(row);
+        });
+        
+        // Add event listeners to action buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => viewBeneficiary(btn.dataset.id));
+        });
+        
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => editBeneficiary(btn.dataset.id));
+        });
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', () => deleteBeneficiary(btn.dataset.id));
+        });
+    }
+
+    // Fungsi untuk mencari data penduduk
+    function searchPenduduk() {
+        const searchQuery = document.getElementById('searchPenduduk').value;
+        
+        if (searchQuery.length < 3) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Masukkan minimal 3 karakter',
+                text: 'Silakan masukkan minimal 3 karakter untuk mencari data penduduk.'
+            });
+            return;
+        }
+        
+        fetch(`/pulosarok/api/core/people/?search=${searchQuery}`)
+            .then(response => response.json())
+            .then(data => {
+                const pendudukList = document.getElementById('pendudukList');
+                pendudukList.innerHTML = '';
+                
+                if (data.results.length === 0) {
+                    pendudukList.innerHTML = `
+                        <li class="p-3 text-center text-gray-500">
+                            <i class="fas fa-info-circle mr-2"></i>Tidak ada data yang ditemukan
+                        </li>
+                    `;
+                } else {
+                    data.results.forEach(person => {
+                        const li = document.createElement('li');
+                        li.className = 'p-3 hover:bg-gray-50 cursor-pointer';
+                        li.innerHTML = `
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-medium text-gray-900">${person.full_name}</p>
+                                    <p class="text-sm text-gray-500">NIK: ${person.nik}</p>
+                                </div>
+                                <button class="select-person-btn px-3 py-1 bg-primary-100 text-primary-700 rounded-lg text-sm hover:bg-primary-200" data-id="${person.id}" data-name="${person.full_name}" data-nik="${person.nik}" data-birth="${person.birth_place}, ${new Date(person.birth_date).toLocaleDateString('id-ID')}" data-gender="${person.gender === 'L' ? 'Laki-laki' : 'Perempuan'}">
+                                    Pilih
+                                </button>
+                            </div>
+                        `;
+                        pendudukList.appendChild(li);
+                    });
+                    
+                    // Add event listeners to select buttons
+                    document.querySelectorAll('.select-person-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            selectPerson({
+                                id: this.dataset.id,
+                                name: this.dataset.name,
+                                nik: this.dataset.nik,
+                                birth: this.dataset.birth,
+                                gender: this.dataset.gender
+                            });
+                        });
+                    });
+                }
+                
+                document.getElementById('pendudukSearchResults').classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error searching people:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal mencari data',
+                    text: 'Terjadi kesalahan saat mencari data penduduk.'
+                });
+            });
+    }
+
+    // Fungsi untuk memilih penduduk
+    function selectPerson(person) {
+        document.getElementById('selectedNama').textContent = person.name;
+        document.getElementById('selectedNIK').textContent = person.nik;
+        document.getElementById('selectedTTL').textContent = person.birth;
+        document.getElementById('selectedGender').textContent = person.gender;
+        document.getElementById('selectedPendudukId').value = person.id;
+        
+        document.getElementById('pendudukSearchResults').classList.add('hidden');
+        document.getElementById('selectedPendudukContainer').classList.remove('hidden');
+    }
+
+    // Fungsi untuk melihat detail penerima bantuan
+    function viewBeneficiary(id) {
+        window.location.href = `/pulosarok/beneficiaries/detail/${id}/`;
+    }
+
+    // Fungsi untuk mengedit penerima bantuan
+    function editBeneficiary(id) {
+        window.location.href = `/pulosarok/beneficiaries/edit/${id}/`;
+    }
+
+    // Fungsi untuk menghapus penerima bantuan
+    function deleteBeneficiary(id) {
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/pulosarok/api/beneficiaries/${id}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        Swal.fire(
+                            'Terhapus!',
+                            'Data penerima bantuan berhasil dihapus.',
+                            'success'
+                        );
+                        loadBeneficiaries();
+                    } else {
+                        throw new Error('Failed to delete');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting beneficiary:', error);
+                    Swal.fire(
+                        'Gagal!',
+                        'Terjadi kesalahan saat menghapus data.',
+                        'error'
+                    );
+                });
+            }
+        });
+    }
+
+    // Fungsi untuk mendapatkan CSRF token dari cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Fungsi untuk menginisialisasi grafik
+    function initCharts() {
+        const csrftoken = getCookie('csrftoken');
+        
+        // Grafik Jenis Bantuan
+        fetch('/pulosarok/api/beneficiaries/stats/by-category/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(response => {
+                try {
+                    let data;
+                    // Handle different response formats
+                    if (Array.isArray(response)) {
+                        data = response;
+                    } else if (response.hasOwnProperty('data') && Array.isArray(response.data)) {
+                        data = response.data;
+                    } else if (response.hasOwnProperty('success') && response.success && Array.isArray(response.data)) {
+                        data = response.data;
+                    } else {
+                        console.error('Unexpected data format:', response);
+                        throw new Error('Invalid data format for category stats');
+                    }
+                    
+                    if (data.length === 0) {
+                        console.warn('No category data available');
+                        return;
+                    }
+                    
+                    const ctx = document.getElementById('jenisbantuanChart').getContext('2d');
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(item => item.name),
+                            datasets: [{
+                                label: 'Jumlah Penerima',
+                                data: data.map(item => item.count),
+                                backgroundColor: [
+                                    'rgba(54, 162, 235, 0.6)',
+                                    'rgba(75, 192, 192, 0.6)',
+                                    'rgba(255, 159, 64, 0.6)',
+                                    'rgba(153, 102, 255, 0.6)',
+                                    'rgba(255, 99, 132, 0.6)',
+                                    'rgba(255, 206, 86, 0.6)'
+                                ],
+                                borderColor: [
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(255, 159, 64, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(255, 206, 86, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                } catch (err) {
+                    console.error('Error processing category data:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal memproses data',
+                        text: 'Error processing category data: ' + err.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading category stats:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memuat data',
+                    text: 'Error loading data: ' + error.message
+                });
+            });
+        
+        // Grafik Taraf Kehidupan
+        fetch('/pulosarok/api/beneficiaries/stats/by-economic-status/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(response => {
+                try {
+                    let data;
+                    // Handle different response formats
+                    if (Array.isArray(response)) {
+                        data = response;
+                    } else if (response.hasOwnProperty('data') && Array.isArray(response.data)) {
+                        data = response.data;
+                    } else if (response.hasOwnProperty('success') && response.success && Array.isArray(response.data)) {
+                        data = response.data;
+                    } else {
+                        console.error('Unexpected data format:', response);
+                        throw new Error('Invalid data format for economic status stats');
+                    }
+                    
+                    if (data.length === 0) {
+                        console.warn('No economic status data available');
+                        return;
+                    }
+                    
+                    const ctx = document.getElementById('tarafkehidupanChart').getContext('2d');
+                    
+                    // Map economic status codes to readable names
+                    const labels = data.map(item => {
+                        switch(item.economic_status) {
+                            case 'sangat_miskin': return 'Sangat Miskin';
+                            case 'miskin': return 'Miskin';
+                            case 'rentan_miskin': return 'Rentan Miskin';
+                            case 'menengah': return 'Menengah';
+                            case 'mampu': return 'Mampu';
+                            case 'tidak_miskin': return 'Tidak Miskin';
+                            default: return item.economic_status || 'Tidak Diketahui';
+                        }
+                    });
+                    
+                    new Chart(ctx, {
+                        type: 'pie',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data.map(item => item.count),
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.6)',
+                                    'rgba(255, 159, 64, 0.6)',
+                                    'rgba(255, 206, 86, 0.6)',
+                                    'rgba(75, 192, 192, 0.6)',
+                                    'rgba(153, 102, 255, 0.6)',
+                                    'rgba(54, 162, 235, 0.6)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(255, 159, 64, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(54, 162, 235, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                } catch (err) {
+                    console.error('Error processing economic status data:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal memproses data',
+                        text: 'Error processing economic status data: ' + err.message
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error loading economic status stats:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memuat data',
+                    text: 'Error loading data: ' + error.message
+                });
+            });}
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load initial data
+        loadCategories();
+        loadBeneficiaries();
+        initCharts();
+        
+        // Pagination
+        document.getElementById('prevPage').addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadBeneficiaries();
+            }
+        });
+        
+        document.getElementById('nextPage').addEventListener('click', function() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadBeneficiaries();
+            }
+        });
+        
+        // Search and filters
+        document.getElementById('searchDataTable').addEventListener('input', function() {
+            searchQuery = this.value;
+            currentPage = 1;
+            loadBeneficiaries();
+        });
+        
+        document.getElementById('filterCategory').addEventListener('change', function() {
+            categoryFilter = this.value;
+            currentPage = 1;
+            loadBeneficiaries();
+        });
+        
+        document.getElementById('filterStatus').addEventListener('change', function() {
+            statusFilter = this.value;
+            currentPage = 1;
+            loadBeneficiaries();
+        });
+        
+        // Modal controls - Removed for separate pages
+        document.getElementById('btnTambahData').addEventListener('click', function() {
+            window.location.href = '/pulosarok/beneficiaries/create/';
+        });
+        
+        // Search penduduk
+        document.getElementById('btnSearchPenduduk').addEventListener('click', searchPenduduk);
+        
+        document.getElementById('searchPenduduk').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchPenduduk();
+            }
+        });
+        
+        // Form submission
+        document.getElementById('formTambahData').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = {};
+            
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            
+            // Validate required fields
+            if (!data.person_id) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Data tidak lengkap',
+                    text: 'Silakan pilih data penduduk terlebih dahulu.'
+                });
+                return;
+            }
+            
+            fetch('/pulosarok/api/beneficiaries/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    return response.json().then(err => {
+                        throw new Error(JSON.stringify(err));
+                    });
+                }
+            })
+            .then(data => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: 'Data penerima bantuan berhasil ditambahkan.'
+                });
+                
+                // Reset form and close modal
+                document.getElementById('formTambahData').reset();
+                document.getElementById('selectedPendudukContainer').classList.add('hidden');
+                document.getElementById('modalTambahData').classList.add('hidden');
+                
+                // Reload data
+                loadBeneficiaries();
+            })
+            .catch(error => {
+                console.error('Error adding beneficiary:', error);
+                
+                let errorMessage = 'Terjadi kesalahan saat menambahkan data.';
+                try {
+                    const errorData = JSON.parse(error.message);
+                    if (typeof errorData === 'object') {
+                        errorMessage = Object.values(errorData).flat().join('\n');
+                    }
+                } catch (e) {
+                    // Use default error message
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal!',
+                    text: errorMessage
+                });
+            });
+        });
+    });
+</script>
+{% endblock extra_js %}

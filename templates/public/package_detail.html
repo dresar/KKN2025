@@ -1,0 +1,240 @@
+{% extends 'public/base.html' %}
+{% load static %}
+
+{% block title %}{{ package.name }} - Paket Wisata{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <nav class="flex mb-8" aria-label="Breadcrumb">
+        <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+                <a href="{% url 'home' %}" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600">
+                    <i class="fas fa-home mr-2"></i>
+                    Beranda
+                </a>
+            </li>
+            <li>
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2 text-sm"></i>
+                    <a href="{% url 'tourism:package_list' %}" class="text-sm font-medium text-gray-700 hover:text-primary-600">
+                        Paket Wisata
+                    </a>
+                </div>
+            </li>
+            <li aria-current="page">
+                <div class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2 text-sm"></i>
+                    <span class="text-sm font-medium text-gray-500">{{ package.name }}</span>
+                </div>
+            </li>
+        </ol>
+    </nav>
+    
+    <!-- Package Detail -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+            <!-- Package Image -->
+            <div class="mb-6 rounded-lg overflow-hidden shadow-md">
+                {% if package.image %}
+                <img src="{{ package.image.url }}" alt="{{ package.name }}" class="w-full h-96 object-cover">
+                {% else %}
+                <div class="w-full h-96 bg-gray-200 flex items-center justify-center">
+                    <i class="fas fa-box-open text-5xl text-gray-400"></i>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Package Info -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <div class="p-6">
+                    <div class="flex flex-wrap items-center mb-4">
+                        <h1 class="text-3xl font-bold text-gray-900 mr-3">{{ package.name }}</h1>
+                        
+                        {% if package.category %}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full mt-1" style="background-color: {{ package.category.color|default:'#E5E7EB' }}20; color: {{ package.category.color|default:'#374151' }}">
+                            {% if package.category.icon %}<i class="{{ package.category.icon }} mr-1"></i>{% endif %}
+                            {{ package.category.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Location -->
+                    {% if package.location %}
+                    <div class="mb-6">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                            <a href="{% url 'tourism:location_detail' package.location.slug %}" class="text-primary-600 hover:text-primary-800">
+                                {{ package.location.name }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Price & Duration -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <!-- Price -->
+                        <div class="bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-xs font-medium text-gray-500 mb-1">Harga</h3>
+                            <p class="text-xl font-semibold text-gray-900">
+                                {% if package.price %}
+                                Rp {{ package.price|floatformat:0|stringformat:"s"|slice:"-3:" }}.{{ package.price|floatformat:0|stringformat:"s"|slice:"-3:" }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <!-- Duration -->
+                        <div class="bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-xs font-medium text-gray-500 mb-1">Durasi</h3>
+                            <p class="text-xl font-semibold text-gray-900">
+                                {% if package.duration %}
+                                {{ package.duration }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <!-- Capacity -->
+                        <div class="bg-gray-50 p-4 rounded-md">
+                            <h3 class="text-xs font-medium text-gray-500 mb-1">Kapasitas</h3>
+                            <p class="text-xl font-semibold text-gray-900">
+                                {% if package.capacity %}
+                                {{ package.capacity }} orang
+                                {% else %}
+                                -
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-3">Deskripsi</h3>
+                        <div class="prose max-w-none text-gray-600">
+                            {{ package.description|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    <!-- Facilities -->
+                    {% if package.facilities %}
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-3">Fasilitas</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for facility in package.facilities_list %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                {{ facility|title }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Media -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-3">Media</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {% if package.video %}
+                            <div>
+                                <video src="{{ package.video.url }}" controls class="w-full h-64 object-cover rounded-md"></video>
+                            </div>
+                            {% endif %}
+                            
+                            {% if package.youtube_link %}
+                            <div class="{% if not package.video %}md:col-span-2{% endif %}">
+                                <div class="aspect-w-16 aspect-h-9 rounded-md overflow-hidden">
+                                    <iframe src="{{ package.youtube_link|safe }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div>
+            <!-- Contact Info -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+                <div class="p-4 bg-primary-600 text-white">
+                    <h3 class="text-lg font-medium">Informasi Kontak</h3>
+                </div>
+                <div class="p-4">
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-phone-alt mt-1 text-primary-600 mr-3"></i>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Telepon</h4>
+                                <p class="text-gray-600">+62 123 4567 890</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-envelope mt-1 text-primary-600 mr-3"></i>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Email</h4>
+                                <p class="text-gray-600">info@desapulosarok.id</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 text-primary-600 mr-3"></i>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Alamat</h4>
+                                <p class="text-gray-600">Desa Pulosarok, Kecamatan Contoh, Kabupaten Contoh, Provinsi Contoh</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <a href="https://wa.me/6281234567890?text=Halo,%20saya%20tertarik%20dengan%20paket%20wisata%20{{ package.name }}" target="_blank" class="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <i class="fab fa-whatsapp mr-2"></i> Hubungi via WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Packages -->
+            {% if related_packages %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="p-4 bg-gray-100">
+                    <h3 class="text-lg font-medium text-gray-900">Paket Wisata Terkait</h3>
+                </div>
+                <div class="p-4">
+                    <div class="space-y-4">
+                        {% for related in related_packages %}
+                        <div class="flex items-center space-x-3 pb-3 {% if not forloop.last %}border-b border-gray-200{% endif %}">
+                            <div class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden">
+                                {% if related.image %}
+                                <img src="{{ related.image.url }}" alt="{{ related.name }}" class="w-full h-full object-cover">
+                                {% else %}
+                                <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                    <i class="fas fa-box-open text-gray-400"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <a href="{% url 'tourism:package_detail' related.id %}" class="text-sm font-medium text-gray-900 hover:text-primary-600">
+                                    {{ related.name }}
+                                </a>
+                                <p class="text-xs text-gray-500">
+                                    {% if related.price %}
+                                    Rp {{ related.price|floatformat:0|stringformat:"s"|slice:"-3:" }}.{{ related.price|floatformat:0|stringformat:"s"|slice:"-3:" }}
+                                    {% else %}
+                                    Harga tidak tersedia
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,465 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Edit Penerima Bantuan{% endblock title %}
+{% block page_title %}Edit Penerima Bantuan{% endblock page_title %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Edit Penerima Bantuan</h1>
+                <p class="text-gray-600 mt-1">Perbarui data penerima bantuan sosial</p>
+            </div>
+            <div>
+                <a href="{% url 'beneficiaries:index' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form id="formEditData" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Data Penduduk Terpilih -->
+                <div id="selectedPendudukContainer" class="col-span-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="font-medium text-gray-900 mb-2">Data Penduduk</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Nama Lengkap</p>
+                            <p id="selectedNama" class="font-medium">{{ beneficiary.person.full_name }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">NIK</p>
+                            <p id="selectedNIK" class="font-medium">{{ beneficiary.person.nik }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Tempat, Tanggal Lahir</p>
+                            <p id="selectedTTL" class="font-medium">{{ beneficiary.person.birth_place }}, {{ beneficiary.person.birth_date|date:"d M Y" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Jenis Kelamin</p>
+                            <p id="selectedGender" class="font-medium">{% if beneficiary.person.gender == 'L' %}Laki-laki{% else %}Perempuan{% endif %}</p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="beneficiaryId" name="id" value="{{ beneficiary.id }}">
+                    <input type="hidden" id="selectedPendudukId" name="person_id" value="{{ beneficiary.person.id }}">
+                </div>
+
+                <!-- Kategori Bantuan -->
+                <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori Bantuan <span class="text-red-500">*</span></label>
+                    <select id="category" name="category" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" required>
+                        <option value="">Pilih Kategori</option>
+                        <!-- Options will be loaded via JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Tanggal Registrasi -->
+                <div>
+                    <label for="registration_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Registrasi <span class="text-red-500">*</span></label>
+                    <input type="date" id="registration_date" name="registration_date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" required>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status <span class="text-red-500">*</span></label>
+                    <select id="status" name="status" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" required>
+                        <option value="aktif">Aktif</option>
+                        <option value="tidak_aktif">Tidak Aktif</option>
+                        <option value="lulus">Lulus</option>
+                        <option value="meninggal">Meninggal</option>
+                        <option value="pindah">Pindah</option>
+                    </select>
+                </div>
+
+                <!-- Status Ekonomi -->
+                <div>
+                    <label for="economic_status" class="block text-sm font-medium text-gray-700 mb-1">Status Ekonomi <span class="text-red-500">*</span></label>
+                    <select id="economic_status" name="economic_status" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" required>
+                        <option value="">Pilih Status Ekonomi</option>
+                        <option value="sangat_miskin">Sangat Miskin</option>
+                        <option value="miskin">Miskin</option>
+                        <option value="rentan_miskin">Rentan Miskin</option>
+                        <option value="tidak_miskin">Tidak Miskin</option>
+                    </select>
+                </div>
+
+                <!-- Pendapatan Bulanan -->
+                <div>
+                    <label for="monthly_income" class="block text-sm font-medium text-gray-700 mb-1">Pendapatan Bulanan (Rp)</label>
+                    <input type="number" id="monthly_income" name="monthly_income" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" placeholder="Contoh: 1500000">
+                </div>
+
+                <!-- Jumlah Anggota Keluarga -->
+                <div>
+                    <label for="family_members_count" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Anggota Keluarga</label>
+                    <input type="number" id="family_members_count" name="family_members_count" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" value="1" min="1">
+                </div>
+
+                <!-- Kondisi Rumah -->
+                <div class="col-span-2">
+                    <label for="house_condition" class="block text-sm font-medium text-gray-700 mb-1">Kondisi Rumah</label>
+                    <textarea id="house_condition" name="house_condition" rows="3" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" placeholder="Deskripsi kondisi rumah..."></textarea>
+                </div>
+
+                <!-- Kebutuhan Khusus -->
+                <div class="col-span-2">
+                    <label for="special_needs" class="block text-sm font-medium text-gray-700 mb-1">Kebutuhan Khusus</label>
+                    <textarea id="special_needs" name="special_needs" rows="3" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" placeholder="Kebutuhan khusus jika ada..."></textarea>
+                </div>
+
+                <!-- Tanggal Verifikasi -->
+                <div>
+                    <label for="verification_date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Verifikasi</label>
+                    <input type="date" id="verification_date" name="verification_date" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50">
+                </div>
+
+                <!-- Verifikator -->
+                <div>
+                    <label for="verifier" class="block text-sm font-medium text-gray-700 mb-1">Verifikator</label>
+                    <input type="text" id="verifier" name="verifier" class="w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50" placeholder="Nama verifikator...">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <a href="{% url 'beneficiaries:index' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Batal
+                </a>
+                <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Variabel global untuk menyimpan data
+    let beneficiaryId = {{ beneficiary.id }};
+    let beneficiaryData = null;
+
+    // Fungsi untuk mendapatkan CSRF token dari cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Fungsi untuk memuat data kategori bantuan
+    function loadCategories() {
+        const csrftoken = getCookie('csrftoken');
+        
+        fetch('/pulosarok/api/beneficiaries/categories/dropdown/', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(response => {
+            try {
+                let data;
+                // Handle different response formats
+                if (Array.isArray(response)) {
+                    data = response;
+                } else if (response.hasOwnProperty('data') && Array.isArray(response.data)) {
+                    data = response.data;
+                } else if (response.hasOwnProperty('success') && response.success && Array.isArray(response.data)) {
+                    data = response.data;
+                } else {
+                    console.error('Unexpected data format:', response);
+                    throw new Error('Invalid data format for categories');
+                }
+                
+                const categorySelect = document.getElementById('category');
+                
+                // Clear existing options except the first one
+                while (categorySelect.options.length > 1) {
+                    categorySelect.remove(1);
+                }
+                
+                // Add new options
+                data.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categorySelect.appendChild(option);
+                });
+                
+                // Load beneficiary data after categories are loaded
+                loadBeneficiaryData();
+            } catch (err) {
+                console.error('Error processing category data:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memproses data',
+                    text: 'Error processing category data: ' + err.message
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading categories:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal memuat data',
+                text: 'Error loading categories: ' + error.message
+            });
+        });
+    }
+
+    // Fungsi untuk memuat data penerima bantuan
+    function loadBeneficiaryData() {
+        const csrftoken = getCookie('csrftoken');
+        const beneficiaryId = document.getElementById('beneficiaryId').value;
+        
+        if (!beneficiaryId) {
+            console.error('Beneficiary ID not found');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'ID penerima bantuan tidak ditemukan.'
+            });
+            return;
+        }
+        
+        fetch(`/pulosarok/api/beneficiaries/${beneficiaryId}/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(JSON.stringify(err));
+                });
+            }
+            return response.json();
+        })
+        .then(response => {
+            try {
+                let data;
+                // Handle different response formats
+                if (Array.isArray(response)) {
+                    data = response[0]; // Ambil item pertama jika array
+                } else if (response.hasOwnProperty('data')) {
+                    data = response.data;
+                } else if (response.hasOwnProperty('success') && response.success && response.hasOwnProperty('data')) {
+                    data = response.data;
+                } else {
+                    data = response;
+                }
+                
+                // Simpan data untuk referensi
+                window.beneficiaryData = data;
+                
+                // Populate form fields
+                if (data.category) {
+                    document.getElementById('category').value = data.category;
+                }
+                
+                if (data.registration_date) {
+                    // Format tanggal jika perlu
+                    let regDate = data.registration_date;
+                    if (regDate.includes('T')) {
+                        regDate = regDate.split('T')[0];
+                    }
+                    document.getElementById('registration_date').value = regDate;
+                }
+                
+                if (data.status) {
+                    document.getElementById('status').value = data.status;
+                }
+                
+                if (data.economic_status) {
+                    document.getElementById('economic_status').value = data.economic_status;
+                }
+                
+                document.getElementById('monthly_income').value = data.monthly_income || '';
+                document.getElementById('family_members_count').value = data.family_members_count || 1;
+                document.getElementById('house_condition').value = data.house_condition || '';
+                document.getElementById('special_needs').value = data.special_needs || '';
+                
+                if (data.verification_date) {
+                    // Format tanggal jika perlu
+                    let verDate = data.verification_date;
+                    if (verDate.includes('T')) {
+                        verDate = verDate.split('T')[0];
+                    }
+                    document.getElementById('verification_date').value = verDate;
+                }
+                
+                document.getElementById('verifier').value = data.verifier || '';
+            } catch (err) {
+                console.error('Error processing beneficiary data:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal memproses data',
+                    text: 'Terjadi kesalahan saat memproses data penerima bantuan.'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading beneficiary:', error);
+            let errorMessage = 'Terjadi kesalahan saat memuat data penerima bantuan.';
+            
+            try {
+                const errorData = JSON.parse(error.message);
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                }
+            } catch (e) {
+                errorMessage = error.message;
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal memuat data',
+                text: errorMessage
+            });
+        });}
+    }
+
+    // Submit form
+    document.getElementById('formEditData').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validasi form
+        const category = document.getElementById('category').value;
+        if (!category) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Silakan pilih kategori bantuan.'
+            });
+            return;
+        }
+        
+        const registrationDate = document.getElementById('registration_date').value;
+        if (!registrationDate) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Silakan isi tanggal registrasi.'
+            });
+            return;
+        }
+        
+        const economicStatus = document.getElementById('economic_status').value;
+        if (!economicStatus) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Silakan pilih status ekonomi.'
+            });
+            return;
+        }
+        
+        // Collect form data
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Tampilkan loading
+        Swal.fire({
+            title: 'Memproses...',
+            text: 'Sedang memperbarui data penerima bantuan',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        const beneficiaryId = document.getElementById('beneficiaryId').value;
+        
+        // Kirim data ke API
+        fetch(`/pulosarok/api/beneficiaries/${beneficiaryId}/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(JSON.stringify(err));
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'Data penerima bantuan berhasil diperbarui.',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '{% url "beneficiaries:index" %}';
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error updating data:', error);
+            let errorMessage = 'Terjadi kesalahan saat memperbarui data.';
+            try {
+                const errorData = JSON.parse(error.message);
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else {
+                    // Cek error untuk setiap field
+                    const errorFields = Object.keys(errorData);
+                    if (errorFields.length > 0) {
+                        errorMessage = errorFields.map(field => `${field}: ${errorData[field]}`).join('\n');
+                    }
+                }
+            } catch (e) {
+                errorMessage = error.message;
+            }
+            
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: errorMessage
+            });
+        });
+    });
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load kategori bantuan
+        loadCategories();
+    });
+</script>
+{% endblock extra_js %}

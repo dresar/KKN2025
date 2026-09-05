@@ -1,0 +1,321 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Website Desa Pulosarok{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{% static 'images/favicon.svg' %}">
+    <link rel="alternate icon" href="{% static 'images/favicon.svg' %}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+
+    
+    <!-- Additional Custom CSS -->
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .modal {
+            backdrop-filter: blur(4px);
+        }
+        
+        .navbar-scroll {
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-scroll.scrolled {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="navbar-scroll fixed top-0 left-0 right-0 z-50 bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <img src="/static/images/logo-desa.svg" alt="Logo Desa" class="h-10 w-10 mr-3" onerror="this.style.display='none'">
+                    <div>
+                        <h1 class="text-xl font-bold text-gray-900">Desa Pulosarok</h1>
+                        <p class="text-xs text-gray-600">Kabupaten Malang</p>
+                    </div>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-gray-700 hover:text-primary-600 transition-colors">Beranda</a>
+                    <div class="relative group">
+                        <button class="text-gray-700 hover:text-primary-600 transition-colors flex items-center">
+                            Profil Desa <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <a href="/profil/visi-misi" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Visi & Misi</a>
+                            <a href="/profil/sejarah" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sejarah</a>
+                            <a href="/profil/geografis" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Geografis</a>
+                            <a href="/profil/peta" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Peta Desa</a>
+                        </div>
+                    </div>
+                    <a href="/penduduk" class="text-gray-700 hover:text-primary-600 transition-colors">Data Penduduk</a>
+                    <a href="/kegiatan" class="text-gray-700 hover:text-primary-600 transition-colors">Kegiatan</a>
+                    <a href="/berita" class="text-gray-700 hover:text-primary-600 transition-colors">Berita</a>
+                    <div class="relative group">
+                        <button class="text-gray-700 hover:text-primary-600 transition-colors flex items-center">
+                            Layanan <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                        </button>
+                        <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <a href="/wisata" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wisata Desa</a>
+                            <a href="/umkm" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">UMKM</a>
+                            <a href="/organisasi" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Organisasi</a>
+                            <a href="/layanan-surat" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Layanan Surat</a>
+                        </div>
+                    </div>
+                    <a href="/kontak" class="text-gray-700 hover:text-primary-600 transition-colors">Kontak</a>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary-600">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden bg-white border-t hidden">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="/" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Beranda</a>
+                <a href="/profil" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Profil Desa</a>
+                <a href="/penduduk" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Data Penduduk</a>
+                <a href="/kegiatan" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Kegiatan</a>
+                <a href="/berita" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Berita</a>
+                <a href="/wisata" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Wisata Desa</a>
+                <a href="/umkm" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">UMKM</a>
+                <a href="/organisasi" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Organisasi</a>
+                <a href="/layanan-surat" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Layanan Surat</a>
+                <a href="/kontak" class="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md">Kontak</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <main class="pt-16">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center mb-4">
+                        <img src="/static/images/logo-desa.svg" alt="Logo Desa" class="h-12 w-12 mr-3" onerror="this.style.display='none'">
+                        <div>
+                            <h3 class="text-xl font-bold">Desa Pulosarok</h3>
+                            <p class="text-gray-400">Kabupaten Malang, Jawa Timur</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 mb-4">Website resmi Desa Pulosarok yang menyediakan informasi terkini tentang kegiatan, berita, dan layanan desa.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Menu Utama</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/" class="text-gray-400 hover:text-white transition-colors">Beranda</a></li>
+                        <li><a href="/profil" class="text-gray-400 hover:text-white transition-colors">Profil Desa</a></li>
+                        <li><a href="/penduduk" class="text-gray-400 hover:text-white transition-colors">Data Penduduk</a></li>
+                        <li><a href="/kegiatan" class="text-gray-400 hover:text-white transition-colors">Kegiatan</a></li>
+                        <li><a href="/berita" class="text-gray-400 hover:text-white transition-colors">Berita</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Kontak</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span>Desa Pulosarok, Kec. Tempursari, Kab. Malang</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2"></i>
+                            <span>(0341) 123456</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <span>info@pulosarok.desa.id</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Desa Pulosarok. Semua hak cipta dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+            <span class="text-gray-700">Memuat...</span>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar-scroll');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+        
+        // Loading overlay functions
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+        
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Format number
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                timeZone: 'Asia/Jakarta'
+            };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+        
+        // API call helper
+        async function apiCall(url, options = {}) {
+            try {
+                showLoading();
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API call error:', error);
+                throw error;
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+    
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

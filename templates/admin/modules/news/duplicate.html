@@ -1,0 +1,93 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Duplikasi Berita - {{ news.title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Duplikasi Berita</h1>
+            <p class="text-gray-600 mt-1">{{ news.title }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'news:news_admin' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Confirmation Card -->
+    <div class="bg-white rounded-lg shadow-sm border p-6">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-4">
+                <i class="fas fa-copy text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Konfirmasi Duplikasi</h3>
+            <p class="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menduplikasi berita "{{ news.title }}"?
+                <br>
+                Berita baru akan dibuat sebagai draft dengan judul "{{ news.title }} (Copy)"
+            </p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <div class="flex justify-center space-x-3">
+                    <a href="{% url 'news:news_admin' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
+                        Batal
+                    </a>
+                    <button type="submit" class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200">
+                        <i class="fas fa-copy mr-2"></i>Duplikasi Berita
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- News Preview -->
+    <div class="bg-white rounded-lg shadow-sm border p-6 mt-6">
+        <h3 class="text-lg font-semibold mb-4">Preview Berita yang Akan Diduplikasi</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-medium text-gray-700 mb-2">Informasi Dasar</h4>
+                <div class="space-y-2 text-sm">
+                    <div><span class="font-medium">Judul:</span> {{ news.title }}</div>
+                    <div><span class="font-medium">Kategori:</span> {{ news.category.name }}</div>
+                    <div><span class="font-medium">Penulis:</span> {{ news.author.get_full_name|default:news.author.username }}</div>
+                    <div><span class="font-medium">Status:</span> {{ news.get_status_display }}</div>
+                    <div><span class="font-medium">Dibuat:</span> {{ news.created_at|date:"d M Y H:i" }}</div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="font-medium text-gray-700 mb-2">Konten</h4>
+                <div class="text-sm text-gray-600">
+                    {% if news.excerpt %}
+                        <p class="mb-2">{{ news.excerpt }}</p>
+                    {% endif %}
+                    <p class="text-xs text-gray-500">
+                        {{ news.content|length }} karakter
+                        {% if news.reading_time %}
+                            • {{ news.reading_time }} menit baca
+                        {% endif %}
+                    </p>
+                </div>
+                
+                {% if news.tags.all %}
+                    <div class="mt-3">
+                        <h5 class="font-medium text-gray-700 mb-2">Tags</h5>
+                        <div class="flex flex-wrap gap-2">
+                            {% for tag in news.tags.all %}
+                                <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

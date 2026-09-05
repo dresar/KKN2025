@@ -1,0 +1,688 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Membuat Berita{% endblock %}
+{% block page_title %}Membuat Berita{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    .news-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .news-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .editor-container {
+        height: 300px;
+    }
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .tag-input {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        min-height: 2.5rem;
+    }
+    .tag-item {
+        background: #3b82f6;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    .tag-remove {
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Kelola Berita</h1>
+                <p class="text-gray-600 mt-1">Buat dan kelola berita untuk website gampong</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="openModal('newsModal')" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>Buat Berita
+                </button>
+                <button onclick="exportNews()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i>Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100">
+                    <i class="fas fa-newspaper text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Berita</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_news|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Dipublikasi</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ published_news|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Draft</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ draft_news|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100">
+                    <i class="fas fa-eye text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Views</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_views|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filter Berita</h3>
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                <select name="kategori" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="pengumuman" {% if request.GET.kategori == 'pengumuman' %}selected{% endif %}>Pengumuman</option>
+                    <option value="kegiatan" {% if request.GET.kategori == 'kegiatan' %}selected{% endif %}>Kegiatan</option>
+                    <option value="pembangunan" {% if request.GET.kategori == 'pembangunan' %}selected{% endif %}>Pembangunan</option>
+                    <option value="sosial" {% if request.GET.kategori == 'sosial' %}selected{% endif %}>Sosial</option>
+                    <option value="kesehatan" {% if request.GET.kategori == 'kesehatan' %}selected{% endif %}>Kesehatan</option>
+                    <option value="pendidikan" {% if request.GET.kategori == 'pendidikan' %}selected{% endif %}>Pendidikan</option>
+                    <option value="ekonomi" {% if request.GET.kategori == 'ekonomi' %}selected{% endif %}>Ekonomi</option>
+                    <option value="lainnya" {% if request.GET.kategori == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Status</option>
+                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="published" {% if request.GET.status == 'published' %}selected{% endif %}>Dipublikasi</option>
+                    <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Diarsipkan</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Penulis</label>
+                <select name="author" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Penulis</option>
+                    {% for author in authors %}
+                    <option value="{{ author.id }}" {% if request.GET.author == author.id|stringformat:'s' %}selected{% endif %}>{{ author.get_full_name|default:author.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Judul berita..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- News Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for news in page_obj %}
+        <div class="news-card overflow-hidden">
+            {% if news.featured_image %}
+            <div class="h-48 overflow-hidden">
+                <img src="{{ news.featured_image.url }}" alt="{{ news.title }}" class="w-full h-full object-cover">
+            </div>
+            {% endif %}
+            
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        {{ news.get_kategori_display }}
+                    </span>
+                    <span class="status-badge 
+                        {% if news.status == 'draft' %}bg-yellow-100 text-yellow-800
+                        {% elif news.status == 'published' %}bg-green-100 text-green-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ news.get_status_display }}
+                    </span>
+                </div>
+                
+                <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{{ news.title }}</h3>
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ news.excerpt|default:news.content|striptags|truncatechars:120 }}</p>
+                
+                <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-user mr-1"></i>
+                        {{ news.author.get_full_name|default:news.author.username }}
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar mr-1"></i>
+                        {{ news.created_at|date:"d M Y" }}
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-eye mr-1"></i>
+                        {{ news.views_count|default:0 }} views
+                    </div>
+                    {% if news.tags.all %}
+                    <div class="flex items-center">
+                        <i class="fas fa-tags mr-1"></i>
+                        {{ news.tags.all|length }} tag{{ news.tags.all|length|pluralize }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="viewNews({{ news.id }})" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm">
+                        <i class="fas fa-eye mr-1"></i>Lihat
+                    </button>
+                    <button onclick="editNews({{ news.id }})" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                    {% if news.status == 'draft' %}
+                    <button onclick="publishNews({{ news.id }})" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm">
+                        <i class="fas fa-share mr-1"></i>Publish
+                    </button>
+                    {% endif %}
+                    <button onclick="deleteNews({{ news.id }})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <i class="fas fa-newspaper text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">Belum ada berita yang dibuat</p>
+            <button onclick="openModal('newsModal')" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg">
+                Buat Berita Pertama
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+        <div class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.author %}&author={{ request.GET.author }}{% endif %}" 
+                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-2 text-sm bg-primary-600 text-white border border-primary-600 rounded-md">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.author %}&author={{ request.GET.author }}{% endif %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.author %}&author={{ request.GET.author }}{% endif %}" 
+                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create/Edit News Modal -->
+<div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">Buat Berita Baru</h3>
+                    <button onclick="closeModal('newsModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="newsForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Main Content -->
+                        <div class="lg:col-span-2 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Judul Berita *</label>
+                                <input type="text" name="title" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Slug</label>
+                                <input type="text" name="slug" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <p class="text-xs text-gray-500 mt-1">Kosongkan untuk generate otomatis dari judul</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Excerpt</label>
+                                <textarea name="excerpt" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ringkasan singkat berita..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Konten Berita *</label>
+                                <div id="editor" class="editor-container"></div>
+                                <input type="hidden" name="content" id="content">
+                            </div>
+                        </div>
+                        
+                        <!-- Sidebar -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="draft">Draft</option>
+                                    <option value="published">Dipublikasi</option>
+                                    <option value="archived">Diarsipkan</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Kategori *</label>
+                                <select name="kategori" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">Pilih Kategori</option>
+                                    <option value="pengumuman">Pengumuman</option>
+                                    <option value="kegiatan">Kegiatan</option>
+                                    <option value="pembangunan">Pembangunan</option>
+                                    <option value="sosial">Sosial</option>
+                                    <option value="kesehatan">Kesehatan</option>
+                                    <option value="pendidikan">Pendidikan</option>
+                                    <option value="ekonomi">Ekonomi</option>
+                                    <option value="lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Utama</label>
+                                <input type="file" name="featured_image" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <div id="imagePreview" class="mt-2 hidden">
+                                    <img id="previewImg" class="image-preview">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                                <div class="tag-input" id="tagInput">
+                                    <input type="text" id="tagInputField" placeholder="Ketik tag dan tekan Enter" class="flex-1 border-0 outline-0 bg-transparent">
+                                </div>
+                                <input type="hidden" name="tags" id="tagsHidden">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Publikasi</label>
+                                <input type="datetime-local" name="published_at" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" name="is_featured" id="is_featured" class="mr-2">
+                                <label for="is_featured" class="text-sm text-gray-700">Berita Unggulan</label>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" name="allow_comments" id="allow_comments" class="mr-2" checked>
+                                <label for="allow_comments" class="text-sm text-gray-700">Izinkan Komentar</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal('newsModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            Batal
+                        </button>
+                        <button type="button" onclick="saveDraft()" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+                            Simpan Draft
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                            Simpan & Publikasi
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script>
+    let quill;
+    let currentTags = [];
+    
+    // Initialize Quill editor
+    document.addEventListener('DOMContentLoaded', function() {
+        quill = new Quill('#editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link', 'image', 'video'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Tulis konten berita di sini...'
+        });
+        
+        // Auto-generate slug from title
+        document.querySelector('[name="title"]').addEventListener('input', function() {
+            const title = this.value;
+            const slug = title.toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Remove special characters
+                .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+                .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+            document.querySelector('[name="slug"]').value = slug;
+        });
+        
+        // Image preview
+        document.querySelector('[name="featured_image"]').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Tag input handling
+        const tagInputField = document.getElementById('tagInputField');
+        tagInputField.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const tag = this.value.trim();
+                if (tag && !currentTags.includes(tag)) {
+                    addTag(tag);
+                    this.value = '';
+                }
+            }
+        });
+    });
+    
+    function addTag(tag) {
+        currentTags.push(tag);
+        updateTagDisplay();
+        updateTagsHidden();
+    }
+    
+    function removeTag(tag) {
+        currentTags = currentTags.filter(t => t !== tag);
+        updateTagDisplay();
+        updateTagsHidden();
+    }
+    
+    function updateTagDisplay() {
+        const tagInput = document.getElementById('tagInput');
+        const tagInputField = document.getElementById('tagInputField');
+        
+        // Remove existing tag items
+        tagInput.querySelectorAll('.tag-item').forEach(item => item.remove());
+        
+        // Add tag items
+        currentTags.forEach(tag => {
+            const tagItem = document.createElement('div');
+            tagItem.className = 'tag-item';
+            tagItem.innerHTML = `
+                ${tag}
+                <span class="tag-remove" onclick="removeTag('${tag}')">&times;</span>
+            `;
+            tagInput.insertBefore(tagItem, tagInputField);
+        });
+    }
+    
+    function updateTagsHidden() {
+        document.getElementById('tagsHidden').value = currentTags.join(',');
+    }
+    
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+        
+        if (modalId === 'newsModal') {
+            document.getElementById('newsForm').reset();
+            document.getElementById('modalTitle').textContent = 'Buat Berita Baru';
+            document.getElementById('imagePreview').classList.add('hidden');
+            currentTags = [];
+            updateTagDisplay();
+            updateTagsHidden();
+            if (quill) quill.setContents([]);
+            
+            // Remove news_id if exists
+            const idInput = document.querySelector('input[name="news_id"]');
+            if (idInput) {
+                idInput.remove();
+            }
+        }
+    }
+    
+    function viewNews(id) {
+        window.open(`/news/${id}/`, '_blank');
+    }
+    
+    function editNews(id) {
+        fetch(`/admin/beneficiaries/berita/${id}/edit/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('modalTitle').textContent = 'Edit Berita';
+                const form = document.getElementById('newsForm');
+                
+                // Fill form fields
+                Object.keys(data).forEach(key => {
+                    const field = form.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        if (field.type === 'checkbox') {
+                            field.checked = data[key];
+                        } else {
+                            field.value = data[key];
+                        }
+                    }
+                });
+                
+                // Set editor content
+                if (quill && data.content) {
+                    quill.root.innerHTML = data.content;
+                }
+                
+                // Set tags
+                if (data.tags) {
+                    currentTags = data.tags.split(',').filter(tag => tag.trim());
+                    updateTagDisplay();
+                    updateTagsHidden();
+                }
+                
+                // Show image preview if exists
+                if (data.featured_image) {
+                    document.getElementById('previewImg').src = data.featured_image;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                }
+                
+                // Add hidden input for news ID
+                let idInput = document.querySelector('input[name="news_id"]');
+                if (!idInput) {
+                    idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'news_id';
+                    form.appendChild(idInput);
+                }
+                idInput.value = id;
+                
+                openModal('newsModal');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengambil data berita');
+            });
+    }
+    
+    function publishNews(id) {
+        if (confirm('Apakah Anda yakin ingin mempublikasikan berita ini?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = window.location.pathname;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'publish';
+            
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'news_id';
+            idInput.value = id;
+            
+            form.appendChild(csrfToken);
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function deleteNews(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus berita ini?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = window.location.pathname;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'delete';
+            
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = 'news_id';
+            idInput.value = id;
+            
+            form.appendChild(csrfToken);
+            form.appendChild(actionInput);
+            form.appendChild(idInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function saveDraft() {
+        document.querySelector('[name="status"]').value = 'draft';
+        document.getElementById('content').value = quill.root.innerHTML;
+        document.getElementById('newsForm').submit();
+    }
+    
+    function exportNews() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', 'excel');
+        window.open(`${window.location.pathname}?${params.toString()}`, '_blank');
+    }
+    
+    // Form submission - allow normal Django form submission
+    document.getElementById('newsForm').addEventListener('submit', function(e) {
+        // Set content from Quill editor
+        document.getElementById('content').value = quill.root.innerHTML;
+        
+        // Validate required fields
+        const title = document.querySelector('input[name="title"]').value.trim();
+        const kategori = document.querySelector('select[name="kategori"]').value;
+        const content = quill.root.innerHTML.trim();
+        
+        if (!title) {
+            e.preventDefault();
+            alert('Judul berita harus diisi');
+            return;
+        }
+        
+        if (!kategori) {
+            e.preventDefault();
+            alert('Kategori harus dipilih');
+            return;
+        }
+        
+        if (!content || content === '<p><br></p>') {
+            e.preventDefault();
+            alert('Konten berita harus diisi');
+            return;
+        }
+        
+        // Allow normal form submission to Django view
+        return true;
+    });
+</script>
+{% endblock %}

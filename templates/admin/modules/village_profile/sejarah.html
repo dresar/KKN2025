@@ -1,0 +1,1314 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/dropzone@5.9.3/dist/min/dropzone.min.css" rel="stylesheet">
+<style>
+    .history-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .history-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        background: #3b82f6;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 3px #3b82f6;
+    }
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 1.5rem;
+        width: 2px;
+        height: calc(100% - 1rem);
+        background: #e5e7eb;
+    }
+    .timeline-item:last-child::after {
+        display: none;
+    }
+    .photo-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        overflow: hidden;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .photo-item:hover img {
+        transform: scale(1.1);
+    }
+    .photo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .photo-item:hover .photo-overlay {
+        opacity: 1;
+    }
+    .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .dropzone.dz-drag-hover {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    .modal.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        max-width: 90vw;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+    }
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1100;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+    }
+    .notification.show {
+        transform: translateX(0);
+    }
+    .notification.success {
+        background-color: #10b981;
+    }
+    .notification.error {
+        background-color: #ef4444;
+    }
+    
+    /* Enhanced notification animations */
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes slideOutRight {
+         from {
+             opacity: 1;
+             transform: translateX(0);
+         }
+         to {
+             opacity: 0;
+             transform: translateX(100%);
+         }
+     }
+     
+     @keyframes fadeIn {
+         from {
+             opacity: 0;
+             transform: translateY(10px);
+         }
+         to {
+             opacity: 1;
+             transform: translateY(0);
+         }
+     }
+     
+     /* Search results info styling */
+     #searchResultsInfo {
+         border-left: 4px solid #17a2b8;
+         background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+         border-radius: 8px;
+         transition: all 0.3s ease;
+     }
+     
+     #searchResultsInfo.alert-warning {
+         border-left-color: #ffc107;
+         background: linear-gradient(135deg, #fff3cd 0%, #f8f9fa 100%);
+     }
+    
+    /* Timeline View Styles */
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #f59e0b, #d97706);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -37px;
+        top: 20px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        z-index: 1;
+    }
+    
+    .timeline-item .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border-left: 4px solid #e5e7eb;
+    }
+    
+    .timeline-item .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        border-left-color: #f59e0b;
+    }
+    
+    /* Card View Enhancements */
+    .history-item .card {
+        transition: all 0.3s ease;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .history-item .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    /* View Toggle Button */
+    .view-toggle-btn {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .view-toggle-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <div class="d-flex align-items-center mb-2">
+                <button class="btn btn-outline-secondary me-3" onclick="goBack()" title="Kembali">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+            </div>
+            <p class="text-muted">Kelola sejarah dan perkembangan Desa Pulosarok</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn view-toggle-btn" onclick="toggleView()">
+                <i class="fas fa-list" id="view-icon"></i>
+                <span id="view-text">Timeline View</span>
+            </button>
+            <button class="btn btn-primary" onclick="openHistoryModal()">
+                <i class="fas fa-plus"></i> Tambah Sejarah
+            </button>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cari sejarah..." onkeyup="searchHistory()">
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="typeFilter" onchange="filterHistory()">
+                        <option value="">Semua Jenis</option>
+                        <option value="FOUNDING">Sejarah Berdiri</option>
+                        <option value="DEVELOPMENT">Perkembangan</option>
+                        <option value="CULTURE">Budaya & Tradisi</option>
+                        <option value="ECONOMY">Ekonomi</option>
+                        <option value="SOCIAL">Sosial</option>
+                        <option value="GOVERNMENT">Pemerintahan</option>
+                        <option value="OTHER">Lainnya</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="featuredFilter" onchange="filterHistory()">
+                        <option value="">Semua Status</option>
+                        <option value="true">Unggulan</option>
+                        <option value="false">Biasa</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                        <i class="fas fa-refresh"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Content -->
+    <div id="history-content">
+        <!-- Card View -->
+        <div id="card-view" class="row">
+            {% for history in histories %}
+            <div class="col-lg-6 col-xl-4 mb-4 history-item" data-type="{{ history.history_type }}" data-featured="{{ history.is_featured|yesno:'true,false' }}">
+                <div class="card history-card h-100">
+                    {% if history.featured_image %}
+                    <img src="{{ history.featured_image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ history.title }}">
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary">{{ history.get_history_type_display }}</span>
+                            {% if history.is_featured %}
+                            <span class="badge bg-warning"><i class="fas fa-star"></i> Unggulan</span>
+                            {% endif %}
+                        </div>
+                        <h5 class="card-title">{{ history.title }}</h5>
+                        <p class="card-text text-muted small mb-2">{{ history.period_display }}</p>
+                        {% if history.summary %}
+                        <p class="card-text">{{ history.summary|truncatewords:20 }}</p>
+                        {% endif %}
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-eye"></i> {{ history.view_count }}
+                                    <i class="fas fa-images ms-2"></i> {{ history.photo_count }}
+                                </small>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewHistory({{ history.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="editHistory({{ history.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHistory({{ history.id }}, '{{ history.title }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-history text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">Belum ada sejarah</h4>
+                    <p class="text-muted">Mulai tambahkan sejarah desa untuk menampilkan data di sini</p>
+                    <button class="btn btn-primary" onclick="openHistoryModal()">
+                        <i class="fas fa-plus"></i> Tambah Sejarah Pertama
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Timeline View -->
+        <div id="timeline-view" class="d-none">
+            <div class="timeline">
+                {% for history in histories %}
+                <div class="timeline-item mb-4 history-item" data-type="{{ history.history_type }}" data-featured="{{ history.is_featured|yesno:'true,false' }}">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="card-title mb-1">{{ history.title }}</h5>
+                                    <p class="text-primary fw-bold mb-2">{{ history.period_display }}</p>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <span class="badge bg-primary">{{ history.get_history_type_display }}</span>
+                                    {% if history.is_featured %}
+                                    <span class="badge bg-warning"><i class="fas fa-star"></i></span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if history.summary %}
+                            <p class="card-text">{{ history.summary }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-eye"></i> {{ history.view_count }}
+                                    <i class="fas fa-images ms-2"></i> {{ history.photo_count }}
+                                </small>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewHistory({{ history.id }})">
+                                        <i class="fas fa-eye"></i> Lihat
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="editHistory({{ history.id }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteHistory({{ history.id }}, '{{ history.title }}')">
+                                        <i class="fas fa-trash"></i> Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- History Modal -->
+<div id="historyModal" class="modal">
+    <div class="modal-content" style="width: 800px;">
+        <div class="modal-header p-4 border-bottom">
+            <h5 class="modal-title" id="historyModalTitle">Tambah Sejarah Baru</h5>
+            <button type="button" class="btn-close" onclick="closeModal('historyModal')"></button>
+        </div>
+        <form id="historyForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" id="historyId" name="history_id">
+            <div class="modal-body p-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="title" class="form-label">Judul Sejarah *</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="history_type" class="form-label">Jenis Sejarah</label>
+                        <select class="form-select" id="history_type" name="history_type">
+                            <option value="FOUNDING">Sejarah Berdiri</option>
+                            <option value="DEVELOPMENT">Perkembangan</option>
+                            <option value="CULTURE">Budaya & Tradisi</option>
+                            <option value="ECONOMY">Ekonomi</option>
+                            <option value="SOCIAL">Sosial</option>
+                            <option value="GOVERNMENT">Pemerintahan</option>
+                            <option value="OTHER" selected>Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
+                            <input class="form-check-input" type="checkbox" id="is_featured" name="is_featured">
+                            <label class="form-check-label" for="is_featured">
+                                Jadikan Unggulan
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="period_start" class="form-label">Periode Mulai</label>
+                        <input type="text" class="form-control" id="period_start" name="period_start" placeholder="Contoh: 1945">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="period_end" class="form-label">Periode Berakhir</label>
+                        <input type="text" class="form-control" id="period_end" name="period_end" placeholder="Contoh: 1950">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="year_start" class="form-label">Tahun Mulai</label>
+                        <input type="number" class="form-control" id="year_start" name="year_start" min="1000" max="2100">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="year_end" class="form-label">Tahun Berakhir</label>
+                        <input type="number" class="form-control" id="year_end" name="year_end" min="1000" max="2100">
+                    </div>
+                    <div class="col-12">
+                        <label for="summary" class="form-label">Ringkasan</label>
+                        <textarea class="form-control" id="summary" name="summary" rows="3" maxlength="500" placeholder="Ringkasan singkat sejarah (maksimal 500 karakter)"></textarea>
+                        <div class="form-text">Karakter tersisa: <span id="summaryCount">500</span></div>
+                    </div>
+                    <div class="col-12">
+                        <label for="content" class="form-label">Konten Lengkap *</label>
+                        <textarea class="form-control" id="content" name="content" rows="6" required placeholder="Tulis konten lengkap sejarah di sini..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="source" class="form-label">Sumber</label>
+                        <input type="text" class="form-control" id="source" name="source" placeholder="Sumber informasi">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="author" class="form-label">Penulis</label>
+                        <input type="text" class="form-control" id="author" name="author" placeholder="Nama penulis">
+                    </div>
+                    <div class="col-12">
+                        <label for="featured_image" class="form-label">Gambar Utama</label>
+                        <input type="file" class="form-control" id="featured_image" name="featured_image" accept="image/*">
+                        <div class="form-text">Format yang didukung: JPG, PNG, GIF (maksimal 5MB)</div>
+                    </div>
+                    <div class="col-12">
+                        <label for="featured_image_caption" class="form-label">Keterangan Gambar</label>
+                        <input type="text" class="form-control" id="featured_image_caption" name="featured_image_caption" placeholder="Keterangan gambar utama">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer p-4 border-top">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('historyModal')">Batal</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View History Modal -->
+<div id="viewHistoryModal" class="modal">
+    <div class="modal-content" style="width: 900px;">
+        <div class="modal-header p-4 border-bottom">
+            <h5 class="modal-title" id="viewHistoryTitle">Detail Sejarah</h5>
+            <button type="button" class="btn-close" onclick="closeModal('viewHistoryModal')"></button>
+        </div>
+        <div class="modal-body p-4" id="viewHistoryContent">
+            <!-- Content will be loaded here -->
+        </div>
+        <div class="modal-footer p-4 border-top">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('viewHistoryModal')">Tutup</button>
+            <button type="button" class="btn btn-primary" onclick="editHistoryFromView()">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content" style="width: 400px;">
+        <div class="modal-header p-4 border-bottom">
+            <h5 class="modal-title">Konfirmasi Hapus</h5>
+            <button type="button" class="btn-close" onclick="closeModal('deleteModal')"></button>
+        </div>
+        <div class="modal-body p-4">
+            <p>Apakah Anda yakin ingin menghapus sejarah <strong id="deleteHistoryTitle"></strong>?</p>
+            <p class="text-muted small">Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <div class="modal-footer p-4 border-top">
+            <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Batal</button>
+            <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                <i class="fas fa-trash"></i> Hapus
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Photo Gallery Modal -->
+<div id="photoGalleryModal" class="modal">
+    <div class="modal-content" style="width: 800px;">
+        <div class="modal-header p-4 border-bottom">
+            <h5 class="modal-title">Galeri Foto</h5>
+            <button type="button" class="btn-close" onclick="closeModal('photoGalleryModal')"></button>
+        </div>
+        <div class="modal-body p-4">
+            <div class="mb-3">
+                <button class="btn btn-primary" onclick="openPhotoUploadModal()">
+                    <i class="fas fa-plus"></i> Tambah Foto
+                </button>
+            </div>
+            <div id="photoGalleryContent" class="photo-gallery">
+                <!-- Photos will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification -->
+<div id="notification" class="notification"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/dropzone@5.9.3/dist/min/dropzone.min.js"></script>
+<script>
+// Global variables
+let currentView = 'card';
+let currentHistoryId = null;
+let deleteHistoryId = null;
+
+// Back button function
+function goBack() {
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = '/pulosarok/village-profile/';
+    }
+}
+
+// Modal functions
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('show');
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+    if (modalId === 'historyModal') {
+        resetHistoryForm();
+    }
+}
+
+// View toggle with smooth animation
+function toggleView() {
+    const cardView = document.getElementById('card-view');
+    const timelineView = document.getElementById('timeline-view');
+    const viewIcon = document.getElementById('view-icon');
+    const viewText = document.getElementById('view-text');
+    
+    // Add fade out effect
+    const currentActiveView = currentView === 'card' ? cardView : timelineView;
+    const nextActiveView = currentView === 'card' ? timelineView : cardView;
+    
+    currentActiveView.style.opacity = '0';
+    currentActiveView.style.transform = 'translateY(10px)';
+    
+    setTimeout(() => {
+        if (currentView === 'card') {
+            cardView.classList.add('d-none');
+            timelineView.classList.remove('d-none');
+            viewIcon.className = 'fas fa-th-large';
+            viewText.textContent = 'Card View';
+            currentView = 'timeline';
+            
+            // Store preference
+            localStorage.setItem('historyViewPreference', 'timeline');
+        } else {
+            cardView.classList.remove('d-none');
+            timelineView.classList.add('d-none');
+            viewIcon.className = 'fas fa-list';
+            viewText.textContent = 'Timeline View';
+            currentView = 'card';
+            
+            // Store preference
+            localStorage.setItem('historyViewPreference', 'card');
+        }
+        
+        // Add fade in effect
+        nextActiveView.style.opacity = '0';
+        nextActiveView.style.transform = 'translateY(10px)';
+        
+        setTimeout(() => {
+            nextActiveView.style.transition = 'all 0.3s ease';
+            nextActiveView.style.opacity = '1';
+            nextActiveView.style.transform = 'translateY(0)';
+        }, 50);
+    }, 150);
+}
+
+// Initialize view preference on page load
+function initializeViewPreference() {
+    const savedPreference = localStorage.getItem('historyViewPreference');
+    if (savedPreference && savedPreference !== currentView) {
+        toggleView();
+    }
+}
+
+// Add smooth transitions to views
+function addViewTransitions() {
+    const cardView = document.getElementById('card-view');
+    const timelineView = document.getElementById('timeline-view');
+    
+    if (cardView) {
+        cardView.style.transition = 'all 0.3s ease';
+        cardView.style.opacity = '1';
+        cardView.style.transform = 'translateY(0)';
+    }
+    
+    if (timelineView) {
+        timelineView.style.transition = 'all 0.3s ease';
+        timelineView.style.opacity = '1';
+        timelineView.style.transform = 'translateY(0)';
+    }
+}
+
+// Enhanced search and filter functions with real-time feedback
+function searchHistory() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    filterHistoryItems();
+    playSearchSound();
+}
+
+function filterHistory() {
+    filterHistoryItems();
+    playFilterSound();
+}
+
+function filterHistoryItems() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const typeFilter = document.getElementById('typeFilter').value;
+    const featuredFilter = document.getElementById('featuredFilter').value;
+    
+    const items = document.querySelectorAll('.history-item');
+    let visibleCount = 0;
+    
+    items.forEach(item => {
+        const title = item.querySelector('.card-title').textContent.toLowerCase();
+        const summary = item.querySelector('.card-text') ? item.querySelector('.card-text').textContent.toLowerCase() : '';
+        const type = item.dataset.type;
+        const featured = item.dataset.featured;
+        
+        let show = true;
+        
+        // Enhanced search filter - search in title and summary
+        if (searchTerm && !title.includes(searchTerm) && !summary.includes(searchTerm)) {
+            show = false;
+        }
+        
+        // Type filter
+        if (typeFilter && type !== typeFilter) {
+            show = false;
+        }
+        
+        // Featured filter
+        if (featuredFilter && featured !== featuredFilter) {
+            show = false;
+        }
+        
+        if (show) {
+            item.style.display = 'block';
+            item.style.animation = 'fadeIn 0.3s ease-in';
+            visibleCount++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Update search results feedback
+    updateSearchResultsInfo(searchTerm, typeFilter, featuredFilter, visibleCount, items.length);
+}
+
+// Update search results information with enhanced feedback
+function updateSearchResultsInfo(searchTerm, typeFilter, featuredFilter, visibleCount, totalCount) {
+    let infoElement = document.getElementById('searchResultsInfo');
+    if (!infoElement) {
+        infoElement = document.createElement('div');
+        infoElement.id = 'searchResultsInfo';
+        infoElement.className = 'alert alert-info mt-2 mb-0';
+        infoElement.style.transition = 'all 0.3s ease';
+        document.querySelector('.card-body').appendChild(infoElement);
+    }
+    
+    if (searchTerm || typeFilter || featuredFilter) {
+        let filterText = [];
+        if (searchTerm) filterText.push(`pencarian "<em>${searchTerm}</em>"`);
+        if (typeFilter) {
+            const typeOptions = {
+                'FOUNDING': 'Sejarah Berdiri',
+                'DEVELOPMENT': 'Perkembangan',
+                'CULTURE': 'Budaya & Tradisi',
+                'ECONOMY': 'Ekonomi',
+                'SOCIAL': 'Sosial',
+                'GOVERNMENT': 'Pemerintahan',
+                'OTHER': 'Lainnya'
+            };
+            filterText.push(`jenis "${typeOptions[typeFilter]}"`);
+        }
+        if (featuredFilter) {
+            filterText.push(`status "${featuredFilter === 'true' ? 'Unggulan' : 'Biasa'}"`);
+        }
+        
+        const resultClass = visibleCount === 0 ? 'alert-warning' : 'alert-info';
+        const resultIcon = visibleCount === 0 ? 'fas fa-exclamation-triangle' : 'fas fa-search';
+        
+        infoElement.className = `alert ${resultClass} mt-2 mb-0`;
+        infoElement.innerHTML = `
+            <i class="${resultIcon} me-2"></i>
+            ${visibleCount === 0 ? 'Tidak ada data yang ditemukan' : `Menampilkan <strong>${visibleCount}</strong> dari <strong>${totalCount}</strong> data sejarah`} 
+            untuk ${filterText.join(' dan ')}
+            ${visibleCount === 0 ? '<br><small class="text-muted">Coba ubah kriteria pencarian atau filter</small>' : ''}
+        `;
+        infoElement.style.display = 'block';
+        infoElement.style.opacity = '1';
+    } else {
+        infoElement.style.opacity = '0';
+        setTimeout(() => {
+            if (infoElement.style.opacity === '0') {
+                infoElement.style.display = 'none';
+            }
+        }, 300);
+    }
+}
+
+function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('typeFilter').value = '';
+    document.getElementById('featuredFilter').value = '';
+    filterHistoryItems();
+    playResetSound();
+    showToast('Filter berhasil direset', 'info');
+}
+
+// Sound notification functions for better user experience
+function playSearchSound() {
+    playNotificationSound(800, 100); // High pitch, short duration
+}
+
+function playFilterSound() {
+    playNotificationSound(600, 150); // Medium pitch, medium duration
+}
+
+function playResetSound() {
+    playNotificationSound(400, 200); // Low pitch, longer duration
+}
+
+function playSuccessSound() {
+    // Play a pleasant success chord
+    playNotificationSound(523, 100); // C note
+    setTimeout(() => playNotificationSound(659, 100), 100); // E note
+    setTimeout(() => playNotificationSound(784, 200), 200); // G note
+}
+
+function playErrorSound() {
+    // Play a warning sound
+    playNotificationSound(300, 100);
+    setTimeout(() => playNotificationSound(250, 100), 150);
+}
+
+function playNotificationSound(frequency, duration) {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration / 1000);
+    } catch (error) {
+        // Silently fail if audio context is not supported
+        console.log('Audio notifications not supported');
+    }
+}
+
+// History CRUD functions
+function openHistoryModal(historyId = null) {
+    currentHistoryId = historyId;
+    
+    if (historyId) {
+        // Edit mode
+        document.getElementById('historyModalTitle').textContent = 'Edit Sejarah';
+        loadHistoryData(historyId);
+    } else {
+        // Add mode
+        document.getElementById('historyModalTitle').textContent = 'Tambah Sejarah Baru';
+        resetHistoryForm();
+    }
+    
+    openModal('historyModal');
+}
+
+function resetHistoryForm() {
+    document.getElementById('historyForm').reset();
+    document.getElementById('historyId').value = '';
+    document.getElementById('summaryCount').textContent = '500';
+    currentHistoryId = null;
+}
+
+function loadHistoryData(historyId) {
+    // Show progress notification
+    const progressNotification = showProgressNotification('Memuat data sejarah...');
+    
+    fetch(`/pulosarok/village-profile/api/history/${historyId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // Remove progress notification
+            if (progressNotification.parentNode) {
+                progressNotification.remove();
+            }
+            
+            document.getElementById('historyId').value = data.id;
+            document.getElementById('title').value = data.title;
+            document.getElementById('summary').value = data.summary || '';
+            document.getElementById('content').value = data.content;
+            document.getElementById('history_type').value = data.history_type;
+            document.getElementById('period_start').value = data.period_start || '';
+            document.getElementById('period_end').value = data.period_end || '';
+            document.getElementById('year_start').value = data.year_start || '';
+            document.getElementById('year_end').value = data.year_end || '';
+            document.getElementById('source').value = data.source || '';
+            document.getElementById('author').value = data.author || '';
+            document.getElementById('is_featured').checked = data.is_featured;
+            document.getElementById('featured_image_caption').value = data.featured_image_caption || '';
+            
+            updateSummaryCount();
+        })
+        .catch(error => {
+            // Remove progress notification
+            if (progressNotification.parentNode) {
+                progressNotification.remove();
+            }
+            console.error('Error:', error);
+            showNotification('Gagal memuat data sejarah', 'error');
+        });
+}
+
+function saveHistory() {
+    const form = document.getElementById('historyForm');
+    const formData = new FormData(form);
+    const isEdit = document.getElementById('historyId').value !== '';
+    const url = isEdit ? 
+        `/pulosarok/village-profile/api/history/${document.getElementById('historyId').value}/update/` : 
+        '/pulosarok/village-profile/api/history/create/';
+    
+    // Show progress notification
+    const progressNotification = showProgressNotification(
+        isEdit ? 'Memperbarui data sejarah...' : 'Menyimpan data sejarah baru...'
+    );
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        // Remove progress notification
+        if (progressNotification.parentNode) {
+            progressNotification.remove();
+        }
+        
+        if (data.success) {
+            closeModal('historyModal');
+            playSuccessSound();
+            showToast(
+                isEdit ? 'Data sejarah berhasil diperbarui!' : 'Data sejarah baru berhasil ditambahkan!',
+                'success'
+            );
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            playErrorSound();
+            showNotification('Error: ' + (data.error || 'Terjadi kesalahan'), 'error');
+        }
+    })
+    .catch(error => {
+        // Remove progress notification
+        if (progressNotification.parentNode) {
+            progressNotification.remove();
+        }
+        console.error('Error:', error);
+        playErrorSound();
+        if (error.message.includes('Response is not JSON')) {
+            showNotification('Server mengembalikan response yang tidak valid. Silakan coba lagi.', 'error');
+        } else {
+            showNotification('Terjadi kesalahan saat menyimpan data: ' + error.message, 'error');
+        }
+    });
+}
+
+function viewHistory(historyId) {
+    // Show progress notification
+    const progressNotification = showProgressNotification('Memuat detail sejarah...');
+    
+    fetch(`/pulosarok/village-profile/api/history/${historyId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // Remove progress notification
+            if (progressNotification.parentNode) {
+                progressNotification.remove();
+            }
+            
+            currentHistoryId = historyId;
+            document.getElementById('viewHistoryTitle').textContent = data.title;
+            
+            let content = `
+                <div class="row g-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-primary mb-2">${data.history_type_display}</span>
+                                ${data.is_featured ? '<span class="badge bg-warning ms-2"><i class="fas fa-star"></i> Unggulan</span>' : ''}
+                                <h6 class="text-primary mb-0">${data.period_display}</h6>
+                            </div>
+                            <small class="text-muted">
+                                <i class="fas fa-eye"></i> ${data.view_count} views
+                            </small>
+                        </div>
+                    </div>
+                    ${data.featured_image ? `
+                    <div class="col-12">
+                        <img src="${data.featured_image}" class="img-fluid rounded" alt="${data.title}">
+                        ${data.featured_image_caption ? `<p class="text-muted small mt-2">${data.featured_image_caption}</p>` : ''}
+                    </div>
+                    ` : ''}
+                    ${data.summary ? `
+                    <div class="col-12">
+                        <h6>Ringkasan</h6>
+                        <p class="text-muted">${data.summary}</p>
+                    </div>
+                    ` : ''}
+                    <div class="col-12">
+                        <h6>Konten Lengkap</h6>
+                        <div class="content">${data.content ? data.content.replace(/\n/g, '<br>') : 'Tidak ada konten'}</div>
+                    </div>
+                    ${data.source || data.author ? `
+                    <div class="col-12">
+                        <div class="row">
+                            ${data.source ? `<div class="col-md-6"><strong>Sumber:</strong> ${data.source}</div>` : ''}
+                            ${data.author ? `<div class="col-md-6"><strong>Penulis:</strong> ${data.author}</div>` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${data.photos && data.photos.length > 0 ? `
+                    <div class="col-12">
+                        <h6>Galeri Foto (${data.photos.length})</h6>
+                        <div class="photo-gallery">
+                            ${data.photos.map(photo => `
+                                <div class="photo-item" onclick="viewPhoto('${photo.image}', '${photo.caption}')">
+                                    <img src="${photo.image}" alt="${photo.caption}">
+                                    <div class="photo-overlay">
+                                        <i class="fas fa-search-plus text-white"></i>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.getElementById('viewHistoryContent').innerHTML = content;
+            openModal('viewHistoryModal');
+        })
+        .catch(error => {
+            // Remove progress notification
+            if (progressNotification.parentNode) {
+                progressNotification.remove();
+            }
+            console.error('Error:', error);
+            showNotification('Gagal memuat detail sejarah', 'error');
+        });
+}
+
+function editHistory(historyId) {
+    openHistoryModal(historyId);
+}
+
+function editHistoryFromView() {
+    closeModal('viewHistoryModal');
+    openHistoryModal(currentHistoryId);
+}
+
+function deleteHistory(historyId, title) {
+    deleteHistoryId = historyId;
+    document.getElementById('deleteHistoryTitle').textContent = title;
+    openModal('deleteModal');
+}
+
+function confirmDelete() {
+    if (!deleteHistoryId) return;
+    
+    // Show progress notification
+    const progressNotification = showProgressNotification('Menghapus data sejarah...');
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/pulosarok/village-profile/api/history/${deleteHistoryId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Response is not JSON');
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        // Remove progress notification
+        if (progressNotification.parentNode) {
+            progressNotification.remove();
+        }
+        
+        if (data.success) {
+            closeModal('deleteModal');
+            playSuccessSound();
+            showToast('Data sejarah berhasil dihapus!', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            playErrorSound();
+            showNotification('Error: ' + (data.error || 'Terjadi kesalahan'), 'error');
+        }
+    })
+    .catch(error => {
+        // Remove progress notification
+        if (progressNotification.parentNode) {
+            progressNotification.remove();
+        }
+        console.error('Error:', error);
+        playErrorSound();
+        if (error.message.includes('Response is not JSON')) {
+            showNotification('Server mengembalikan response yang tidak valid. Silakan coba lagi.', 'error');
+        } else {
+            showNotification('Terjadi kesalahan saat menghapus data: ' + error.message, 'error');
+        }
+    });
+}
+
+// Enhanced notification system
+function showNotification(message, type = 'success', duration = 5000) {
+    // Create notification element with enhanced styling
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed shadow-lg`;
+    notification.style.cssText = `
+        top: 20px; 
+        right: 20px; 
+        z-index: 9999; 
+        min-width: 320px;
+        max-width: 400px;
+        border-radius: 8px;
+        border: none;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    // Add icon based on type
+    let icon = '';
+    switch(type) {
+        case 'success':
+            icon = '<i class="fas fa-check-circle me-2"></i>';
+            break;
+        case 'danger':
+        case 'error':
+            icon = '<i class="fas fa-exclamation-circle me-2"></i>';
+            break;
+        case 'warning':
+            icon = '<i class="fas fa-exclamation-triangle me-2"></i>';
+            break;
+        case 'info':
+            icon = '<i class="fas fa-info-circle me-2"></i>';
+            break;
+    }
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            ${icon}
+            <div class="flex-grow-1">${message}</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove with fade out animation
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOutRight 0.3s ease-in';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, duration);
+}
+
+// Toast notification for quick feedback
+function showToast(message, type = 'success') {
+    showNotification(message, type, 3000);
+}
+
+// Progress notification for long operations
+function showProgressNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-info alert-dismissible fade show position-fixed shadow-lg';
+    notification.style.cssText = `
+        top: 20px; 
+        right: 20px; 
+        z-index: 9999; 
+        min-width: 320px;
+        border-radius: 8px;
+        border: none;
+    `;
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            <div class="flex-grow-1">${message}</div>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    return notification;
+}
+
+function updateSummaryCount() {
+    const summary = document.getElementById('summary');
+    const count = document.getElementById('summaryCount');
+    const remaining = 500 - summary.value.length;
+    count.textContent = remaining;
+    count.style.color = remaining < 50 ? '#ef4444' : '#6b7280';
+}
+
+function viewPhoto(imageUrl, caption) {
+    // Simple photo viewer - you can enhance this with a proper lightbox
+    const modal = document.createElement('div');
+    modal.className = 'modal show';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 90vw; max-height: 90vh; padding: 0; background: transparent; border: none;">
+            <div style="position: relative;">
+                <img src="${imageUrl}" style="width: 100%; height: auto; max-height: 90vh; object-fit: contain;" alt="${caption}">
+                <button onclick="this.closest('.modal').remove()" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer;">
+                    <i class="fas fa-times"></i>
+                </button>
+                ${caption ? `<div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.7); color: white; padding: 1rem; text-align: center;">${caption}</div>` : ''}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize view preferences and transitions
+    addViewTransitions();
+    initializeViewPreference();
+    
+    // Form submission
+    document.getElementById('historyForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveHistory();
+    });
+    
+    // Summary character count
+    document.getElementById('summary').addEventListener('input', updateSummaryCount);
+    
+    // Close modals when clicking outside
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('show');
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                openModal.classList.remove('show');
+            }
+        }
+        
+        // Ctrl/Cmd + T to toggle view
+        if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+            e.preventDefault();
+            toggleView();
+        }
+        
+        // Ctrl/Cmd + N to add new history
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            openHistoryModal();
+        }
+    });
+});
+</script>
+{% endblock %}

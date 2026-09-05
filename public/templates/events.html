@@ -1,0 +1,670 @@
+{% extends 'base.html' %}
+
+{% block title %}Kegiatan Desa - Website Desa Pulosarok{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-in">Kegiatan Desa</h1>
+            <p class="text-xl opacity-90 fade-in">Agenda dan Kegiatan Masyarakat Desa Pulosarok</p>
+        </div>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section class="py-8 bg-white border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                <div class="flex-1">
+                    <input type="text" id="search-input" placeholder="Cari kegiatan..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                
+                <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="pemerintahan">Pemerintahan</option>
+                    <option value="sosial">Sosial</option>
+                    <option value="budaya">Budaya</option>
+                    <option value="olahraga">Olahraga</option>
+                    <option value="keagamaan">Keagamaan</option>
+                    <option value="ekonomi">Ekonomi</option>
+                </select>
+                
+                <select id="status-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Status</option>
+                    <option value="upcoming">Akan Datang</option>
+                    <option value="ongoing">Sedang Berlangsung</option>
+                    <option value="completed">Selesai</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="toggleView('calendar')" id="calendar-btn" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-calendar-alt mr-2"></i>Kalender
+                </button>
+                <button onclick="toggleView('list')" id="list-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-list mr-2"></i>Daftar
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Calendar View -->
+<section id="calendar-view" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Kalender Kegiatan</h2>
+                <div class="flex items-center gap-4">
+                    <button onclick="changeMonth(-1)" class="p-2 text-gray-600 hover:text-primary-600">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <span id="current-month" class="text-lg font-semibold text-gray-900"></span>
+                    <button onclick="changeMonth(1)" class="p-2 text-gray-600 hover:text-primary-600">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="calendar-grid" class="grid grid-cols-7 gap-1">
+                <!-- Calendar will be rendered here -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- List View -->
+<section id="list-view" class="py-16 bg-gray-50 hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Upcoming Events -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Kegiatan Mendatang</h2>
+            <div id="upcoming-events" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Upcoming events will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- All Events -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Semua Kegiatan</h2>
+            <div id="events-list" class="space-y-4">
+                <!-- Events list will be loaded here -->
+            </div>
+            
+            <!-- Pagination -->
+            <div id="events-pagination" class="flex items-center justify-between mt-6">
+                <!-- Pagination will be loaded here -->
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Event Statistics -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Statistik Kegiatan</h2>
+            <p class="text-gray-600">Ringkasan kegiatan desa dalam periode ini</p>
+        </div>
+        
+        <div id="event-stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <!-- Stats will be loaded here -->
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Kegiatan per Kategori</h3>
+                <canvas id="categoryChart" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Kegiatan per Bulan</h3>
+                <canvas id="monthlyChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Event Detail Modal -->
+<div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="event-modal-title" class="text-2xl font-bold text-gray-900"></h2>
+                    <button onclick="closeModal('event-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="event-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class EventsPage {
+        constructor() {
+            this.currentView = 'calendar';
+            this.currentDate = new Date();
+            this.currentPage = 1;
+            this.pageSize = 10;
+            this.filters = {
+                search: '',
+                category: '',
+                status: ''
+            };
+            this.events = [];
+            this.init();
+        }
+        
+        async init() {
+            await this.loadEvents();
+            await this.loadEventStats();
+            this.setupFilters();
+            this.renderCalendar();
+            this.renderEventsList();
+        }
+        
+        setupFilters() {
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                this.filters.search = e.target.value;
+                this.debounceSearch();
+            });
+            
+            document.getElementById('category-filter').addEventListener('change', (e) => {
+                this.filters.category = e.target.value;
+                this.loadEvents();
+            });
+            
+            document.getElementById('status-filter').addEventListener('change', (e) => {
+                this.filters.status = e.target.value;
+                this.loadEvents();
+            });
+        }
+        
+        debounceSearch() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                this.loadEvents();
+            }, 500);
+        }
+        
+        async loadEvents() {
+            try {
+                let url = `/pulosarok/events/api/events/?page=${this.currentPage}&page_size=${this.pageSize}`;
+                
+                if (this.filters.search) {
+                    url += `&search=${encodeURIComponent(this.filters.search)}`;
+                }
+                if (this.filters.category) {
+                    url += `&kategori=${this.filters.category}`;
+                }
+                if (this.filters.status) {
+                    url += `&status=${this.filters.status}`;
+                }
+                
+                const data = await apiCall(url);
+                this.events = data.results || [];
+                
+                if (this.currentView === 'calendar') {
+                    this.renderCalendar();
+                } else {
+                    this.renderEventsList();
+                    this.renderPagination(data);
+                }
+            } catch (error) {
+                console.error('Error loading events:', error);
+            }
+        }
+        
+        async loadEventStats() {
+            try {
+                const data = await apiCall('/pulosarok/events/api/stats/');
+                this.renderEventStats(data);
+                this.renderCategoryChart(data);
+                this.renderMonthlyChart(data);
+            } catch (error) {
+                console.error('Error loading event stats:', error);
+            }
+        }
+        
+        renderEventStats(data) {
+            const stats = data.stats || {};
+            const container = document.getElementById('event-stats');
+            
+            const statsData = [
+                { icon: 'fas fa-calendar-check', label: 'Total Kegiatan', value: stats.total || 0, color: 'blue' },
+                { icon: 'fas fa-clock', label: 'Akan Datang', value: stats.upcoming || 0, color: 'green' },
+                { icon: 'fas fa-play-circle', label: 'Sedang Berlangsung', value: stats.ongoing || 0, color: 'yellow' },
+                { icon: 'fas fa-check-circle', label: 'Selesai', value: stats.completed || 0, color: 'gray' }
+            ];
+            
+            container.innerHTML = statsData.map(stat => `
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-${stat.color}-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">${formatNumber(stat.value)}</h3>
+                    <p class="text-gray-600">${stat.label}</p>
+                </div>
+            `).join('');
+        }
+        
+        renderCategoryChart(data) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const categories = data.categories || {};
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(categories),
+                    datasets: [{
+                        data: Object.values(categories),
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        renderMonthlyChart(data) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            const monthly = data.monthly || {};
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            const monthlyData = months.map((month, index) => monthly[index + 1] || 0);
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Jumlah Kegiatan',
+                        data: monthlyData,
+                        borderColor: '#0EA5E9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        renderCalendar() {
+            const container = document.getElementById('calendar-grid');
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 
+                              'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            
+            document.getElementById('current-month').textContent = 
+                `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+            
+            const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+            const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+            let calendarHTML = '';
+            
+            // Header
+            dayNames.forEach(day => {
+                calendarHTML += `<div class="p-2 text-center font-semibold text-gray-600 bg-gray-100">${day}</div>`;
+            });
+            
+            // Calendar days
+            const currentDate = new Date(startDate);
+            for (let i = 0; i < 42; i++) {
+                const isCurrentMonth = currentDate.getMonth() === this.currentDate.getMonth();
+                const isToday = currentDate.toDateString() === new Date().toDateString();
+                const dayEvents = this.getEventsForDate(currentDate);
+                
+                let dayClass = 'p-2 min-h-[80px] border border-gray-200 cursor-pointer hover:bg-gray-50';
+                if (!isCurrentMonth) dayClass += ' text-gray-400 bg-gray-50';
+                if (isToday) dayClass += ' bg-primary-100 text-primary-800';
+                
+                calendarHTML += `
+                    <div class="${dayClass}" onclick="showDayEvents('${currentDate.toISOString().split('T')[0]}')">
+                        <div class="font-semibold">${currentDate.getDate()}</div>
+                        <div class="mt-1 space-y-1">
+                            ${dayEvents.slice(0, 2).map(event => `
+                                <div class="text-xs bg-primary-200 text-primary-800 px-1 py-0.5 rounded truncate" title="${event.nama}">
+                                    ${event.nama}
+                                </div>
+                            `).join('')}
+                            ${dayEvents.length > 2 ? `<div class="text-xs text-gray-500">+${dayEvents.length - 2} lainnya</div>` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            container.innerHTML = calendarHTML;
+        }
+        
+        getEventsForDate(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            return this.events.filter(event => {
+                const eventDate = new Date(event.tanggal_mulai).toISOString().split('T')[0];
+                return eventDate === dateStr;
+            });
+        }
+        
+        renderEventsList() {
+            const upcomingContainer = document.getElementById('upcoming-events');
+            const listContainer = document.getElementById('events-list');
+            
+            // Upcoming events
+            const upcomingEvents = this.events.filter(event => {
+                const eventDate = new Date(event.tanggal_mulai);
+                return eventDate > new Date();
+            }).slice(0, 6);
+            
+            upcomingContainer.innerHTML = upcomingEvents.map(event => `
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden card-hover cursor-pointer" onclick="showEventDetail(${event.id})">
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                ${event.kategori || 'Umum'}
+                            </span>
+                            <span class="text-sm text-gray-500">${formatDate(event.tanggal_mulai)}</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${event.nama}</h3>
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">${event.deskripsi || 'Tidak ada deskripsi'}</p>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span>${event.lokasi || 'Lokasi belum ditentukan'}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // All events list
+            if (this.events.length === 0) {
+                listContainer.innerHTML = '<div class="text-center text-gray-500 py-8">Tidak ada kegiatan ditemukan</div>';
+                return;
+            }
+            
+            listContainer.innerHTML = this.events.map(event => {
+                const statusClass = {
+                    'upcoming': 'bg-blue-100 text-blue-800',
+                    'ongoing': 'bg-green-100 text-green-800',
+                    'completed': 'bg-gray-100 text-gray-800'
+                }[event.status] || 'bg-gray-100 text-gray-800';
+                
+                return `
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer" onclick="showEventDetail(${event.id})">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="text-lg font-semibold text-gray-900">${event.nama}</h3>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                                        ${event.status_display || event.status}
+                                    </span>
+                                </div>
+                                <p class="text-gray-600 mb-3 line-clamp-2">${event.deskripsi || 'Tidak ada deskripsi'}</p>
+                                <div class="flex items-center gap-6 text-sm text-gray-500">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar mr-2"></i>
+                                        <span>${formatDate(event.tanggal_mulai)}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-clock mr-2"></i>
+                                        <span>${event.waktu_mulai || 'Waktu belum ditentukan'}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                        <span>${event.lokasi || 'Lokasi belum ditentukan'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                    ${event.kategori || 'Umum'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        renderPagination(data) {
+            const container = document.getElementById('events-pagination');
+            const totalPages = Math.ceil((data.count || 0) / this.pageSize);
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Menampilkan ${((this.currentPage - 1) * this.pageSize) + 1} - ${Math.min(this.currentPage * this.pageSize, data.count)} dari ${data.count} kegiatan
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="eventsPage.changePage(${this.currentPage - 1})" 
+                                ${this.currentPage === 1 ? 'disabled' : ''} 
+                                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Sebelumnya
+                        </button>
+                        <span class="px-3 py-2 text-sm font-medium text-gray-700">
+                            Halaman ${this.currentPage} dari ${totalPages}
+                        </span>
+                        <button onclick="eventsPage.changePage(${this.currentPage + 1})" 
+                                ${this.currentPage === totalPages ? 'disabled' : ''} 
+                                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Selanjutnya
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        changePage(page) {
+            if (page < 1) return;
+            this.currentPage = page;
+            this.loadEvents();
+        }
+        
+        changeMonth(direction) {
+            this.currentDate.setMonth(this.currentDate.getMonth() + direction);
+            this.renderCalendar();
+        }
+    }
+    
+    function toggleView(view) {
+        const calendarView = document.getElementById('calendar-view');
+        const listView = document.getElementById('list-view');
+        const calendarBtn = document.getElementById('calendar-btn');
+        const listBtn = document.getElementById('list-btn');
+        
+        if (view === 'calendar') {
+            calendarView.classList.remove('hidden');
+            listView.classList.add('hidden');
+            calendarBtn.classList.add('bg-primary-600', 'text-white');
+            calendarBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            listBtn.classList.add('bg-gray-200', 'text-gray-700');
+            listBtn.classList.remove('bg-primary-600', 'text-white');
+        } else {
+            calendarView.classList.add('hidden');
+            listView.classList.remove('hidden');
+            listBtn.classList.add('bg-primary-600', 'text-white');
+            listBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            calendarBtn.classList.add('bg-gray-200', 'text-gray-700');
+            calendarBtn.classList.remove('bg-primary-600', 'text-white');
+        }
+        
+        eventsPage.currentView = view;
+    }
+    
+    function changeMonth(direction) {
+        eventsPage.changeMonth(direction);
+    }
+    
+    async function showDayEvents(date) {
+        const dayEvents = eventsPage.getEventsForDate(new Date(date));
+        
+        if (dayEvents.length === 0) {
+            return;
+        }
+        
+        document.getElementById('event-modal-title').textContent = `Kegiatan ${formatDate(date)}`;
+        document.getElementById('event-modal-content').innerHTML = `
+            <div class="space-y-4">
+                ${dayEvents.map(event => `
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="showEventDetail(${event.id})">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="text-lg font-semibold text-gray-900">${event.nama}</h3>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                ${event.kategori || 'Umum'}
+                            </span>
+                        </div>
+                        <p class="text-gray-600 mb-3">${event.deskripsi || 'Tidak ada deskripsi'}</p>
+                        <div class="flex items-center gap-4 text-sm text-gray-500">
+                            <div class="flex items-center">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>${event.waktu_mulai || 'Waktu belum ditentukan'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                <span>${event.lokasi || 'Lokasi belum ditentukan'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        
+        openModal('event-modal');
+    }
+    
+    async function showEventDetail(eventId) {
+        try {
+            const event = await apiCall(`/pulosarok/events/api/events/${eventId}/`);
+            
+            document.getElementById('event-modal-title').textContent = event.nama;
+            document.getElementById('event-modal-content').innerHTML = `
+                <div class="space-y-6">
+                    ${event.gambar ? `
+                        <div class="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                            <img src="${event.gambar}" alt="${event.nama}" class="w-full h-full object-cover">
+                        </div>
+                    ` : ''}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Informasi Kegiatan</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center">
+                                    <i class="fas fa-calendar w-5 text-gray-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">Tanggal</div>
+                                        <div class="font-medium">${formatDate(event.tanggal_mulai)} - ${formatDate(event.tanggal_selesai)}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock w-5 text-gray-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">Waktu</div>
+                                        <div class="font-medium">${event.waktu_mulai || 'Belum ditentukan'} - ${event.waktu_selesai || 'Belum ditentukan'}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-map-marker-alt w-5 text-gray-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">Lokasi</div>
+                                        <div class="font-medium">${event.lokasi || 'Belum ditentukan'}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-tag w-5 text-gray-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">Kategori</div>
+                                        <div class="font-medium">${event.kategori || 'Umum'}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-user w-5 text-gray-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-sm text-gray-500">Penyelenggara</div>
+                                        <div class="font-medium">${event.penyelenggara || 'Pemerintah Desa'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Deskripsi</h3>
+                            <div class="text-gray-600 leading-relaxed">
+                                ${event.deskripsi || 'Tidak ada deskripsi tersedia.'}
+                            </div>
+                            
+                            ${event.persyaratan ? `
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Persyaratan</h4>
+                                    <div class="text-gray-600">${event.persyaratan}</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${event.kontak_person ? `
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-gray-900 mb-2">Kontak Person</h4>
+                                    <div class="text-gray-600">${event.kontak_person}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            openModal('event-modal');
+        } catch (error) {
+            console.error('Error loading event detail:', error);
+        }
+    }
+    
+    // Initialize events page
+    let eventsPage;
+    document.addEventListener('DOMContentLoaded', function() {
+        eventsPage = new EventsPage();
+    });
+</script>
+{% endblock %}

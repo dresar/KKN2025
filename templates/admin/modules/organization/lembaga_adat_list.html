@@ -1,0 +1,785 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Lembaga Adat{% endblock %}
+
+{% block page_title %}Lembaga Adat{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Responsive styles */
+    @media (max-width: 768px) {
+        .overflow-x-auto {
+            overflow-x: auto;
+        }
+        table {
+            min-width: 100%;
+        }
+        th, td {
+            white-space: normal;
+            padding: 0.5rem;
+        }
+        .mobile-card {
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Lembaga Adat</h1>
+                <p class="mt-1 text-sm text-gray-600">Kelola data lembaga adat desa Pulosarok</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'organization:lembaga_adat_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    <i class="fas fa-plus mr-2"></i>Tambah Lembaga Adat
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                        <i class="fas fa-users text-white"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Lembaga Adat</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-gray-900" id="total-count">{{ total_count }}</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                        <i class="fas fa-check-circle text-white"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Lembaga Aktif</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-gray-900" id="active-count">{{ active_count }}</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-red-500 rounded-md p-3">
+                        <i class="fas fa-times-circle text-white"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Lembaga Non-Aktif</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-gray-900" id="inactive-count">{{ inactive_count }}</div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search Section -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="p-4 sm:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="col-span-1">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" name="search" id="search" value="{{ search_query }}" class="focus:ring-purple-500 focus:border-purple-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md" placeholder="Cari lembaga adat...">
+                    </div>
+                </div>
+
+                <div class="col-span-1">
+                    <label for="jenis-filter" class="block text-sm font-medium text-gray-700 mb-1">Jenis Lembaga</label>
+                    <select id="jenis-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                        <option value="">Semua Jenis</option>
+                        {% for value, label in jenis_choices %}
+                        <option value="{{ value }}" {% if jenis_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-span-1">
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="status-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md">
+                        <option value="">Semua Status</option>
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-span-1 flex items-end">
+                    <button id="reset-filter" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        <i class="fas fa-redo mr-2"></i>Reset Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="hidden md:block">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Lembaga</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Lembaga</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ketua</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Anggota</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lembaga-adat-table" class="bg-white divide-y divide-gray-200">
+                        <!-- Table content will be loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mobile View -->
+        <div class="md:hidden" id="mobile-lembaga-adat-list">
+            <!-- Mobile cards will be loaded via AJAX -->
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700" id="pagination-info">
+                        Menampilkan <span class="font-medium" id="page-start">1</span> sampai <span class="font-medium" id="page-end">10</span> dari <span class="font-medium" id="total-items">{{ page_obj.paginator.count }}</span> lembaga adat
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination" id="pagination-container">
+                        <!-- Pagination buttons will be loaded via AJAX -->
+                    </nav>
+                </div>
+            </div>
+            <div class="flex-1 flex justify-between sm:hidden">
+                <button id="mobile-prev-page" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Sebelumnya
+                </button>
+                <span class="text-sm text-gray-700" id="mobile-pagination-info">
+                    Halaman <span class="font-medium" id="current-page">1</span>
+                </span>
+                <button id="mobile-next-page" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Berikutnya
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="delete-modal">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mt-2">Konfirmasi Hapus</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Apakah Anda yakin ingin menghapus lembaga adat <span id="delete-lembaga-name" class="font-medium"></span>? Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="flex justify-center mt-4 px-4 py-3">
+                <button id="cancel-delete" class="bg-gray-200 px-4 py-2 rounded-md text-gray-800 hover:bg-gray-300 mr-2">
+                    Batal
+                </button>
+                <button id="confirm-delete" class="bg-red-600 px-4 py-2 rounded-md text-white hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="detail-modal">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Detail Lembaga Adat</h3>
+            <button id="close-detail-modal" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="detail-modal-content">
+            <div class="flex justify-center items-center py-12">
+                <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                <span class="ml-2 text-gray-500">Memuat detail...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CSRF Token handling
+    function getCSRFToken() {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue;
+    }
+
+    // Notification function
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} shadow-lg z-50 transform transition-transform duration-300 ease-in-out`;
+        notification.innerHTML = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('opacity-0');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Helper functions for mapping values
+    function getJenisLembagaLabel(jenis) {
+        const jenisMap = {
+            {% for value, label in jenis_choices %}
+            '{{ value }}': '{{ label }}',
+            {% endfor %}
+        };
+        return jenisMap[jenis] || jenis;
+    }
+
+    function getStatusLabel(status) {
+        const statusMap = {
+            {% for value, label in status_choices %}
+            '{{ value }}': '{{ label }}',
+            {% endfor %}
+        };
+        return statusMap[status] || status;
+    }
+
+    function getStatusBadgeClass(status) {
+        switch(status) {
+            case 'aktif':
+                return 'bg-green-100 text-green-800';
+            case 'non_aktif':
+                return 'bg-red-100 text-red-800';
+            case 'dalam_pembinaan':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+
+    // Load Lembaga Adat data via AJAX
+    let currentPage = 1;
+    let totalPages = 1;
+
+    function loadLembagaAdat(page = 1) {
+        currentPage = page;
+        const searchQuery = document.getElementById('search').value;
+        const jenisFilter = document.getElementById('jenis-filter').value;
+        const statusFilter = document.getElementById('status-filter').value;
+        
+        // Show loading state
+        document.getElementById('lembaga-adat-table').innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center">
+                    <i class="fas fa-spinner fa-spin mr-2"></i> Memuat data...
+                </td>
+            </tr>
+        `;
+        document.getElementById('mobile-lembaga-adat-list').innerHTML = `
+            <div class="p-4 text-center">
+                <i class="fas fa-spinner fa-spin mr-2"></i> Memuat data...
+            </div>
+        `;
+        
+        // Fetch data
+        fetch(`/pulosarok/organization/api/lembaga-adat/?page=${page}&search=${searchQuery}&jenis=${jenisFilter}&status=${statusFilter}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderTable(data.results);
+                    updatePagination(data.current_page || data.page, data.total_pages, data.count);
+                    updateStatistics(data.statistics || data.stats || {});
+                } else {
+                    showNotification('Gagal memuat data: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan saat memuat data', 'error');
+            });
+    }
+
+    // Render table with data
+    function renderTable(data) {
+        const tableBody = document.getElementById('lembaga-adat-table');
+        const mobileList = document.getElementById('mobile-lembaga-adat-list');
+        
+        if (data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                        Tidak ada data lembaga adat yang ditemukan
+                    </td>
+                </tr>
+            `;
+            mobileList.innerHTML = `
+                <div class="p-4 text-center text-gray-500">
+                    Tidak ada data lembaga adat yang ditemukan
+                </div>
+            `;
+            return;
+        }
+        
+        // Desktop view
+        let tableHTML = '';
+        data.forEach(lembaga => {
+            tableHTML += `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${lembaga.nama_lembaga}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${lembaga.jenis_lembaga}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">${lembaga.ketua_nama || '-'}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(lembaga.status_code)}">
+                            ${lembaga.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${lembaga.jumlah_anggota}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-purple-600 hover:text-purple-900 mr-3 view-detail" data-id="${lembaga.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-blue-600 hover:text-blue-900 mr-3 edit-lembaga" data-id="${lembaga.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-900 delete-lembaga" data-id="${lembaga.id}" data-name="${lembaga.nama_lembaga}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        tableBody.innerHTML = tableHTML;
+        
+        // Mobile view
+        let mobileHTML = '';
+        data.forEach(lembaga => {
+            mobileHTML += `
+                <div class="mobile-card bg-white">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900">${lembaga.nama_lembaga}</h3>
+                            <p class="text-sm text-gray-600">${lembaga.jenis_lembaga}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(lembaga.status_code)}">
+                            ${lembaga.status}
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-600"><span class="font-medium">Ketua:</span> ${lembaga.ketua_nama || '-'}</p>
+                        <p class="text-sm text-gray-600"><span class="font-medium">Jumlah Anggota:</span> ${lembaga.jumlah_anggota}</p>
+                    </div>
+                    <div class="mt-3 flex justify-end space-x-3">
+                        <button class="text-purple-600 hover:text-purple-900 view-detail" data-id="${lembaga.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-blue-600 hover:text-blue-900 edit-lembaga" data-id="${lembaga.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-900 delete-lembaga" data-id="${lembaga.id}" data-name="${lembaga.nama_lembaga}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        mobileList.innerHTML = mobileHTML;
+        
+        // Add event listeners to buttons
+        document.querySelectorAll('.view-detail').forEach(btn => {
+            btn.addEventListener('click', () => showDetailModal(btn.dataset.id));
+        });
+        
+        document.querySelectorAll('.edit-lembaga').forEach(btn => {
+            btn.addEventListener('click', () => {
+                window.location.href = `/pulosarok/organization/lembaga-adat/${btn.dataset.id}/edit/`;
+            });
+        });
+        
+        document.querySelectorAll('.delete-lembaga').forEach(btn => {
+            btn.addEventListener('click', () => showDeleteModal(btn.dataset.id, btn.dataset.name));
+        });
+    }
+
+    // Update statistics
+    function updateStatistics(stats) {
+        document.getElementById('total-count').textContent = stats.total || stats.total_count || 0;
+        document.getElementById('active-count').textContent = stats.aktif || stats.active_count || 0;
+        document.getElementById('inactive-count').textContent = stats.tidak_aktif || stats.inactive_count || 0;
+    }
+
+    // Update pagination
+    function updatePagination(page, totalPages, totalItems) {
+        currentPage = page;
+        this.totalPages = totalPages;
+        
+        // Update pagination info
+        const itemsPerPage = 10;
+        const start = (page - 1) * itemsPerPage + 1;
+        const end = Math.min(page * itemsPerPage, totalItems);
+        
+        document.getElementById('page-start').textContent = start;
+        document.getElementById('page-end').textContent = end;
+        document.getElementById('total-items').textContent = totalItems;
+        document.getElementById('current-page').textContent = page;
+        
+        // Update pagination buttons
+        const paginationContainer = document.getElementById('pagination-container');
+        let paginationHTML = '';
+        
+        // Previous button
+        paginationHTML += `
+            <button ${page === 1 ? 'disabled' : ''} class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${page === 1 ? 'opacity-50 cursor-not-allowed' : ''}" id="prev-page">
+                <span class="sr-only">Previous</span>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+        
+        // Page numbers
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, page - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        if (endPage - startPage < 4) {
+            startPage = Math.max(1, endPage - 4);
+        }
+        
+        if (startPage > 1) {
+            paginationHTML += `
+                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" data-page="1">
+                    1
+                </button>
+            `;
+            
+            if (startPage > 2) {
+                paginationHTML += `
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                    </span>
+                `;
+            }
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <button class="relative inline-flex items-center px-4 py-2 border ${page === i ? 'border-purple-500 bg-purple-50 text-purple-600' : 'border-gray-300 bg-white text-gray-700'} text-sm font-medium hover:bg-gray-50" data-page="${i}">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                paginationHTML += `
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                    </span>
+                `;
+            }
+            
+            paginationHTML += `
+                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50" data-page="${totalPages}">
+                    ${totalPages}
+                </button>
+            `;
+        }
+        
+        // Next button
+        paginationHTML += `
+            <button ${page === totalPages ? 'disabled' : ''} class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${page === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" id="next-page">
+                <span class="sr-only">Next</span>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+        
+        paginationContainer.innerHTML = paginationHTML;
+        
+        // Add event listeners to pagination buttons
+        document.querySelectorAll('#pagination-container button[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => loadLembagaAdat(parseInt(btn.dataset.page)));
+        });
+        
+        document.getElementById('prev-page')?.addEventListener('click', () => {
+            if (page > 1) loadLembagaAdat(page - 1);
+        });
+        
+        document.getElementById('next-page')?.addEventListener('click', () => {
+            if (page < totalPages) loadLembagaAdat(page + 1);
+        });
+        
+        // Mobile pagination
+        document.getElementById('mobile-prev-page').disabled = page === 1;
+        document.getElementById('mobile-next-page').disabled = page === totalPages;
+        
+        document.getElementById('mobile-prev-page').addEventListener('click', () => {
+            if (page > 1) loadLembagaAdat(page - 1);
+        });
+        
+        document.getElementById('mobile-next-page').addEventListener('click', () => {
+            if (page < totalPages) loadLembagaAdat(page + 1);
+        });
+    }
+
+    // Show detail modal
+    function showDetailModal(id) {
+        const modal = document.getElementById('detail-modal');
+        const content = document.getElementById('detail-modal-content');
+        
+        // Show loading state
+        content.innerHTML = `
+            <div class="flex justify-center items-center py-12">
+                <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                <span class="ml-2 text-gray-500">Memuat detail...</span>
+            </div>
+        `;
+        
+        modal.classList.remove('hidden');
+        
+        // Fetch detail data
+        fetch(`/pulosarok/organization/api/lembaga-adat/${id}/`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const lembaga = data.data;
+                    content.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-lg font-medium text-gray-900 mb-4">Informasi Dasar</h4>
+                                <dl class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Nama Lembaga</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.nama_lembaga}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Jenis Lembaga</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.jenis_lembaga}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Status</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(lembaga.status_code)}">
+                                                ${lembaga.status}
+                                            </span>
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Tanggal Terbentuk</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.tanggal_terbentuk || '-'}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-medium text-gray-900 mb-4">Kepengurusan</h4>
+                                <dl class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Ketua</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.ketua_nama || '-'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Sekretaris</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.sekretaris_nama || '-'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Bendahara</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.bendahara_nama || '-'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Jumlah Anggota</dt>
+                                        <dd class="mt-1 text-sm text-gray-900">${lembaga.jumlah_anggota || '0'}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <h4 class="text-lg font-medium text-gray-900 mb-4">Informasi Tambahan</h4>
+                            <dl class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Alamat Sekretariat</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">${lembaga.alamat_sekretariat || '-'}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Deskripsi</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">${lembaga.deskripsi || '-'}</dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Kegiatan Rutin</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">${lembaga.kegiatan_rutin || '-'}</dd>
+                                </div>
+                            </dl>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <a href="/organization/lembaga-adat/${lembaga.id}/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700">
+                                <i class="fas fa-eye mr-2"></i>Lihat Detail Lengkap
+                            </a>
+                            <a href="/organization/lembaga-adat/${lembaga.id}/edit/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                <i class="fas fa-edit mr-2"></i>Edit
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = `
+                        <div class="text-center py-6">
+                            <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                            <p class="text-gray-700">Gagal memuat detail: ${data.error || 'Terjadi kesalahan'}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                content.innerHTML = `
+                    <div class="text-center py-6">
+                        <i class="fas fa-exclamation-circle text-red-500 text-4xl mb-4"></i>
+                        <p class="text-gray-700">Terjadi kesalahan saat memuat detail</p>
+                    </div>
+                `;
+            });
+    }
+
+    // Edit functionality removed - now redirects to lembaga_adat_form.html
+
+    // Show delete confirmation modal
+    function showDeleteModal(id, name) {
+        const modal = document.getElementById('delete-modal');
+        document.getElementById('delete-lembaga-name').textContent = name;
+        modal.classList.remove('hidden');
+        
+        // Set up confirm button
+        document.getElementById('confirm-delete').onclick = () => deleteLembaga(id);
+    }
+
+    // Delete lembaga adat
+    function deleteLembaga(id) {
+        // Show loading state
+        const confirmBtn = document.getElementById('confirm-delete');
+        const originalBtnText = confirmBtn.innerHTML;
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menghapus...';
+        
+        // Send AJAX request
+        fetch(`/pulosarok/organization/api/lembaga-adat/${id}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Close modal
+                document.getElementById('delete-modal').classList.add('hidden');
+                
+                if (data.success) {
+                    showNotification(data.message || 'Data lembaga adat berhasil dihapus');
+                    
+                    // Reload data
+                    loadLembagaAdat(currentPage);
+                } else {
+                    showNotification(data.error || 'Gagal menghapus data lembaga adat', 'error');
+                }
+                
+                // Reset button
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalBtnText;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('delete-modal').classList.add('hidden');
+                showNotification('Terjadi kesalahan saat menghapus data', 'error');
+                
+                // Reset button
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = originalBtnText;
+            });
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        loadLembagaAdat();
+        
+        // Search and filter events
+        document.getElementById('search').addEventListener('input', () => loadLembagaAdat(1));
+        document.getElementById('jenis-filter').addEventListener('change', () => loadLembagaAdat(1));
+        document.getElementById('status-filter').addEventListener('change', () => loadLembagaAdat(1));
+        document.getElementById('reset-filter').addEventListener('click', () => {
+            document.getElementById('search').value = '';
+            document.getElementById('jenis-filter').value = '';
+            document.getElementById('status-filter').value = '';
+            loadLembagaAdat(1);
+        });
+        
+        // Modal close events
+        document.getElementById('close-detail-modal').addEventListener('click', () => {
+            document.getElementById('detail-modal').classList.add('hidden');
+        });
+        
+        // Edit modal event listener removed
+        
+        document.getElementById('cancel-delete').addEventListener('click', () => {
+            document.getElementById('delete-modal').classList.add('hidden');
+        });
+    });
+</script>
+{% endblock %}

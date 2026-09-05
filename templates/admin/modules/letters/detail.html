@@ -1,0 +1,778 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Detail Surat - {{ letter.subject }}{% endblock %}
+
+{% block page_title %}Detail Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .status-draft {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    .status-pending {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    .status-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .status-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    .status-signed {
+        background-color: #e0e7ff;
+        color: #3730a3;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: -1rem;
+        width: 2px;
+        background-color: #e5e7eb;
+    }
+    .timeline-item:last-child::before {
+        display: none;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: 0;
+        top: 0.25rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #e5e7eb;
+    }
+    .signature-valid {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    .signature-invalid {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    .ai-score {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+    }
+    .content-preview {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: #f9fafb;
+    }
+    .action-button {
+        transition: all 0.3s ease;
+    }
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div class="flex-1">
+                <div class="flex items-center mb-2">
+                    <h2 class="text-2xl font-bold text-gray-900 mr-4">{{ letter.subject }}</h2>
+                    <span class="status-badge status-{{ letter.status }}">
+                        <i class="fas fa-circle mr-2 text-xs"></i>
+                        {% if letter.status == 'draft' %}Draft
+                        {% elif letter.status == 'pending' %}Menunggu Persetujuan
+                        {% elif letter.status == 'approved' %}Disetujui
+                        {% elif letter.status == 'rejected' %}Ditolak
+                        {% elif letter.status == 'signed' %}Ditandatangani
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div>
+                        <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+                        <strong>Nomor:</strong> {{ letter.letter_number|default:"Belum dibuat" }}
+                    </div>
+                    <div>
+                        <i class="fas fa-calendar mr-2 text-green-600"></i>
+                        <strong>Tanggal:</strong> {{ letter.created_at|date:"d F Y" }}
+                    </div>
+                    <div>
+                        <i class="fas fa-user mr-2 text-purple-600"></i>
+                        <strong>Pemohon:</strong> {{ letter.recipient_name }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="window.history.back()" class="action-button bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                
+                {% if letter.status == 'draft' %}
+                <a href="/pulosarok/letters/edit/{{ letter.id }}/" class="action-button bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 inline-flex items-center">
+                    <i class="fas fa-edit mr-2"></i>
+                    Edit
+                </a>
+                {% endif %}
+                
+                <button onclick="exportToPDF()" class="action-button bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    PDF
+                </button>
+                
+                <button onclick="exportToWord()" class="action-button bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                    <i class="fas fa-file-word mr-2"></i>
+                    Word
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Letter Information -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                    Informasi Surat
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Jenis Surat</label>
+                            <p class="text-gray-900">{{ letter.get_letter_type_display }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Perihal</label>
+                            <p class="text-gray-900">{{ letter.subject }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nomor Surat</label>
+                            <p class="text-gray-900">{{ letter.letter_number|default:"Belum dibuat" }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tanggal Dibuat</label>
+                            <p class="text-gray-900">{{ letter.created_at|date:"d F Y H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <span class="status-badge status-{{ letter.status }}">
+                                {% if letter.status == 'draft' %}Draft
+                                {% elif letter.status == 'pending' %}Menunggu Persetujuan
+                                {% elif letter.status == 'approved' %}Disetujui
+                                {% elif letter.status == 'rejected' %}Ditolak
+                                {% elif letter.status == 'signed' %}Ditandatangani
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Dibuat Oleh</label>
+                            <p class="text-gray-900">{{ letter.created_by.get_full_name|default:letter.created_by.username }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Terakhir Diupdate</label>
+                            <p class="text-gray-900">{{ letter.updated_at|date:"d F Y H:i" }}</p>
+                        </div>
+                        
+                        {% if letter.approved_by %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Disetujui Oleh</label>
+                            <p class="text-gray-900">{{ letter.approved_by.get_full_name|default:letter.approved_by.username }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recipient Information -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-user mr-2 text-green-600"></i>
+                    Informasi Penerima/Pemohon
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                            <p class="text-gray-900">{{ letter.recipient_name }}</p>
+                        </div>
+                        
+                        {% if letter.recipient_nik %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">NIK</label>
+                            <p class="text-gray-900">{{ letter.recipient_nik }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if letter.recipient_birth_place_date %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tempat, Tanggal Lahir</label>
+                            <p class="text-gray-900">{{ letter.recipient_birth_place_date }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="space-y-3">
+                        {% if letter.recipient_gender %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Jenis Kelamin</label>
+                            <p class="text-gray-900">{{ letter.get_recipient_gender_display }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if letter.recipient_address %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Alamat</label>
+                            <p class="text-gray-900">{{ letter.recipient_address }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if letter.recipient_phone %}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                            <p class="text-gray-900">{{ letter.recipient_phone }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Letter Content -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-file-alt mr-2 text-purple-600"></i>
+                    Isi Surat
+                </h3>
+                
+                <div class="content-preview">
+                    {{ letter.content|safe }}
+                </div>
+            </div>
+
+            <!-- Attachments -->
+            {% if letter.attachments.exists %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-paperclip mr-2 text-orange-600"></i>
+                    Lampiran ({{ letter.attachments.count }})
+                </h3>
+                
+                <div class="space-y-3">
+                    {% for attachment in letter.attachments.all %}
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-file mr-3 text-gray-600"></i>
+                            <div>
+                                <p class="font-medium text-gray-900">{{ attachment.file_name }}</p>
+                                <p class="text-sm text-gray-500">{{ attachment.file_size|filesizeformat }} • {{ attachment.uploaded_at|date:"d M Y H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        <a href="{{ attachment.file.url }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-bolt mr-2 text-yellow-600"></i>
+                    Aksi Cepat
+                </h3>
+                
+                <div class="space-y-3">
+                    {% if letter.status == 'pending' and perms.letters.can_approve %}
+                    <button onclick="approveLetter()" class="w-full action-button bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        <i class="fas fa-check mr-2"></i>
+                        Setujui Surat
+                    </button>
+                    
+                    <button onclick="rejectLetter()" class="w-full action-button bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+                        <i class="fas fa-times mr-2"></i>
+                        Tolak Surat
+                    </button>
+                    {% endif %}
+                    
+                    {% if letter.status == 'approved' and perms.letters.can_sign %}
+                    <button onclick="signLetter()" class="w-full action-button bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                        <i class="fas fa-signature mr-2"></i>
+                        Tanda Tangan Digital
+                    </button>
+                    {% endif %}
+                    
+                    <button onclick="duplicateLetter()" class="w-full action-button bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-copy mr-2"></i>
+                        Duplikasi Surat
+                    </button>
+                    
+                    <button onclick="printLetter()" class="w-full action-button bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-print mr-2"></i>
+                        Cetak Surat
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI Validation Results -->
+            {% if letter.ai_validations.exists %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-robot mr-2 text-purple-600"></i>
+                    Validasi AI
+                </h3>
+                
+                {% for validation in letter.ai_validations.all %}
+                <div class="mb-4 last:mb-0">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">{{ validation.created_at|date:"d M Y H:i" }}</span>
+                        <span class="ai-score px-2 py-1 rounded text-xs font-medium">
+                            Skor: {{ validation.validation_score|floatformat:0 }}%
+                        </span>
+                    </div>
+                    
+                    <div class="text-sm text-gray-600">
+                        <p><strong>Status:</strong> 
+                            <span class="{% if validation.is_valid %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if validation.is_valid %}Valid{% else %}Perlu Perbaikan{% endif %}
+                            </span>
+                        </p>
+                        
+                        {% if validation.suggestions %}
+                        <div class="mt-2">
+                            <p class="font-medium">Saran:</p>
+                            <div class="text-xs bg-blue-50 p-2 rounded mt-1">
+                                {{ validation.suggestions|truncatewords:20 }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <button onclick="validateWithAI()" class="w-full mt-3 action-button bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                    <i class="fas fa-magic mr-2"></i>
+                    Validasi Ulang
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Digital Signature -->
+            {% if letter.digital_signatures.exists %}
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-certificate mr-2 text-green-600"></i>
+                    Tanda Tangan Digital
+                </h3>
+                
+                {% for signature in letter.digital_signatures.all %}
+                <div class="mb-4 last:mb-0">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">{{ signature.signer.get_full_name|default:signature.signer.username }}</span>
+                        <span class="{% if signature.is_valid %}signature-valid{% else %}signature-invalid{% endif %} px-2 py-1 rounded text-xs font-medium">
+                            {% if signature.is_valid %}Valid{% else %}Invalid{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="text-xs text-gray-600">
+                        <p>Ditandatangani: {{ signature.signed_at|date:"d M Y H:i" }}</p>
+                        <p>Hash: {{ signature.signature_hash|truncatechars:20 }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <button onclick="verifySignature()" class="w-full mt-3 action-button bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    Verifikasi Tanda Tangan
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Activity Timeline -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-history mr-2 text-gray-600"></i>
+                    Riwayat Aktivitas
+                </h3>
+                
+                <div class="space-y-4">
+                    {% for tracking in letter.tracking_records.all %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot bg-{{ tracking.action|default:'blue' }}-500"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ tracking.get_action_display }}</p>
+                            <p class="text-xs text-gray-600">{{ tracking.created_at|date:"d M Y H:i" }}</p>
+                            {% if tracking.notes %}
+                            <p class="text-xs text-gray-500 mt-1">{{ tracking.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot bg-blue-500"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Surat Dibuat</p>
+                            <p class="text-xs text-gray-600">{{ letter.created_at|date:"d M Y H:i" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+                    Statistik
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Waktu Baca</span>
+                        <span class="text-sm font-medium text-gray-900">{{ letter.reading_time|default:"2" }} menit</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Jumlah Kata</span>
+                        <span class="text-sm font-medium text-gray-900">{{ letter.word_count|default:"150" }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Jumlah Karakter</span>
+                        <span class="text-sm font-medium text-gray-900">{{ letter.character_count|default:"750" }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Dilihat</span>
+                        <span class="text-sm font-medium text-gray-900">{{ letter.view_count|default:"1" }} kali</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approval Modal -->
+<div id="approval-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-check text-green-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Setujui Surat</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">Apakah Anda yakin ingin menyetujui surat ini?</p>
+                            <textarea id="approval-notes" placeholder="Catatan (opsional)" class="mt-3 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="confirmApproval()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Setujui
+                </button>
+                <button onclick="closeApprovalModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rejection Modal -->
+<div id="rejection-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="fas fa-times text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Tolak Surat</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">Berikan alasan penolakan surat ini:</p>
+                            <textarea id="rejection-notes" placeholder="Alasan penolakan (wajib)" class="mt-3 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" rows="3" required></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="confirmRejection()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Tolak
+                </button>
+                <button onclick="closeRejectionModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const letterId = {{ letter.id }};
+    
+    // Approve letter
+    function approveLetter() {
+        document.getElementById('approval-modal').classList.remove('hidden');
+    }
+    
+    function closeApprovalModal() {
+        document.getElementById('approval-modal').classList.add('hidden');
+        document.getElementById('approval-notes').value = '';
+    }
+    
+    function confirmApproval() {
+        const notes = document.getElementById('approval-notes').value;
+        
+        // Simulate API call
+        showNotification('Menyetujui surat...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Surat berhasil disetujui!', 'success');
+            closeApprovalModal();
+            
+            // Reload page after 2 seconds
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }, 1500);
+    }
+    
+    // Reject letter
+    function rejectLetter() {
+        document.getElementById('rejection-modal').classList.remove('hidden');
+    }
+    
+    function closeRejectionModal() {
+        document.getElementById('rejection-modal').classList.add('hidden');
+        document.getElementById('rejection-notes').value = '';
+    }
+    
+    function confirmRejection() {
+        const notes = document.getElementById('rejection-notes').value;
+        
+        if (!notes.trim()) {
+            showNotification('Alasan penolakan harus diisi!', 'error');
+            return;
+        }
+        
+        // Simulate API call
+        showNotification('Menolak surat...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Surat berhasil ditolak!', 'success');
+            closeRejectionModal();
+            
+            // Reload page after 2 seconds
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }, 1500);
+    }
+    
+    // Sign letter
+    function signLetter() {
+        showNotification('Memproses tanda tangan digital...', 'info');
+        
+        // Simulate digital signing process
+        setTimeout(() => {
+            showNotification('Surat berhasil ditandatangani!', 'success');
+            
+            // Reload page after 2 seconds
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }, 3000);
+    }
+    
+    // Duplicate letter
+    function duplicateLetter() {
+        showNotification('Menduplikasi surat...', 'info');
+        
+        // Simulate duplication
+        setTimeout(() => {
+            showNotification('Surat berhasil diduplikasi!', 'success');
+            
+            // Redirect to edit page of duplicated letter
+            setTimeout(() => {
+                window.location.href = '/pulosarok/letters/create/?duplicate=' + letterId;
+            }, 2000);
+        }, 1500);
+    }
+    
+    // Print letter
+    function printLetter() {
+        window.print();
+    }
+    
+    // Export to PDF
+    function exportToPDF() {
+        showNotification('Mengekspor ke PDF...', 'info');
+        
+        // Simulate PDF export
+        setTimeout(() => {
+            showNotification('PDF berhasil diunduh!', 'success');
+            
+            // In real implementation, this would trigger file download
+            const link = document.createElement('a');
+            link.href = `/pulosarok/letters/${letterId}/export/pdf/`;
+            link.download = `surat-${letterId}.pdf`;
+            link.click();
+        }, 2000);
+    }
+    
+    // Export to Word
+    function exportToWord() {
+        showNotification('Mengekspor ke Word...', 'info');
+        
+        // Simulate Word export
+        setTimeout(() => {
+            showNotification('File Word berhasil diunduh!', 'success');
+            
+            // In real implementation, this would trigger file download
+            const link = document.createElement('a');
+            link.href = `/pulosarok/letters/${letterId}/export/docx/`;
+            link.download = `surat-${letterId}.docx`;
+            link.click();
+        }, 2000);
+    }
+    
+    // Validate with AI
+    function validateWithAI() {
+        showNotification('AI sedang memvalidasi surat...', 'info');
+        
+        // Simulate AI validation
+        setTimeout(() => {
+            showNotification('Validasi AI selesai!', 'success');
+            
+            // Reload page to show new validation results
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }, 3000);
+    }
+    
+    // Verify signature
+    function verifySignature() {
+        showNotification('Memverifikasi tanda tangan...', 'info');
+        
+        // Simulate signature verification
+        setTimeout(() => {
+            showNotification('Tanda tangan valid!', 'success');
+        }, 2000);
+    }
+    
+    // Utility function for notifications
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            success: 'bg-green-500 text-white',
+            error: 'bg-red-500 text-white',
+            warning: 'bg-yellow-500 text-white',
+            info: 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : type === 'warning' ? 'exclamation' : 'info'}-circle mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Close modals when clicking outside
+    document.getElementById('approval-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeApprovalModal();
+        }
+    });
+    
+    document.getElementById('rejection-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeRejectionModal();
+        }
+    });
+    
+    // Update view count
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simulate updating view count
+        fetch(`/pulosarok/letters/${letterId}/view/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                'Content-Type': 'application/json'
+            }
+        }).catch(console.error);
+    });
+</script>
+{% endblock %}

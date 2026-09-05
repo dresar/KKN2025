@@ -1,0 +1,1216 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Arsip Surat{% endblock %}
+
+{% block page_title %}Arsip Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .archive-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .archive-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #e5e7eb;
+    }
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 0.25rem;
+        top: 0.5rem;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background-color: #3b82f6;
+    }
+    .timeline-item:last-child::before {
+        display: none;
+    }
+    .filter-chip {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .filter-chip:hover {
+        transform: scale(1.05);
+    }
+    .filter-chip.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .search-suggestion {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    .search-suggestion:hover {
+        background-color: #f3f4f6;
+    }
+    .archive-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    .archive-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .priority-indicator {
+        width: 4px;
+        height: 100%;
+        position: absolute;
+        left: 0;
+        top: 0;
+        border-radius: 0 4px 4px 0;
+    }
+    .priority-high { background-color: #ef4444; }
+    .priority-medium { background-color: #f59e0b; }
+    .priority-low { background-color: #10b981; }
+    .archive-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .quick-filter {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    .export-options {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-archive mr-3 text-blue-600"></i>
+                Arsip Surat
+            </h1>
+            <p class="text-gray-600">Kelola dan cari arsip surat dengan mudah</p>
+        </div>
+        <div class="flex space-x-3 mt-4 lg:mt-0">
+            <button onclick="exportArchive()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                <i class="fas fa-download mr-2"></i>
+                Export Arsip
+            </button>
+            <button onclick="openAdvancedSearch()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                <i class="fas fa-search-plus mr-2"></i>
+                Pencarian Lanjutan
+            </button>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="archive-stats rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Total Arsip</p>
+                    <p class="text-3xl font-bold text-white" id="total-archive">1,247</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-archive text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span>+12% dari bulan lalu</span>
+            </div>
+        </div>
+        
+        <div class="quick-filter rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Bulan Ini</p>
+                    <p class="text-3xl font-bold text-white" id="monthly-archive">89</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-clock mr-1"></i>
+                <span>Update terakhir: hari ini</span>
+            </div>
+        </div>
+        
+        <div class="export-options rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Kategori</p>
+                    <p class="text-3xl font-bold text-white" id="categories-count">8</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tags text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-layer-group mr-1"></i>
+                <span>Kependudukan, Perizinan, dll</span>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Ukuran Total</p>
+                    <p class="text-3xl font-bold text-white" id="total-size">2.4 GB</p>
+                </div>
+                <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-hdd text-white text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-database mr-1"></i>
+                <span>Rata-rata 2MB per file</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Search and Filter Section -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
+            <!-- Search Input -->
+            <div class="flex-1 relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" id="search-input" placeholder="Cari nomor surat, nama pemohon, atau isi surat..." 
+                       class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                
+                <!-- Search Suggestions -->
+                <div id="search-suggestions" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 hidden z-10">
+                    <div class="p-2">
+                        <div class="search-suggestion p-2 rounded hover:bg-gray-50">
+                            <i class="fas fa-history text-gray-400 mr-2"></i>
+                            Surat Keterangan Domisili
+                        </div>
+                        <div class="search-suggestion p-2 rounded hover:bg-gray-50">
+                            <i class="fas fa-history text-gray-400 mr-2"></i>
+                            001/DS/2024
+                        </div>
+                        <div class="search-suggestion p-2 rounded hover:bg-gray-50">
+                            <i class="fas fa-history text-gray-400 mr-2"></i>
+                            Ahmad Wijaya
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Date Range -->
+            <div class="flex space-x-2">
+                <input type="date" id="date-from" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <span class="flex items-center text-gray-500">s/d</span>
+                <input type="date" id="date-to" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <!-- View Toggle -->
+            <div class="flex bg-gray-100 rounded-lg p-1">
+                <button onclick="toggleView('grid')" id="grid-view-btn" class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 bg-white text-gray-900 shadow-sm">
+                    <i class="fas fa-th-large"></i>
+                </button>
+                <button onclick="toggleView('list')" id="list-view-btn" class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button onclick="toggleView('timeline')" id="timeline-view-btn" class="px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-stream"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Filter Chips -->
+        <div class="mt-4 flex flex-wrap gap-2">
+            <div class="filter-chip active bg-blue-600 text-white px-3 py-1 rounded-full text-sm" onclick="toggleFilter('all')">
+                Semua
+            </div>
+            <div class="filter-chip bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm" onclick="toggleFilter('kependudukan')">
+                Kependudukan
+            </div>
+            <div class="filter-chip bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm" onclick="toggleFilter('perizinan')">
+                Perizinan
+            </div>
+            <div class="filter-chip bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm" onclick="toggleFilter('keuangan')">
+                Keuangan
+            </div>
+            <div class="filter-chip bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm" onclick="toggleFilter('umum')">
+                Umum
+            </div>
+            <div class="filter-chip bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm" onclick="toggleFilter('completed')">
+                <i class="fas fa-check mr-1"></i>
+                Selesai
+            </div>
+            <div class="filter-chip bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm" onclick="toggleFilter('signed')">
+                <i class="fas fa-signature mr-1"></i>
+                Ditandatangani
+            </div>
+        </div>
+    </div>
+    
+    <!-- Archive Content -->
+    <div class="bg-white rounded-lg shadow">
+        <!-- Grid View -->
+        <div id="grid-view" class="archive-grid p-6">
+            <!-- Archive cards will be dynamically generated -->
+        </div>
+        
+        <!-- List View -->
+        <div id="list-view" class="archive-list p-6 hidden">
+            <!-- Archive list items will be dynamically generated -->
+        </div>
+        
+        <!-- Timeline View -->
+        <div id="timeline-view" class="p-6 hidden">
+            <div class="space-y-6">
+                <!-- Timeline items will be dynamically generated -->
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-12 hidden">
+            <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada arsip ditemukan</h3>
+            <p class="text-gray-500 mb-6">Coba ubah kriteria pencarian atau filter Anda</p>
+            <button onclick="resetFilters()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Reset Filter
+            </button>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="mt-8 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Menampilkan <span class="font-medium" id="showing-from">1</span> sampai <span class="font-medium" id="showing-to">20</span> 
+            dari <span class="font-medium" id="total-results">1247</span> hasil
+        </div>
+        <div class="flex space-x-2">
+            <button onclick="previousPage()" id="prev-btn" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left mr-1"></i>
+                Sebelumnya
+            </button>
+            <div class="flex space-x-1" id="pagination-numbers">
+                <!-- Pagination numbers will be generated dynamically -->
+            </div>
+            <button onclick="nextPage()" id="next-btn" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Selanjutnya
+                <i class="fas fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Search Modal -->
+<div id="advanced-search-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-search-plus mr-2 text-purple-600"></i>
+                        Pencarian Lanjutan
+                    </h3>
+                    <button onclick="closeAdvancedSearch()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Basic Search -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">Pencarian Dasar</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat</label>
+                                <input type="text" id="adv-number" placeholder="Contoh: 001/DS/2024" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nama Pemohon</label>
+                                <input type="text" id="adv-applicant" placeholder="Nama lengkap pemohon" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">NIK</label>
+                                <input type="text" id="adv-nik" placeholder="16 digit NIK" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Filters -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">Filter Lanjutan</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat</label>
+                                <select id="adv-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Semua Jenis</option>
+                                    <option value="kependudukan">Kependudukan</option>
+                                    <option value="perizinan">Perizinan</option>
+                                    <option value="keuangan">Keuangan</option>
+                                    <option value="umum">Umum</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select id="adv-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Semua Status</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Disetujui</option>
+                                    <option value="completed">Selesai</option>
+                                    <option value="rejected">Ditolak</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Prioritas</label>
+                                <select id="adv-priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Semua Prioritas</option>
+                                    <option value="high">Tinggi</option>
+                                    <option value="medium">Sedang</option>
+                                    <option value="low">Rendah</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">Rentang Tanggal</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
+                                <input type="date" id="adv-date-from" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Akhir</label>
+                                <input type="date" id="adv-date-to" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Preset Tanggal</label>
+                                <select id="date-preset" onchange="applyDatePreset()" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="">Pilih Preset</option>
+                                    <option value="today">Hari Ini</option>
+                                    <option value="yesterday">Kemarin</option>
+                                    <option value="this-week">Minggu Ini</option>
+                                    <option value="last-week">Minggu Lalu</option>
+                                    <option value="this-month">Bulan Ini</option>
+                                    <option value="last-month">Bulan Lalu</option>
+                                    <option value="this-year">Tahun Ini</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Content Search -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">Pencarian Konten</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Isi Surat</label>
+                                <textarea id="adv-content" rows="3" placeholder="Cari dalam isi surat..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Keperluan</label>
+                                <input type="text" id="adv-purpose" placeholder="Keperluan surat" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="has-attachments" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                    <span class="text-sm text-gray-700">Memiliki lampiran</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="is-signed" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                    <span class="text-sm text-gray-700">Sudah ditandatangani</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" id="ai-validated" class="rounded border-gray-300 text-purple-600 focus:ring-purple-500">
+                                    <span class="text-sm text-gray-700">Tervalidasi AI</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex justify-end space-x-3">
+                    <button onclick="resetAdvancedSearch()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        Reset
+                    </button>
+                    <button onclick="applyAdvancedSearch()" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                        <i class="fas fa-search mr-2"></i>
+                        Cari
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Modal -->
+<div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-download mr-2 text-green-600"></i>
+                        Export Arsip
+                    </h3>
+                    <button onclick="closeExportModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Format Export</label>
+                        <select id="export-format" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="pdf">PDF</option>
+                            <option value="excel">Excel (.xlsx)</option>
+                            <option value="csv">CSV</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Data yang Diexport</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="export-scope" value="current" checked class="text-green-600 focus:ring-green-500">
+                                <span class="text-sm text-gray-700">Hasil pencarian saat ini</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="export-scope" value="all" class="text-green-600 focus:ring-green-500">
+                                <span class="text-sm text-gray-700">Semua arsip</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="radio" name="export-scope" value="selected" class="text-green-600 focus:ring-green-500">
+                                <span class="text-sm text-gray-700">Arsip yang dipilih</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="include-content" checked class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="text-sm text-gray-700">Sertakan isi surat</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="include-attachments" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="text-sm text-gray-700">Sertakan lampiran</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="include-signatures" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="text-sm text-gray-700">Sertakan tanda tangan digital</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button onclick="closeExportModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                        Batal
+                    </button>
+                    <button onclick="startExport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                        <i class="fas fa-download mr-2"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentView = 'grid';
+    let currentPage = 1;
+    let itemsPerPage = 20;
+    let totalItems = 1247;
+    let currentFilter = 'all';
+    let searchQuery = '';
+    let archiveData = [];
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        generateSampleData();
+        renderArchive();
+        setupEventListeners();
+        updatePagination();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', debounce(handleSearch, 300));
+        searchInput.addEventListener('focus', showSearchSuggestions);
+        searchInput.addEventListener('blur', hideSearchSuggestions);
+        
+        document.getElementById('date-from').addEventListener('change', handleDateFilter);
+        document.getElementById('date-to').addEventListener('change', handleDateFilter);
+    }
+    
+    // Generate sample archive data
+    function generateSampleData() {
+        const types = ['Kependudukan', 'Perizinan', 'Keuangan', 'Umum'];
+        const statuses = ['Draft', 'Pending', 'Approved', 'Completed', 'Rejected'];
+        const priorities = ['high', 'medium', 'low'];
+        const names = ['Ahmad Wijaya', 'Siti Nurhaliza', 'Budi Santoso', 'Dewi Sartika', 'Eko Prasetyo'];
+        
+        archiveData = [];
+        
+        for (let i = 0; i < totalItems; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+            
+            archiveData.push({
+                id: i + 1,
+                number: `${String(i + 1).padStart(3, '0')}/DS/${date.getFullYear()}/${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}`,
+                type: types[Math.floor(Math.random() * types.length)],
+                applicant: names[Math.floor(Math.random() * names.length)],
+                nik: `3201${String(Math.floor(Math.random() * 1000000000000)).padStart(12, '0')}`,
+                date: date.toISOString().split('T')[0],
+                status: statuses[Math.floor(Math.random() * statuses.length)],
+                priority: priorities[Math.floor(Math.random() * priorities.length)],
+                content: `Isi surat ${i + 1} dengan berbagai keperluan administrasi desa.`,
+                purpose: ['Administrasi KTP', 'Surat Domisili', 'Izin Usaha', 'Bantuan Sosial'][Math.floor(Math.random() * 4)],
+                hasAttachments: Math.random() > 0.7,
+                isSigned: Math.random() > 0.5,
+                aiValidated: Math.random() > 0.6,
+                fileSize: Math.floor(Math.random() * 5000) + 500 // KB
+            });
+        }
+    }
+    
+    // Handle search
+    function handleSearch(e) {
+        searchQuery = e.target.value.toLowerCase();
+        currentPage = 1;
+        renderArchive();
+        updatePagination();
+    }
+    
+    // Show search suggestions
+    function showSearchSuggestions() {
+        document.getElementById('search-suggestions').classList.remove('hidden');
+    }
+    
+    // Hide search suggestions
+    function hideSearchSuggestions() {
+        setTimeout(() => {
+            document.getElementById('search-suggestions').classList.add('hidden');
+        }, 200);
+    }
+    
+    // Handle date filter
+    function handleDateFilter() {
+        currentPage = 1;
+        renderArchive();
+        updatePagination();
+    }
+    
+    // Toggle filter
+    function toggleFilter(filter) {
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active', 'bg-blue-600', 'text-white');
+            chip.classList.add('bg-gray-200', 'text-gray-700');
+        });
+        
+        event.target.classList.remove('bg-gray-200', 'text-gray-700');
+        event.target.classList.add('active', 'bg-blue-600', 'text-white');
+        
+        currentFilter = filter;
+        currentPage = 1;
+        renderArchive();
+        updatePagination();
+    }
+    
+    // Toggle view
+    function toggleView(view) {
+        document.querySelectorAll('[id$="-view-btn"]').forEach(btn => {
+            btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+            btn.classList.add('text-gray-600');
+        });
+        
+        document.getElementById(`${view}-view-btn`).classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+        document.getElementById(`${view}-view-btn`).classList.remove('text-gray-600');
+        
+        document.querySelectorAll('[id$="-view"]').forEach(viewEl => {
+            viewEl.classList.add('hidden');
+        });
+        
+        document.getElementById(`${view}-view`).classList.remove('hidden');
+        
+        currentView = view;
+        renderArchive();
+    }
+    
+    // Filter data
+    function filterData() {
+        let filtered = archiveData;
+        
+        // Apply search filter
+        if (searchQuery) {
+            filtered = filtered.filter(item => 
+                item.number.toLowerCase().includes(searchQuery) ||
+                item.applicant.toLowerCase().includes(searchQuery) ||
+                item.content.toLowerCase().includes(searchQuery) ||
+                item.purpose.toLowerCase().includes(searchQuery)
+            );
+        }
+        
+        // Apply category filter
+        if (currentFilter !== 'all') {
+            if (currentFilter === 'completed') {
+                filtered = filtered.filter(item => item.status === 'Completed');
+            } else if (currentFilter === 'signed') {
+                filtered = filtered.filter(item => item.isSigned);
+            } else {
+                filtered = filtered.filter(item => item.type.toLowerCase() === currentFilter);
+            }
+        }
+        
+        // Apply date filter
+        const dateFrom = document.getElementById('date-from').value;
+        const dateTo = document.getElementById('date-to').value;
+        
+        if (dateFrom) {
+            filtered = filtered.filter(item => item.date >= dateFrom);
+        }
+        
+        if (dateTo) {
+            filtered = filtered.filter(item => item.date <= dateTo);
+        }
+        
+        return filtered;
+    }
+    
+    // Render archive
+    function renderArchive() {
+        const filtered = filterData();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageData = filtered.slice(startIndex, endIndex);
+        
+        if (pageData.length === 0) {
+            showEmptyState();
+            return;
+        }
+        
+        hideEmptyState();
+        
+        if (currentView === 'grid') {
+            renderGridView(pageData);
+        } else if (currentView === 'list') {
+            renderListView(pageData);
+        } else if (currentView === 'timeline') {
+            renderTimelineView(pageData);
+        }
+        
+        updateResultsInfo(filtered.length, startIndex, Math.min(endIndex, filtered.length));
+    }
+    
+    // Render grid view
+    function renderGridView(data) {
+        const container = document.getElementById('grid-view');
+        container.innerHTML = data.map(item => `
+            <div class="archive-card bg-white rounded-lg p-6 relative">
+                <div class="priority-indicator priority-${item.priority}"></div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-1">${item.number}</h3>
+                        <p class="text-sm text-gray-600">${item.type}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        ${item.hasAttachments ? '<i class="fas fa-paperclip text-gray-400" title="Memiliki lampiran"></i>' : ''}
+                        ${item.isSigned ? '<i class="fas fa-signature text-green-600" title="Sudah ditandatangani"></i>' : ''}
+                        ${item.aiValidated ? '<i class="fas fa-robot text-blue-600" title="Tervalidasi AI"></i>' : ''}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <p class="text-sm text-gray-700 mb-2">
+                        <i class="fas fa-user mr-2 text-gray-400"></i>
+                        ${item.applicant}
+                    </p>
+                    <p class="text-sm text-gray-700 mb-2">
+                        <i class="fas fa-calendar mr-2 text-gray-400"></i>
+                        ${formatDate(item.date)}
+                    </p>
+                    <p class="text-sm text-gray-700">
+                        <i class="fas fa-tag mr-2 text-gray-400"></i>
+                        ${item.purpose}
+                    </p>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="status-badge ${getStatusClass(item.status)}">
+                        ${item.status}
+                    </span>
+                    <div class="flex space-x-2">
+                        <button onclick="viewArchive(${item.id})" class="text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="downloadArchive(${item.id})" class="text-green-600 hover:text-green-800 text-sm">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button onclick="shareArchive(${item.id})" class="text-purple-600 hover:text-purple-800 text-sm">
+                            <i class="fas fa-share"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Render list view
+    function renderListView(data) {
+        const container = document.getElementById('list-view');
+        container.innerHTML = data.map(item => `
+            <div class="archive-card bg-white rounded-lg p-4 flex items-center justify-between relative">
+                <div class="priority-indicator priority-${item.priority}"></div>
+                <div class="flex items-center space-x-4 flex-1">
+                    <div class="flex-shrink-0">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <h3 class="text-sm font-semibold text-gray-900 truncate">${item.number}</h3>
+                            <span class="status-badge ${getStatusClass(item.status)}">
+                                ${item.status}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 truncate">${item.applicant} - ${item.purpose}</p>
+                        <div class="flex items-center space-x-4 mt-1 text-xs text-gray-500">
+                            <span><i class="fas fa-calendar mr-1"></i>${formatDate(item.date)}</span>
+                            <span><i class="fas fa-tag mr-1"></i>${item.type}</span>
+                            <span><i class="fas fa-file mr-1"></i>${formatFileSize(item.fileSize * 1024)}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        ${item.hasAttachments ? '<i class="fas fa-paperclip text-gray-400" title="Memiliki lampiran"></i>' : ''}
+                        ${item.isSigned ? '<i class="fas fa-signature text-green-600" title="Sudah ditandatangani"></i>' : ''}
+                        ${item.aiValidated ? '<i class="fas fa-robot text-blue-600" title="Tervalidasi AI"></i>' : ''}
+                    </div>
+                </div>
+                <div class="flex space-x-2 ml-4">
+                    <button onclick="viewArchive(${item.id})" class="text-blue-600 hover:text-blue-800 p-2">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="downloadArchive(${item.id})" class="text-green-600 hover:text-green-800 p-2">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button onclick="shareArchive(${item.id})" class="text-purple-600 hover:text-purple-800 p-2">
+                        <i class="fas fa-share"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Render timeline view
+    function renderTimelineView(data) {
+        const container = document.getElementById('timeline-view').querySelector('.space-y-6');
+        
+        // Group by date
+        const groupedData = data.reduce((groups, item) => {
+            const date = item.date;
+            if (!groups[date]) {
+                groups[date] = [];
+            }
+            groups[date].push(item);
+            return groups;
+        }, {});
+        
+        container.innerHTML = Object.keys(groupedData).sort((a, b) => new Date(b) - new Date(a)).map(date => `
+            <div class="timeline-item">
+                <div class="bg-white rounded-lg p-4 shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-calendar-day mr-2 text-blue-600"></i>
+                        ${formatDate(date)}
+                    </h3>
+                    <div class="space-y-3">
+                        ${groupedData[date].map(item => `
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-file-alt text-blue-600 text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">${item.number}</p>
+                                        <p class="text-xs text-gray-600">${item.applicant} - ${item.purpose}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="status-badge ${getStatusClass(item.status)}">
+                                        ${item.status}
+                                    </span>
+                                    <button onclick="viewArchive(${item.id})" class="text-blue-600 hover:text-blue-800 p-1">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    // Show empty state
+    function showEmptyState() {
+        document.querySelectorAll('[id$="-view"]').forEach(view => {
+            view.classList.add('hidden');
+        });
+        document.getElementById('empty-state').classList.remove('hidden');
+    }
+    
+    // Hide empty state
+    function hideEmptyState() {
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById(`${currentView}-view`).classList.remove('hidden');
+    }
+    
+    // Update results info
+    function updateResultsInfo(total, from, to) {
+        document.getElementById('showing-from').textContent = from + 1;
+        document.getElementById('showing-to').textContent = to;
+        document.getElementById('total-results').textContent = total;
+    }
+    
+    // Update pagination
+    function updatePagination() {
+        const filtered = filterData();
+        const totalPages = Math.ceil(filtered.length / itemsPerPage);
+        
+        document.getElementById('prev-btn').disabled = currentPage === 1;
+        document.getElementById('next-btn').disabled = currentPage === totalPages;
+        
+        const paginationNumbers = document.getElementById('pagination-numbers');
+        paginationNumbers.innerHTML = '';
+        
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const button = document.createElement('button');
+            button.className = `px-3 py-2 border rounded-lg text-sm font-medium transition-colors duration-200 ${
+                i === currentPage 
+                    ? 'bg-blue-600 text-white border-blue-600' 
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`;
+            button.textContent = i;
+            button.onclick = () => goToPage(i);
+            paginationNumbers.appendChild(button);
+        }
+    }
+    
+    // Go to page
+    function goToPage(page) {
+        currentPage = page;
+        renderArchive();
+        updatePagination();
+    }
+    
+    // Previous page
+    function previousPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderArchive();
+            updatePagination();
+        }
+    }
+    
+    // Next page
+    function nextPage() {
+        const filtered = filterData();
+        const totalPages = Math.ceil(filtered.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderArchive();
+            updatePagination();
+        }
+    }
+    
+    // Reset filters
+    function resetFilters() {
+        document.getElementById('search-input').value = '';
+        document.getElementById('date-from').value = '';
+        document.getElementById('date-to').value = '';
+        
+        searchQuery = '';
+        currentFilter = 'all';
+        currentPage = 1;
+        
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active', 'bg-blue-600', 'text-white');
+            chip.classList.add('bg-gray-200', 'text-gray-700');
+        });
+        
+        document.querySelector('[onclick="toggleFilter(\'all\')"]').classList.add('active', 'bg-blue-600', 'text-white');
+        document.querySelector('[onclick="toggleFilter(\'all\')"]').classList.remove('bg-gray-200', 'text-gray-700');
+        
+        renderArchive();
+        updatePagination();
+    }
+    
+    // Advanced search functions
+    function openAdvancedSearch() {
+        document.getElementById('advanced-search-modal').classList.remove('hidden');
+    }
+    
+    function closeAdvancedSearch() {
+        document.getElementById('advanced-search-modal').classList.add('hidden');
+    }
+    
+    function resetAdvancedSearch() {
+        document.getElementById('adv-number').value = '';
+        document.getElementById('adv-applicant').value = '';
+        document.getElementById('adv-nik').value = '';
+        document.getElementById('adv-type').value = '';
+        document.getElementById('adv-status').value = '';
+        document.getElementById('adv-priority').value = '';
+        document.getElementById('adv-date-from').value = '';
+        document.getElementById('adv-date-to').value = '';
+        document.getElementById('adv-content').value = '';
+        document.getElementById('adv-purpose').value = '';
+        document.getElementById('has-attachments').checked = false;
+        document.getElementById('is-signed').checked = false;
+        document.getElementById('ai-validated').checked = false;
+        document.getElementById('date-preset').value = '';
+    }
+    
+    function applyAdvancedSearch() {
+        // Get all advanced search values
+        const advSearch = {
+            number: document.getElementById('adv-number').value,
+            applicant: document.getElementById('adv-applicant').value,
+            nik: document.getElementById('adv-nik').value,
+            type: document.getElementById('adv-type').value,
+            status: document.getElementById('adv-status').value,
+            priority: document.getElementById('adv-priority').value,
+            dateFrom: document.getElementById('adv-date-from').value,
+            dateTo: document.getElementById('adv-date-to').value,
+            content: document.getElementById('adv-content').value,
+            purpose: document.getElementById('adv-purpose').value,
+            hasAttachments: document.getElementById('has-attachments').checked,
+            isSigned: document.getElementById('is-signed').checked,
+            aiValidated: document.getElementById('ai-validated').checked
+        };
+        
+        // Apply advanced filters (simplified for demo)
+        currentPage = 1;
+        renderArchive();
+        updatePagination();
+        closeAdvancedSearch();
+        
+        showNotification('Pencarian lanjutan diterapkan!', 'success');
+    }
+    
+    function applyDatePreset() {
+        const preset = document.getElementById('date-preset').value;
+        const today = new Date();
+        let fromDate, toDate;
+        
+        switch (preset) {
+            case 'today':
+                fromDate = toDate = today.toISOString().split('T')[0];
+                break;
+            case 'yesterday':
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                fromDate = toDate = yesterday.toISOString().split('T')[0];
+                break;
+            case 'this-week':
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                fromDate = startOfWeek.toISOString().split('T')[0];
+                toDate = today.toISOString().split('T')[0];
+                break;
+            case 'last-week':
+                const lastWeekEnd = new Date(today);
+                lastWeekEnd.setDate(today.getDate() - today.getDay() - 1);
+                const lastWeekStart = new Date(lastWeekEnd);
+                lastWeekStart.setDate(lastWeekEnd.getDate() - 6);
+                fromDate = lastWeekStart.toISOString().split('T')[0];
+                toDate = lastWeekEnd.toISOString().split('T')[0];
+                break;
+            case 'this-month':
+                fromDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                toDate = today.toISOString().split('T')[0];
+                break;
+            case 'last-month':
+                const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+                fromDate = lastMonth.toISOString().split('T')[0];
+                toDate = lastMonthEnd.toISOString().split('T')[0];
+                break;
+            case 'this-year':
+                fromDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+                toDate = today.toISOString().split('T')[0];
+                break;
+        }
+        
+        if (fromDate && toDate) {
+            document.getElementById('adv-date-from').value = fromDate;
+            document.getElementById('adv-date-to').value = toDate;
+        }
+    }
+    
+    // Export functions
+    function exportArchive() {
+        document.getElementById('export-modal').classList.remove('hidden');
+    }
+    
+    function closeExportModal() {
+        document.getElementById('export-modal').classList.add('hidden');
+    }
+    
+    function startExport() {
+        const format = document.getElementById('export-format').value;
+        const scope = document.querySelector('input[name="export-scope"]:checked').value;
+        const includeContent = document.getElementById('include-content').checked;
+        const includeAttachments = document.getElementById('include-attachments').checked;
+        const includeSignatures = document.getElementById('include-signatures').checked;
+        
+        showNotification(`Memulai export arsip dalam format ${format.toUpperCase()}...`, 'info');
+        
+        // Simulate export process
+        setTimeout(() => {
+            showNotification(`Export arsip berhasil! File telah didownload.`, 'success');
+            closeExportModal();
+        }, 2000);
+    }
+    
+    // Archive actions
+    function viewArchive(id) {
+        showNotification(`Membuka arsip ID: ${id}`, 'info');
+        // Redirect to detail page
+        window.location.href = `/pulosarok/letters/detail/${id}/`;
+    }
+    
+    function downloadArchive(id) {
+        showNotification(`Mendownload arsip ID: ${id}`, 'info');
+        // Simulate download
+        setTimeout(() => {
+            showNotification('Download selesai!', 'success');
+        }, 1500);
+    }
+    
+    function shareArchive(id) {
+        showNotification(`Membagikan arsip ID: ${id}`, 'info');
+        // Implement share functionality
+    }
+    
+    // Utility functions
+    function getStatusClass(status) {
+        const statusClasses = {
+            'Draft': 'bg-gray-100 text-gray-800',
+            'Pending': 'bg-yellow-100 text-yellow-800',
+            'Approved': 'bg-blue-100 text-blue-800',
+            'Completed': 'bg-green-100 text-green-800',
+            'Rejected': 'bg-red-100 text-red-800'
+        };
+        return statusClasses[status] || 'bg-gray-100 text-gray-800';
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const bgColors = {
+            'success': 'bg-green-500',
+            'error': 'bg-red-500',
+            'warning': 'bg-yellow-500',
+            'info': 'bg-blue-500'
+        };
+        
+        notification.classList.add(bgColors[type] || bgColors.info);
+        notification.classList.add('text-white');
+        
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'times' : type === 'warning' ? 'exclamation' : 'info'}-circle"></i>
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 5000);
+    }
+</script>
+{% endblock %}

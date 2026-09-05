@@ -1,0 +1,694 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Upload Dokumen Gampong{% endblock %}
+{% block page_title %}Upload Dokumen Gampong{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+    }
+    .upload-area:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .upload-area.dragover {
+        border-color: #3b82f6;
+        background: #dbeafe;
+    }
+    .document-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .document-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    .file-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+    }
+    .file-pdf { background: #ef4444; }
+    .file-doc { background: #3b82f6; }
+    .file-img { background: #10b981; }
+    .file-other { background: #6b7280; }
+    .progress-bar {
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .progress-fill {
+        height: 100%;
+        background: #3b82f6;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Upload Dokumen Gampong</h1>
+                <p class="text-gray-600 mt-1">Kelola dokumen-dokumen penting gampong</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="openModal('folderModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-folder-plus mr-2"></i>Buat Folder
+                </button>
+                <button onclick="exportDocuments()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i>Export List
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100">
+                    <i class="fas fa-file text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Dokumen</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_documents|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100">
+                    <i class="fas fa-folder text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Folder</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_folders|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100">
+                    <i class="fas fa-hdd text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Ukuran</p>
+                    <p class="text-lg font-bold text-gray-900">{{ total_size|filesizeformat|default:"0 B" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Upload Hari Ini</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ today_uploads|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Upload Dokumen Baru</h3>
+        
+        <div id="uploadArea" class="upload-area">
+            <div class="mb-4">
+                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                <p class="text-lg font-medium text-gray-700">Drag & Drop file di sini</p>
+                <p class="text-sm text-gray-500">atau klik untuk memilih file</p>
+            </div>
+            
+            <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.ppt,.pptx" class="hidden">
+            
+            <button onclick="document.getElementById('fileInput').click()" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg">
+                <i class="fas fa-plus mr-2"></i>Pilih File
+            </button>
+            
+            <div class="mt-4">
+                <p class="text-xs text-gray-500">Format yang didukung: PDF, DOC, DOCX, JPG, PNG, GIF, XLSX, XLS, PPT, PPTX</p>
+                <p class="text-xs text-gray-500">Maksimal ukuran file: 10MB per file</p>
+            </div>
+        </div>
+        
+        <!-- Upload Progress -->
+        <div id="uploadProgress" class="hidden mt-4">
+            <div class="space-y-3" id="uploadList"></div>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filter Dokumen</h3>
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                <select name="kategori" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="administrasi" {% if request.GET.kategori == 'administrasi' %}selected{% endif %}>Administrasi</option>
+                    <option value="keuangan" {% if request.GET.kategori == 'keuangan' %}selected{% endif %}>Keuangan</option>
+                    <option value="pembangunan" {% if request.GET.kategori == 'pembangunan' %}selected{% endif %}>Pembangunan</option>
+                    <option value="sosial" {% if request.GET.kategori == 'sosial' %}selected{% endif %}>Sosial</option>
+                    <option value="kesehatan" {% if request.GET.kategori == 'kesehatan' %}selected{% endif %}>Kesehatan</option>
+                    <option value="pendidikan" {% if request.GET.kategori == 'pendidikan' %}selected{% endif %}>Pendidikan</option>
+                    <option value="lainnya" {% if request.GET.kategori == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis File</label>
+                <select name="jenis_file" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Jenis</option>
+                    <option value="pdf" {% if request.GET.jenis_file == 'pdf' %}selected{% endif %}>PDF</option>
+                    <option value="doc" {% if request.GET.jenis_file == 'doc' %}selected{% endif %}>Word</option>
+                    <option value="img" {% if request.GET.jenis_file == 'img' %}selected{% endif %}>Gambar</option>
+                    <option value="excel" {% if request.GET.jenis_file == 'excel' %}selected{% endif %}>Excel</option>
+                    <option value="ppt" {% if request.GET.jenis_file == 'ppt' %}selected{% endif %}>PowerPoint</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Tahun</label>
+                <select name="tahun" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Tahun</option>
+                    {% for year in years %}
+                    <option value="{{ year }}" {% if request.GET.tahun == year|stringformat:'s' %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nama file..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li>
+                    <a href="?folder=" class="text-primary-600 hover:text-primary-700">
+                        <i class="fas fa-home"></i> Root
+                    </a>
+                </li>
+                {% for folder in breadcrumb %}
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <a href="?folder={{ folder.id }}" class="text-primary-600 hover:text-primary-700">{{ folder.name }}</a>
+                </li>
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Documents Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Folders -->
+        {% for folder in folders %}
+        <div class="document-card p-4 cursor-pointer" onclick="openFolder({{ folder.id }})">
+            <div class="flex items-center mb-3">
+                <div class="file-icon bg-yellow-500">
+                    <i class="fas fa-folder"></i>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h4 class="text-sm font-medium text-gray-900 truncate">{{ folder.name }}</h4>
+                    <p class="text-xs text-gray-500">{{ folder.documents_count }} dokumen</p>
+                </div>
+                <div class="relative">
+                    <button onclick="event.stopPropagation(); toggleDropdown('folder-{{ folder.id }}')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div id="folder-{{ folder.id }}" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden">
+                        <div class="py-1">
+                            <button onclick="renameFolder({{ folder.id }}, '{{ folder.name }}')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-edit mr-2"></i>Rename
+                            </button>
+                            <button onclick="deleteFolder({{ folder.id }})" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-trash mr-2"></i>Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-xs text-gray-500">
+                Dibuat: {{ folder.created_at|date:"d M Y" }}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Documents -->
+        {% for doc in documents %}
+        <div class="document-card p-4">
+            <div class="flex items-center mb-3">
+                <div class="file-icon {% if doc.file_extension == 'pdf' %}file-pdf{% elif doc.file_extension in 'doc,docx' %}file-doc{% elif doc.file_extension in 'jpg,jpeg,png,gif' %}file-img{% else %}file-other{% endif %}">
+                    <i class="fas fa-{% if doc.file_extension == 'pdf' %}file-pdf{% elif doc.file_extension in 'doc,docx' %}file-word{% elif doc.file_extension in 'jpg,jpeg,png,gif' %}file-image{% elif doc.file_extension in 'xls,xlsx' %}file-excel{% elif doc.file_extension in 'ppt,pptx' %}file-powerpoint{% else %}file{% endif %}"></i>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h4 class="text-sm font-medium text-gray-900 truncate" title="{{ doc.original_name }}">{{ doc.original_name }}</h4>
+                    <p class="text-xs text-gray-500">{{ doc.file_size|filesizeformat }}</p>
+                </div>
+                <div class="relative">
+                    <button onclick="toggleDropdown('doc-{{ doc.id }}')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div id="doc-{{ doc.id }}" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 hidden">
+                        <div class="py-1">
+                            <button onclick="viewDocument({{ doc.id }})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-eye mr-2"></i>Lihat
+                            </button>
+                            <button onclick="downloadDocument({{ doc.id }})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-download mr-2"></i>Download
+                            </button>
+                            <button onclick="editDocument({{ doc.id }})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-edit mr-2"></i>Edit Info
+                            </button>
+                            <button onclick="moveDocument({{ doc.id }})" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-arrows-alt mr-2"></i>Pindah
+                            </button>
+                            <button onclick="deleteDocument({{ doc.id }})" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                <i class="fas fa-trash mr-2"></i>Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-2">
+                <span class="inline-block px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                    {{ doc.get_kategori_display }}
+                </span>
+            </div>
+            <div class="text-xs text-gray-500">
+                <div>Upload: {{ doc.uploaded_at|date:"d M Y H:i" }}</div>
+                <div>Oleh: {{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username }}</div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <i class="fas fa-folder-open text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">Tidak ada dokumen yang ditemukan</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+        <div class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.jenis_file %}&jenis_file={{ request.GET.jenis_file }}{% endif %}{% if request.GET.tahun %}&tahun={{ request.GET.tahun }}{% endif %}{% if request.GET.folder %}&folder={{ request.GET.folder }}{% endif %}" 
+                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-2 text-sm bg-primary-600 text-white border border-primary-600 rounded-md">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.jenis_file %}&jenis_file={{ request.GET.jenis_file }}{% endif %}{% if request.GET.tahun %}&tahun={{ request.GET.tahun }}{% endif %}{% if request.GET.folder %}&folder={{ request.GET.folder }}{% endif %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}{% if request.GET.jenis_file %}&jenis_file={{ request.GET.jenis_file }}{% endif %}{% if request.GET.tahun %}&tahun={{ request.GET.tahun }}{% endif %}{% if request.GET.folder %}&folder={{ request.GET.folder }}{% endif %}" 
+                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create Folder Modal -->
+<div id="folderModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Buat Folder Baru</h3>
+                    <button onclick="closeModal('folderModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="folderForm" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Folder</label>
+                        <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
+                        <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal('folderModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                            Buat Folder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Document Modal -->
+<div id="editDocModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Edit Informasi Dokumen</h3>
+                    <button onclick="closeModal('editDocModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="editDocForm" method="POST">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama File</label>
+                        <input type="text" name="original_name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                        <select name="kategori" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            <option value="administrasi">Administrasi</option>
+                            <option value="keuangan">Keuangan</option>
+                            <option value="pembangunan">Pembangunan</option>
+                            <option value="sosial">Sosial</option>
+                            <option value="kesehatan">Kesehatan</option>
+                            <option value="pendidikan">Pendidikan</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
+                        <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal('editDocModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentFolder = {{ current_folder_id|default:'null' }};
+    
+    // File upload handling
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadList = document.getElementById('uploadList');
+    
+    // Drag and drop events
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+    
+    function handleFiles(files) {
+        if (files.length === 0) return;
+        
+        uploadProgress.classList.remove('hidden');
+        uploadList.innerHTML = '';
+        
+        Array.from(files).forEach((file, index) => {
+            uploadFile(file, index);
+        });
+    }
+    
+    function uploadFile(file, index) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder_id', currentFolder || '');
+        formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+        
+        // Create progress item
+        const progressItem = document.createElement('div');
+        progressItem.className = 'flex items-center space-x-3 p-3 bg-gray-50 rounded-lg';
+        progressItem.innerHTML = `
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-medium text-gray-900">${file.name}</span>
+                    <span class="text-sm text-gray-500">${formatFileSize(file.size)}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="text-sm text-gray-500" id="status-${index}">Uploading...</div>
+        `;
+        uploadList.appendChild(progressItem);
+        
+        const progressBar = progressItem.querySelector('.progress-fill');
+        const statusElement = progressItem.querySelector(`#status-${index}`);
+        
+        // Upload with progress
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const percentComplete = (e.loaded / e.total) * 100;
+                progressBar.style.width = percentComplete + '%';
+            }
+        });
+        
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200) {
+                statusElement.textContent = 'Selesai';
+                statusElement.className = 'text-sm text-green-600';
+                progressBar.style.width = '100%';
+                progressBar.className = 'progress-fill bg-green-500';
+                
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            } else {
+                statusElement.textContent = 'Error';
+                statusElement.className = 'text-sm text-red-600';
+                progressBar.className = 'progress-fill bg-red-500';
+            }
+        });
+        
+        xhr.addEventListener('error', () => {
+            statusElement.textContent = 'Error';
+            statusElement.className = 'text-sm text-red-600';
+            progressBar.className = 'progress-fill bg-red-500';
+        });
+        
+        xhr.open('POST', '/admin/beneficiaries/upload-dokumen/upload/');
+        xhr.send(formData);
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Modal functions
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+        if (modalId === 'folderModal') {
+            document.getElementById('folderForm').reset();
+        } else if (modalId === 'editDocModal') {
+            document.getElementById('editDocForm').reset();
+        }
+    }
+    
+    // Dropdown functions
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        const isHidden = dropdown.classList.contains('hidden');
+        
+        // Hide all dropdowns
+        document.querySelectorAll('[id^="doc-"], [id^="folder-"]').forEach(el => {
+            el.classList.add('hidden');
+        });
+        
+        if (isHidden) {
+            dropdown.classList.remove('hidden');
+        }
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.relative')) {
+            document.querySelectorAll('[id^="doc-"], [id^="folder-"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+        }
+    });
+    
+    // Folder functions
+    function openFolder(folderId) {
+        window.location.href = `?folder=${folderId}`;
+    }
+    
+    function renameFolder(folderId, currentName) {
+        const newName = prompt('Nama folder baru:', currentName);
+        if (newName && newName !== currentName) {
+            fetch(`/admin/beneficiaries/upload-dokumen/folder/${folderId}/rename/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: newName })
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    alert('Terjadi kesalahan saat mengubah nama folder');
+                }
+            });
+        }
+    }
+    
+    function deleteFolder(folderId) {
+        if (confirm('Apakah Anda yakin ingin menghapus folder ini? Semua dokumen di dalamnya akan ikut terhapus.')) {
+            // Create a form for DELETE request using Django standard approach
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/beneficiaries/upload-dokumen/folder/${folderId}/delete/`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    // Document functions
+    function viewDocument(docId) {
+        window.open(`/admin/beneficiaries/upload-dokumen/document/${docId}/view/`, '_blank');
+    }
+    
+    function downloadDocument(docId) {
+        window.open(`/admin/beneficiaries/upload-dokumen/document/${docId}/download/`, '_blank');
+    }
+    
+    function editDocument(docId) {
+        // Redirect to edit page using Django standard approach
+        window.location.href = `/admin/beneficiaries/upload-dokumen/document/${docId}/edit/`;
+    }
+    
+    function moveDocument(docId) {
+        // Implementation for moving document to another folder
+        alert('Fitur pindah dokumen akan segera tersedia');
+    }
+    
+    function deleteDocument(docId) {
+        if (confirm('Apakah Anda yakin ingin menghapus dokumen ini?')) {
+            // Create a form for DELETE request using Django standard approach
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/beneficiaries/upload-dokumen/document/${docId}/delete/`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function exportDocuments() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', 'excel');
+        window.open(`/admin/beneficiaries/upload-dokumen/export/?${params.toString()}`, '_blank');
+    }
+    
+    // Form submissions using Django standard approach
+    document.getElementById('folderForm').addEventListener('submit', function(e) {
+        // Add parent folder as hidden input
+        const parentInput = document.createElement('input');
+        parentInput.type = 'hidden';
+        parentInput.name = 'parent_folder';
+        parentInput.value = currentFolder || '';
+        this.appendChild(parentInput);
+        
+        // Let the form submit normally to Django view
+        this.action = '/admin/beneficiaries/upload-dokumen/folder/create/';
+    });
+    
+    document.getElementById('editDocForm').addEventListener('submit', function(e) {
+        // Let the form submit normally to Django view
+        // Action URL should be set when editing a document
+        return true;
+    });
+</script>
+{% endblock %}

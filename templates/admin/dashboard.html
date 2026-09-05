@@ -1,0 +1,732 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .stat-card-green {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    .stat-card-orange {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    .stat-card-purple {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #374151;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    .progress-ring-circle {
+        transition: stroke-dasharray 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+    .quick-action-btn {
+        transition: all 0.2s ease;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .activity-item:hover {
+        background-color: #f9fafb;
+    }
+    /* Chart.js specific styles */
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    .chart-legend-item {
+        display: flex;
+        align-items: center;
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    .chart-legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+    .chart-tooltip {
+        background: rgba(0,0,0,0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-tachometer-alt mr-3 text-blue-600"></i>
+                    Selamat Datang di Dashboard Desa
+                </h1>
+                <p class="text-gray-600">Sistem Informasi Desa Pulosarok</p>
+            </div>
+            <div class="flex items-center space-x-4 mt-4 lg:mt-0">
+                <div class="bg-blue-600 text-white rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-calendar text-2xl"></i>
+                        <div>
+                            <p class="text-sm opacity-90" id="current-date"></p>
+                            <p class="text-lg font-bold" id="current-time"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stat-card rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Total Penduduk</p>
+                    <p class="text-3xl font-bold text-white" id="total-penduduk">Loading...</p>
+                    <p class="text-white/70 text-xs mt-1">Penduduk terdaftar</p>
+                </div>
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-users text-white text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span id="penduduk-growth">+0 dalam 30 hari terakhir</span>
+            </div>
+        </div>
+        
+        <div class="stat-card-green rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Total Dusun</p>
+                    <p class="text-3xl font-bold text-white" id="total-dusun">Loading...</p>
+                    <p class="text-white/70 text-xs mt-1">Dusun di desa</p>
+                </div>
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-home text-white text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <span>Rata-rata: <span id="avg-population-dusun">0</span> penduduk/dusun</span>
+            </div>
+        </div>
+        
+        <div class="stat-card-orange rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Total Organisasi</p>
+                    <p class="text-3xl font-bold text-white" id="total-organisasi">Loading...</p>
+                    <p class="text-white/70 text-xs mt-1">Organisasi aktif</p>
+                </div>
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-sitemap text-white text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <span>Organisasi masyarakat</span>
+            </div>
+        </div>
+        
+        <div class="stat-card-purple rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-700 text-sm font-medium">Total UMKM</p>
+                    <p class="text-3xl font-bold text-gray-800" id="total-umkm">Loading...</p>
+                    <p class="text-gray-600 text-xs mt-1">UMKM terdaftar</p>
+                </div>
+                <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                    <i class="fas fa-store text-gray-600 text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-gray-600 text-sm">
+                <span>Usaha Mikro Kecil Menengah</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Demographics Chart -->
+        <div class="lg:col-span-2">
+            <div class="dashboard-card p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-pie mr-2 text-blue-600"></i>
+                    Demografi Penduduk
+                </h3>
+                
+                <!-- Gender Distribution Chart -->
+                <div class="mb-6">
+                    <h4 class="text-md font-medium text-gray-700 mb-3">Distribusi Jenis Kelamin</h4>
+                    <div class="flex flex-col md:flex-row items-center">
+                        <div class="chart-container" style="height: 200px; max-width: 200px; margin: 0 auto;">
+                            <canvas id="gender-chart"></canvas>
+                        </div>
+                        <div class="flex-1 space-y-3 mt-4 md:mt-0 md:ml-6">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-blue-500 rounded mr-3"></div>
+                                    <span class="text-sm text-gray-600">Laki-laki</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-900 mr-2" id="male-count">-</span>
+                                    <span class="text-sm text-gray-500">(<span id="male-percentage">-</span>%)</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full" id="male-bar" style="width: 0%"></div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-pink-500 rounded mr-3"></div>
+                                    <span class="text-sm text-gray-600">Perempuan</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <span class="text-sm font-medium text-gray-900 mr-2" id="female-count">-</span>
+                                    <span class="text-sm text-gray-500">(<span id="female-percentage">-</span>%)</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-pink-500 h-2 rounded-full" id="female-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Age Distribution Chart -->
+                <div>
+                    <h4 class="text-md font-medium text-gray-700 mb-3">Distribusi Usia</h4>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="age-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activities -->
+        <div class="dashboard-card p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-clock mr-2 text-green-600"></i>
+                Aktivitas Terbaru
+            </h3>
+            
+            <div id="recent-activities" class="space-y-4">
+                <!-- Activities will be loaded here -->
+                <div class="flex items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Population Growth Chart -->
+        <div class="dashboard-card p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-chart-line mr-2 text-indigo-600"></i>
+                Pertumbuhan Penduduk
+            </h3>
+            <div class="chart-container">
+                <canvas id="growth-chart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Disability Statistics -->
+        <div class="dashboard-card p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-wheelchair mr-2 text-red-600"></i>
+                Statistik Disabilitas
+            </h3>
+            <div class="chart-container">
+                <canvas id="disability-chart"></canvas>
+            </div>
+            <div class="mt-4 text-center">
+                <div class="inline-block bg-red-50 rounded-lg px-4 py-2">
+                    <span class="text-sm text-gray-600">Membutuhkan Bantuan:</span>
+                    <span class="text-sm font-medium text-red-600 ml-1" id="needs-assistance-count">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="mt-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-bolt mr-2 text-yellow-600"></i>
+            Aksi Cepat
+        </h3>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <a href="{% url 'custom_admin:module_view' 'references' %}" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow duration-200 text-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-user-plus text-blue-600 text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-900">Tambah Penduduk</p>
+            </a>
+            
+            <a href="{% url 'custom_admin:module_view' 'organization' %}" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow duration-200 text-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-users text-purple-600 text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-900">Kelola Organisasi</p>
+            </a>
+            
+            <a href="{% url 'custom_admin:module_view' 'business' %}" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow duration-200 text-center">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-store text-yellow-600 text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-900">Kelola UMKM</p>
+            </a>
+            
+            <a href="{% url 'custom_admin:module_view' 'news' %}" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow duration-200 text-center">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-newspaper text-green-600 text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-900">Tulis Berita</p>
+            </a>
+            
+            <a href="{% url 'custom_admin:module_view' 'letters' %}" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow duration-200 text-center">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-envelope text-red-600 text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-900">Buat Surat</p>
+            </a>
+            
+            <a href="{% url 'custom_admin:module_view' 'core' %}" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow duration-200 text-center">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-cog text-gray-600 text-xl"></i>
+                </div>
+                <p class="text-sm font-medium text-gray-900">Pengaturan</p>
+            </a>
+        </div>
+    </div>
+    
+    <!-- System Info -->
+    <div class="mt-8 bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-server mr-2 text-gray-600"></i>
+            Informasi Sistem
+        </h3>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600" id="total-users">-</div>
+                <div class="text-sm text-gray-600">Total Pengguna</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600" id="active-users">-</div>
+                <div class="text-sm text-gray-600">Pengguna Aktif</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600" id="total-records">-</div>
+                <div class="text-sm text-gray-600">Total Data</div>
+            </div>
+            <div class="text-center">
+                <div class="flex items-center justify-center">
+                    <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                    <span class="text-sm font-medium text-gray-900">Online</span>
+                </div>
+                <div class="text-sm text-gray-600">Status Server</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Global chart objects for reference
+    const charts = {
+        gender: null,
+        age: null,
+        growth: null,
+        disability: null
+    };
+    
+    // Get CSRF token for API requests
+    function getCSRFToken() {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue || '';
+    }
+    
+    // Update current date and time
+    function updateDateTime() {
+        const now = new Date();
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const timeOptions = { hour: '2-digit', minute: '2-digit' };
+        
+        document.getElementById('current-date').textContent = now.toLocaleDateString('id-ID', dateOptions);
+        document.getElementById('current-time').textContent = now.toLocaleTimeString('id-ID', timeOptions);
+    }
+    
+    // Initialize all charts
+    function initializeCharts() {
+        // Gender distribution chart
+        const genderCtx = document.getElementById('gender-chart').getContext('2d');
+        charts.gender = new Chart(genderCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Laki-laki', 'Perempuan'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#3b82f6', '#ec4899'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Age distribution chart
+        const ageCtx = document.getElementById('age-chart').getContext('2d');
+        charts.age = new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0-17 Tahun', '18-60 Tahun', '60+ Tahun'],
+                datasets: [{
+                    label: 'Jumlah Penduduk',
+                    data: [0, 0, 0],
+                    backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6'],
+                    borderWidth: 0,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Population growth chart
+        const growthCtx = document.getElementById('growth-chart').getContext('2d');
+        
+        // Generate last 6 months for labels
+        const months = [];
+        const currentDate = new Date();
+        for (let i = 5; i >= 0; i--) {
+            const date = new Date(currentDate);
+            date.setMonth(currentDate.getMonth() - i);
+            months.push(date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }));
+        }
+        
+        charts.growth = new Chart(growthCtx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Pertumbuhan Penduduk',
+                    data: [0, 0, 0, 0, 0, 0],
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Disability statistics chart
+        const disabilityCtx = document.getElementById('disability-chart').getContext('2d');
+        charts.disability = new Chart(disabilityCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Disabilitas', 'Non-Disabilitas'],
+                datasets: [{
+                    data: [0, 100],
+                    backgroundColor: ['#ef4444', '#d1d5db'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Load dashboard data
+    async function loadDashboardData() {
+        try {
+            // Load statistics from dashboard_stats_api
+            const statsResponse = await fetch('{% url "custom_admin:dashboard_stats_api" %}');
+            const statsData = await statsResponse.json();
+            
+            // Update stats cards with null checks
+            document.getElementById('total-penduduk').textContent = (statsData.total_penduduk || 0).toLocaleString();
+            document.getElementById('total-dusun').textContent = (statsData.total_dusun || 0).toLocaleString();
+            document.getElementById('total-organisasi').textContent = (statsData.total_organisasi || 0).toLocaleString();
+            document.getElementById('total-umkm').textContent = (statsData.total_umkm || 0).toLocaleString();
+            
+            // Update gender distribution with null checks
+            const maleCount = statsData.male_count || 0;
+            const femaleCount = statsData.female_count || 0;
+            const malePercentage = statsData.male_percentage || 0;
+            const femalePercentage = statsData.female_percentage || 0;
+            
+            document.getElementById('male-count').textContent = maleCount.toLocaleString();
+            document.getElementById('female-count').textContent = femaleCount.toLocaleString();
+            document.getElementById('male-percentage').textContent = malePercentage;
+            document.getElementById('female-percentage').textContent = femalePercentage;
+            
+            // Update progress bars
+            document.getElementById('male-bar').style.width = malePercentage + '%';
+            document.getElementById('female-bar').style.width = femalePercentage + '%';
+            
+            // Update gender chart if it exists
+            if (charts.gender) {
+                charts.gender.data.datasets[0].data = [maleCount, femaleCount];
+                charts.gender.update();
+            }
+            
+            // Update age distribution
+            const age0to17 = statsData.age_0_17 || 0;
+            const age18to60 = statsData.age_18_60 || 0;
+            const age60plus = statsData.age_60_plus || 0;
+            
+            // Update age chart if it exists
+            if (charts.age) {
+                charts.age.data.datasets[0].data = [age0to17, age18to60, age60plus];
+                charts.age.update();
+            }
+            
+
+            
+        } catch (error) {
+            console.error('Error loading dashboard stats:', error);
+        }
+        
+        try {
+            // Load enhanced statistics from references dashboard_summary_api
+            const summaryResponse = await fetch('{% url "references:dashboard_summary" %}');
+            const summaryData = await summaryResponse.json();
+            
+            // Update disability chart if it exists
+            if (charts.disability && summaryData.total_penduduk > 0) {
+                const disabilityCount = summaryData.total_disabilitas || 0;
+                const nonDisabilityCount = summaryData.total_penduduk - disabilityCount;
+                
+                charts.disability.data.datasets[0].data = [disabilityCount, nonDisabilityCount];
+                charts.disability.update();
+                
+                // Update needs assistance count
+                if (summaryData.needs_assistance_count !== undefined) {
+                    document.getElementById('needs-assistance-count').textContent = 
+                        summaryData.needs_assistance_count.toLocaleString();
+                }
+            }
+            
+            // Update growth trend if available
+            if (summaryData.new_residents_month !== undefined) {
+                document.getElementById('penduduk-growth').textContent = 
+                    `+${summaryData.new_residents_month} dalam 30 hari terakhir`;
+            }
+            
+            // Update average population per dusun if available
+            if (summaryData.avg_population_per_dusun !== undefined) {
+                document.getElementById('avg-population-dusun').textContent = 
+                    summaryData.avg_population_per_dusun.toLocaleString();
+            }
+            
+            // Update growth chart with mock data (since we don't have historical data)
+            // In a real implementation, you would use actual historical data
+            if (charts.growth) {
+                // Generate some random growth data based on new_residents_month
+                const baseGrowth = summaryData.new_residents_month || 5;
+                const growthData = [];
+                
+                for (let i = 0; i < 6; i++) {
+                    // Random variation around the base growth
+                    growthData.push(Math.max(0, Math.round(baseGrowth * (0.5 + Math.random()))));
+                }
+                
+                charts.growth.data.datasets[0].data = growthData;
+                charts.growth.update();
+            }
+            
+        } catch (error) {
+            console.error('Error loading dashboard summary:', error);
+        }
+        
+        try {
+            // Load recent activities
+            const activitiesResponse = await fetch('{% url "custom_admin:recent_activities_api" %}');
+            const activitiesData = await activitiesResponse.json();
+            
+            const activitiesContainer = document.getElementById('recent-activities');
+            
+            if (activitiesData.activities && activitiesData.activities.length > 0) {
+                activitiesContainer.innerHTML = activitiesData.activities.map(activity => `
+                    <div class="flex items-start space-x-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 ${activity.color} rounded-full flex items-center justify-center">
+                                <i class="${activity.icon} text-sm"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm text-gray-900">${activity.description}</p>
+                            <p class="text-xs text-gray-500">${activity.time_ago}</p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                activitiesContainer.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-inbox text-gray-400 text-3xl mb-2"></i>
+                        <p class="text-gray-500">Belum ada aktivitas terbaru</p>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            console.error('Error loading recent activities:', error);
+            document.getElementById('recent-activities').innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-3xl mb-2"></i>
+                    <p class="text-red-500">Gagal memuat aktivitas</p>
+                </div>
+            `;
+        }
+        
+        try {
+            // Load system info
+            const systemResponse = await fetch('{% url "custom_admin:system_info_api" %}');
+            const systemData = await systemResponse.json();
+            
+            document.getElementById('total-users').textContent = (systemData.total_users || 0).toLocaleString();
+            document.getElementById('active-users').textContent = (systemData.active_users || 0).toLocaleString();
+            document.getElementById('total-records').textContent = (systemData.total_records || 0).toLocaleString();
+            
+        } catch (error) {
+            console.error('Error loading system info:', error);
+        }
+    }
+    
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Update date and time
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        // Initialize charts
+        initializeCharts();
+        
+        // Load dashboard data
+        loadDashboardData();
+        
+        // Refresh data every 5 minutes
+        setInterval(loadDashboardData, 300000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,621 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}{{ news.title }} - Detail Berita{% endblock %}
+
+{% block extra_css %}
+<style>
+    .news-content {
+        line-height: 1.8;
+        font-size: 16px;
+    }
+    .news-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 16px 0;
+    }
+    .news-content h1, .news-content h2, .news-content h3 {
+        margin: 24px 0 16px 0;
+        font-weight: 600;
+    }
+    .news-content p {
+        margin-bottom: 16px;
+    }
+    .news-content ul, .news-content ol {
+        margin: 16px 0;
+        padding-left: 24px;
+    }
+    .news-content blockquote {
+        border-left: 4px solid #3b82f6;
+        padding-left: 16px;
+        margin: 24px 0;
+        font-style: italic;
+        background: #f8fafc;
+        padding: 16px;
+        border-radius: 0 8px 8px 0;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+    }
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-published {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .status-draft {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    .status-scheduled {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .tag-item {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        margin: 2px;
+        display: inline-block;
+    }
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin: 24px 0;
+    }
+    .gallery-item {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    .gallery-item:hover {
+        transform: scale(1.05);
+    }
+    .gallery-item img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    .gallery-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 16px 12px 8px;
+        font-size: 12px;
+    }
+    .action-button {
+        transition: all 0.3s ease;
+        transform: translateY(0);
+    }
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .featured-badge {
+        background: linear-gradient(45deg, #f59e0b, #d97706);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .timeline-item {
+        border-left: 2px solid #e5e7eb;
+        padding-left: 16px;
+        margin-bottom: 16px;
+        position: relative;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #3b82f6;
+    }
+    .meta-info {
+        background: #f8fafc;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 16px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-4">
+            <a href="{% url "news:news_admin" %}" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-arrow-left text-xl"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Detail Berita</h1>
+                <p class="text-gray-600 mt-1">Informasi lengkap tentang berita</p>
+            </div>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'news:news_edit_view' news.pk %}" class="action-button bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-edit mr-2"></i>Edit
+            </a>
+            <button onclick="duplicateNews()" class="action-button bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-copy mr-2"></i>Duplikasi
+            </button>
+            <button onclick="deleteNews()" class="action-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-trash mr-2"></i>Hapus
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="stats-card">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="text-center">
+                <div class="text-3xl font-bold mb-1">{{ news.views|default:0 }}</div>
+                <div class="text-sm opacity-80">Total Views</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold mb-1">{{ news.likes.count|default:0 }}</div>
+                <div class="text-sm opacity-80">Total Likes</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold mb-1">{{ news.comments.count|default:0 }}</div>
+                <div class="text-sm opacity-80">Komentar</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold mb-1">{{ news.shares|default:0 }}</div>
+                <div class="text-sm opacity-80">Dibagikan</div>
+            </div>
+            <div class="text-center">
+                <div class="text-3xl font-bold mb-1">{{ news.created_at|timesince }}</div>
+                <div class="text-sm opacity-80">Yang lalu</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2">
+            <!-- News Content -->
+            <div class="info-card">
+                <div class="flex items-start justify-between mb-6">
+                    <div class="flex-1">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ news.title }}</h1>
+                        {% if news.excerpt %}
+                            <p class="text-lg text-gray-600 mb-4 italic">{{ news.excerpt }}</p>
+                        {% endif %}
+                    </div>
+                    {% if news.is_featured %}
+                        <span class="featured-badge ml-4">
+                            <i class="fas fa-star mr-1"></i>Featured
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <!-- Featured Image -->
+                {% if news.featured_image %}
+                    <div class="mb-6">
+                        <img src="{{ news.featured_image.url }}" alt="{{ news.featured_image_alt|default:news.title }}" class="w-full h-64 md:h-96 object-cover rounded-lg shadow-lg">
+                        {% if news.featured_image_alt %}
+                            <p class="text-sm text-gray-500 mt-2 text-center italic">{{ news.featured_image_alt }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                
+                <!-- Content -->
+                <div class="news-content">
+                    {{ news.content|safe }}
+                </div>
+                
+                <!-- Additional Images -->
+                {% if news.additional_images.all %}
+                    <div class="mt-8">
+                        <h3 class="text-xl font-semibold mb-4">Galeri Gambar</h3>
+                        <div class="image-gallery">
+                            {% for image in news.additional_images.all %}
+                                <div class="gallery-item" onclick="openImageModal('{{ image.image.url }}', '{{ image.caption|default:'' }}')">
+                                    <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Gambar tambahan' }}">
+                                    {% if image.caption %}
+                                        <div class="gallery-caption">
+                                            {{ image.caption }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- Tags -->
+                {% if news.tags %}
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">Tags:</h4>
+                        <div class="flex flex-wrap">
+                            {% for tag in news.tags_list %}
+                                <span class="tag-item">#{{ tag }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- News Info -->
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4">Informasi Berita</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Status:</span>
+                        <span class="status-badge status-{{ news.status }}">
+                            {% if news.status == 'published' %}
+                                <i class="fas fa-check-circle mr-1"></i>Dipublikasi
+                            {% elif news.status == 'draft' %}
+                                <i class="fas fa-edit mr-1"></i>Draft
+                            {% elif news.status == 'scheduled' %}
+                                <i class="fas fa-clock mr-1"></i>Terjadwal
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Kategori:</span>
+                        <span class="font-medium text-blue-600">{{ news.category.name }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Penulis:</span>
+                        <span class="font-medium">{{ news.author.get_full_name|default:news.author.username }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Slug:</span>
+                        <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ news.slug }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4">Timeline</h3>
+                
+                <div class="space-y-2">
+                    <div class="timeline-item">
+                        <div class="text-sm font-medium">Dibuat</div>
+                        <div class="text-xs text-gray-500">{{ news.created_at|date:"d M Y, H:i" }}</div>
+                    </div>
+                    
+                    {% if news.updated_at != news.created_at %}
+                        <div class="timeline-item">
+                            <div class="text-sm font-medium">Terakhir Diupdate</div>
+                            <div class="text-xs text-gray-500">{{ news.updated_at|date:"d M Y, H:i" }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if news.published_at %}
+                        <div class="timeline-item">
+                            <div class="text-sm font-medium">Dipublikasi</div>
+                            <div class="text-xs text-gray-500">{{ news.published_at|date:"d M Y, H:i" }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if news.scheduled_date and news.status == 'scheduled' %}
+                        <div class="timeline-item">
+                            <div class="text-sm font-medium">Dijadwalkan</div>
+                            <div class="text-xs text-gray-500">{{ news.scheduled_date|date:"d M Y, H:i" }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- SEO Info -->
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4">Informasi SEO</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <div class="text-sm font-medium text-gray-700">Meta Title</div>
+                        <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded mt-1">
+                            {{ news.title|truncatechars:60 }}
+                        </div>
+                    </div>
+                    
+                    {% if news.excerpt %}
+                        <div>
+                            <div class="text-sm font-medium text-gray-700">Meta Description</div>
+                            <div class="text-sm text-gray-600 bg-gray-50 p-2 rounded mt-1">
+                                {{ news.excerpt|truncatechars:160 }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div>
+                        <div class="text-sm font-medium text-gray-700">URL</div>
+                        <div class="text-sm text-blue-600 bg-gray-50 p-2 rounded mt-1 font-mono break-all">
+                            {{ request.build_absolute_uri }}/berita/{{ news.slug }}/
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="info-card">
+                <h3 class="text-lg font-semibold mb-4">Aksi Cepat</h3>
+                
+                <div class="space-y-3">
+                    <button onclick="previewNews()" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                        <i class="fas fa-external-link-alt mr-2"></i>Preview di Website
+                    </button>
+                    
+                    <button onclick="shareNews()" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                        <i class="fas fa-share-alt mr-2"></i>Bagikan
+                    </button>
+                    
+                    <button onclick="exportNews()" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                        <i class="fas fa-download mr-2"></i>Export PDF
+                    </button>
+                    
+                    {% if news.status == 'published' %}
+                        <button onclick="unpublishNews()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                            <i class="fas fa-eye-slash mr-2"></i>Unpublish
+                        </button>
+                    {% elif news.status == 'draft' %}
+                        <button onclick="publishNews()" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                            <i class="fas fa-paper-plane mr-2"></i>Publikasikan
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 flex items-center justify-center p-4">
+    <div class="relative max-w-4xl max-h-full">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white text-2xl z-10 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="modalImage" src="" alt="" class="max-w-full max-h-full object-contain rounded-lg">
+        <div id="modalCaption" class="absolute bottom-4 left-4 right-4 text-white text-center bg-black bg-opacity-50 p-3 rounded"></div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg p-6 w-full max-w-md">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Bagikan Berita</h3>
+            <button onclick="closeShareModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-3">
+            <button onclick="shareToFacebook()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition duration-200">
+                <i class="fab fa-facebook-f mr-2"></i>Facebook
+            </button>
+            <button onclick="shareToTwitter()" class="w-full bg-blue-400 hover:bg-blue-500 text-white py-2 px-4 rounded-lg transition duration-200">
+                <i class="fab fa-twitter mr-2"></i>Twitter
+            </button>
+            <button onclick="shareToWhatsApp()" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+            </button>
+            <button onclick="copyLink()" class="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition duration-200">
+                <i class="fas fa-link mr-2"></i>Salin Link
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openImageModal(imageSrc, caption) {
+    document.getElementById('modalImage').src = imageSrc;
+    document.getElementById('modalCaption').textContent = caption || '';
+    document.getElementById('imageModal').classList.remove('hidden');
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').classList.add('hidden');
+}
+
+function duplicateNews() {
+    if (confirm('Apakah Anda yakin ingin menduplikasi berita ini?')) {
+        window.location.href = '{% url "news:admin_duplicate" news.pk %}';
+    }
+}
+
+function deleteNews() {
+    if (confirm('Apakah Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.')) {
+        window.location.href = '{% url "news:admin_delete" news.pk %}';
+    }
+}
+
+function previewNews() {
+    const url = '{{ request.build_absolute_uri }}/berita/{{ news.slug }}/';
+    window.open(url, '_blank');
+}
+
+function shareNews() {
+    document.getElementById('shareModal').classList.remove('hidden');
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal').classList.add('hidden');
+}
+
+function shareToFacebook() {
+    const url = encodeURIComponent('{{ request.build_absolute_uri }}/berita/{{ news.slug }}/');
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+function shareToTwitter() {
+    const url = encodeURIComponent('{{ request.build_absolute_uri }}/berita/{{ news.slug }}/');
+    const text = encodeURIComponent('{{ news.title }}');
+    window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank');
+}
+
+function shareToWhatsApp() {
+    const url = encodeURIComponent('{{ request.build_absolute_uri }}/berita/{{ news.slug }}/');
+    const text = encodeURIComponent('{{ news.title }} - ' + url);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+
+function copyLink() {
+    const url = '{{ request.build_absolute_uri }}/berita/{{ news.slug }}/';
+    navigator.clipboard.writeText(url).then(function() {
+        showNotification('Link berhasil disalin!', 'success');
+        closeShareModal();
+    }).catch(function() {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showNotification('Link berhasil disalin!', 'success');
+        closeShareModal();
+    });
+}
+
+function exportNews() {
+    // This would typically make an AJAX call to generate PDF
+    showNotification('Fitur export PDF akan segera tersedia', 'info');
+}
+
+function publishNews() {
+    if (confirm('Apakah Anda yakin ingin mempublikasikan berita ini?')) {
+        // AJAX call to publish news
+        fetch('{% url "news:admin_publish" news.pk %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Berita berhasil dipublikasikan!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('Gagal mempublikasikan berita', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Terjadi kesalahan', 'error');
+        });
+    }
+}
+
+function unpublishNews() {
+    if (confirm('Apakah Anda yakin ingin menarik publikasi berita ini?')) {
+        // AJAX call to unpublish news
+        fetch('{% url "news:admin_unpublish" news.pk %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Berita berhasil ditarik dari publikasi!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification('Gagal menarik publikasi berita', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Terjadi kesalahan', 'error');
+        });
+    }
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        info: 'bg-blue-500',
+        warning: 'bg-yellow-500'
+    };
+    
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg text-white ${colors[type]} shadow-lg transform translate-x-full transition-transform duration-300`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Animate out and remove
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// Close modals when clicking outside
+document.getElementById('imageModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeImageModal();
+    }
+});
+
+document.getElementById('shareModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeShareModal();
+    }
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+        closeShareModal();
+    }
+});
+</script>
+{% endblock %}

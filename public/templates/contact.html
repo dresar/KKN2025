@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+
+{% block title %}Kontak - Website Desa Pulosarok{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-in">Hubungi Kami</h1>
+            <p class="text-xl opacity-90 fade-in">Informasi Kontak dan Lokasi Desa Pulosarok</p>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Information -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Office Info -->
+            <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-8 text-center">
+                <div class="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-building text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Kantor Desa</h3>
+                <div class="space-y-3 text-gray-700">
+                    <div class="flex items-start justify-center">
+                        <i class="fas fa-map-marker-alt text-primary-600 mr-3 mt-1"></i>
+                        <div class="text-left">
+                            <p class="font-medium">Alamat:</p>
+                            <p id="office-address">Jl. Raya Pulosarok No. 123<br>Desa Pulosarok, Kec. Cibadak<br>Kabupaten Sukabumi, Jawa Barat 43351</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <i class="fas fa-clock text-primary-600 mr-3"></i>
+                        <div class="text-left">
+                            <p class="font-medium">Jam Operasional:</p>
+                            <p>Senin - Jumat: 08:00 - 16:00<br>Sabtu: 08:00 - 12:00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Details -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-8 text-center">
+                <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-phone text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Kontak</h3>
+                <div class="space-y-3 text-gray-700">
+                    <div class="flex items-center justify-center">
+                        <i class="fas fa-phone text-green-600 mr-3"></i>
+                        <div class="text-left">
+                            <p class="font-medium">Telepon:</p>
+                            <p id="office-phone">(0266) 123-4567</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <i class="fas fa-fax text-green-600 mr-3"></i>
+                        <div class="text-left">
+                            <p class="font-medium">Fax:</p>
+                            <p id="office-fax">(0266) 123-4568</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-center">
+                        <i class="fas fa-envelope text-green-600 mr-3"></i>
+                        <div class="text-left">
+                            <p class="font-medium">Email:</p>
+                            <p id="office-email">info@pulosarok.desa.id</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Social Media -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-8 text-center">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-share-alt text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Media Sosial</h3>
+                <div class="space-y-4">
+                    <a href="#" class="flex items-center justify-center bg-white rounded-lg p-3 hover:shadow-md transition-shadow">
+                        <i class="fab fa-facebook text-blue-600 text-xl mr-3"></i>
+                        <span class="text-gray-700">Facebook</span>
+                    </a>
+                    <a href="#" class="flex items-center justify-center bg-white rounded-lg p-3 hover:shadow-md transition-shadow">
+                        <i class="fab fa-instagram text-pink-600 text-xl mr-3"></i>
+                        <span class="text-gray-700">Instagram</span>
+                    </a>
+                    <a href="#" class="flex items-center justify-center bg-white rounded-lg p-3 hover:shadow-md transition-shadow">
+                        <i class="fab fa-youtube text-red-600 text-xl mr-3"></i>
+                        <span class="text-gray-700">YouTube</span>
+                    </a>
+                    <a href="#" class="flex items-center justify-center bg-white rounded-lg p-3 hover:shadow-md transition-shadow">
+                        <i class="fab fa-whatsapp text-green-600 text-xl mr-3"></i>
+                        <span class="text-gray-700">WhatsApp</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Map Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Lokasi Desa</h2>
+            <p class="text-gray-600">Temukan lokasi Kantor Desa Pulosarok</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div id="map-container" class="h-96 bg-gray-200 flex items-center justify-center">
+                <div class="text-center">
+                    <i class="fas fa-map-marked-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">Peta akan dimuat di sini</p>
+                    <button onclick="loadMap()" class="mt-4 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-map mr-2"></i>Muat Peta
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map Controls -->
+        <div class="mt-6 flex flex-wrap justify-center gap-4">
+            <button onclick="showDirections()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-route mr-2"></i>Petunjuk Arah
+            </button>
+            <button onclick="showNearbyPlaces()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-search-location mr-2"></i>Tempat Terdekat
+            </button>
+            <button onclick="shareLocation()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-share mr-2"></i>Bagikan Lokasi
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Form -->
+<section class="py-16 bg-white">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Kirim Pesan</h2>
+            <p class="text-gray-600">Sampaikan pertanyaan, saran, atau kritik Anda kepada kami</p>
+        </div>
+        
+        <div class="bg-gray-50 rounded-lg p-8">
+            <form id="contact-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="sender-name" class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
+                        <input type="text" id="sender-name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    
+                    <div>
+                        <label for="sender-email" class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                        <input type="email" id="sender-email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    
+                    <div>
+                        <label for="sender-phone" class="block text-sm font-medium text-gray-700 mb-2">No. Telepon</label>
+                        <input type="tel" id="sender-phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    
+                    <div>
+                        <label for="message-category" class="block text-sm font-medium text-gray-700 mb-2">Kategori Pesan *</label>
+                        <select id="message-category" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                            <option value="">Pilih Kategori</option>
+                            <option value="informasi">Permintaan Informasi</option>
+                            <option value="layanan">Layanan Desa</option>
+                            <option value="pengaduan">Pengaduan</option>
+                            <option value="saran">Saran dan Kritik</option>
+                            <option value="kerjasama">Kerjasama</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="message-subject" class="block text-sm font-medium text-gray-700 mb-2">Subjek Pesan *</label>
+                    <input type="text" id="message-subject" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                
+                <div>
+                    <label for="message-content" class="block text-sm font-medium text-gray-700 mb-2">Isi Pesan *</label>
+                    <textarea id="message-content" required rows="6" placeholder="Tulis pesan Anda di sini..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="privacy-agreement" required class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                    <label for="privacy-agreement" class="ml-2 block text-sm text-gray-700">
+                        Saya setuju dengan <a href="#" class="text-primary-600 hover:text-primary-700">kebijakan privasi</a> dan penggunaan data pribadi.
+                    </label>
+                </div>
+                
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="resetForm()" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-undo mr-2"></i>Reset
+                    </button>
+                    <button type="submit" class="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-paper-plane mr-2"></i>Kirim Pesan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Emergency Contacts -->
+<section class="py-16 bg-red-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Kontak Darurat</h2>
+            <p class="text-gray-600">Nomor penting yang dapat dihubungi dalam keadaan darurat</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-ambulance text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Ambulans Desa</h3>
+                <p class="text-2xl font-bold text-red-600 mb-2">119</p>
+                <p class="text-sm text-gray-600">24 Jam</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Keamanan Desa</h3>
+                <p class="text-2xl font-bold text-blue-600 mb-2">110</p>
+                <p class="text-sm text-gray-600">24 Jam</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-fire-extinguisher text-orange-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Pemadam Kebakaran</h3>
+                <p class="text-2xl font-bold text-orange-600 mb-2">113</p>
+                <p class="text-sm text-gray-600">24 Jam</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-md text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Puskesmas</h3>
+                <p class="text-2xl font-bold text-green-600 mb-2">(0266) 123-456</p>
+                <p class="text-sm text-gray-600">06:00 - 22:00</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Success Modal -->
+<div id="message-success-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-md w-full">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Pesan Terkirim!</h3>
+                <p class="text-gray-600 mb-4">Terima kasih atas pesan Anda. Kami akan merespons dalam 1-2 hari kerja.</p>
+                <button onclick="closeModal('message-success-modal')" class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class ContactPage {
+        constructor() {
+            this.init();
+        }
+        
+        async init() {
+            await this.loadContactInfo();
+            this.setupFormHandlers();
+        }
+        
+        async loadContactInfo() {
+            try {
+                const data = await apiCall('/pulosarok/core/api/contact/');
+                this.renderContactInfo(data);
+            } catch (error) {
+                console.error('Error loading contact info:', error);
+                // Keep default contact info if API fails
+            }
+        }
+        
+        renderContactInfo(data) {
+            if (data.alamat) {
+                document.getElementById('office-address').innerHTML = data.alamat.replace(/\n/g, '<br>');
+            }
+            if (data.telepon) {
+                document.getElementById('office-phone').textContent = data.telepon;
+            }
+            if (data.fax) {
+                document.getElementById('office-fax').textContent = data.fax;
+            }
+            if (data.email) {
+                document.getElementById('office-email').textContent = data.email;
+            }
+        }
+        
+        setupFormHandlers() {
+            document.getElementById('contact-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitMessage();
+            });
+        }
+        
+        async submitMessage() {
+            try {
+                const formData = {
+                    nama: document.getElementById('sender-name').value,
+                    email: document.getElementById('sender-email').value,
+                    telepon: document.getElementById('sender-phone').value,
+                    kategori: document.getElementById('message-category').value,
+                    subjek: document.getElementById('message-subject').value,
+                    pesan: document.getElementById('message-content').value
+                };
+                
+                const response = await fetch('/pulosarok/core/api/messages/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken()
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    this.showSuccess();
+                    document.getElementById('contact-form').reset();
+                } else {
+                    throw new Error('Gagal mengirim pesan');
+                }
+            } catch (error) {
+                console.error('Error submitting message:', error);
+                alert('Gagal mengirim pesan. Silakan coba lagi.');
+            }
+        }
+        
+        showSuccess() {
+            openModal('message-success-modal');
+        }
+        
+        getCSRFToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+    }
+    
+    function loadMap() {
+        const mapContainer = document.getElementById('map-container');
+        
+        // Simulate map loading
+        mapContainer.innerHTML = `
+            <div class="w-full h-full bg-green-100 flex items-center justify-center">
+                <div class="text-center">
+                    <i class="fas fa-map-marked-alt text-4xl text-green-600 mb-4"></i>
+                    <p class="text-green-700 font-medium">Peta Lokasi Desa Pulosarok</p>
+                    <p class="text-sm text-green-600 mt-2">Koordinat: -6.9175, 107.6191</p>
+                </div>
+            </div>
+        `;
+        
+        // In real implementation, you would integrate with Google Maps, OpenStreetMap, etc.
+        // Example with Google Maps:
+        /*
+        const map = new google.maps.Map(mapContainer, {
+            center: { lat: -6.9175, lng: 107.6191 },
+            zoom: 15
+        });
+        
+        new google.maps.Marker({
+            position: { lat: -6.9175, lng: 107.6191 },
+            map: map,
+            title: 'Kantor Desa Pulosarok'
+        });
+        */
+    }
+    
+    function showDirections() {
+        const address = encodeURIComponent('Desa Pulosarok, Kec. Cibadak, Kabupaten Sukabumi, Jawa Barat');
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${address}`;
+        window.open(url, '_blank');
+    }
+    
+    function showNearbyPlaces() {
+        const address = encodeURIComponent('Desa Pulosarok, Kec. Cibadak, Kabupaten Sukabumi, Jawa Barat');
+        const url = `https://www.google.com/maps/search/?api=1&query=${address}`;
+        window.open(url, '_blank');
+    }
+    
+    function shareLocation() {
+        const address = 'Desa Pulosarok, Kec. Cibadak, Kabupaten Sukabumi, Jawa Barat';
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Lokasi Desa Pulosarok',
+                text: 'Kantor Desa Pulosarok',
+                url: url
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(`Lokasi Desa Pulosarok: ${url}`).then(() => {
+                alert('Link lokasi telah disalin ke clipboard!');
+            });
+        }
+    }
+    
+    function resetForm() {
+        document.getElementById('contact-form').reset();
+    }
+    
+    // Initialize contact page
+    document.addEventListener('DOMContentLoaded', function() {
+        new ContactPage();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+
+{% block title %}Beranda - Website Desa Pulosarok{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 fade-in">Selamat Datang di Desa Pulosarok</h1>
+            <p class="text-xl md:text-2xl mb-8 opacity-90 fade-in">Desa yang Maju, Sejahtera, dan Berbudaya</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center fade-in">
+                <a href="/profil" class="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                    Tentang Desa
+                </a>
+                <a href="/layanan-surat" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition-colors">
+                    Layanan Online
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Statistik Desa</h2>
+            <p class="text-gray-600">Data terkini tentang Desa Pulosarok</p>
+        </div>
+        
+        <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Stats will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Latest News Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center mb-12">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Berita Terbaru</h2>
+                <p class="text-gray-600">Informasi dan kabar terkini dari Desa Pulosarok</p>
+            </div>
+            <a href="/berita" class="text-primary-600 hover:text-primary-700 font-semibold flex items-center">
+                Lihat Semua <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        
+        <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- News will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Events Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center mb-12">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Kegiatan Mendatang</h2>
+                <p class="text-gray-600">Agenda dan kegiatan yang akan dilaksanakan</p>
+            </div>
+            <a href="/kegiatan" class="text-primary-600 hover:text-primary-700 font-semibold flex items-center">
+                Lihat Semua <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+        
+        <div id="events-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Events will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section class="py-16 bg-primary-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Layanan Desa</h2>
+            <p class="text-gray-600">Berbagai layanan yang tersedia untuk masyarakat</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover text-center">
+                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-file-alt text-primary-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Surat Menyurat</h3>
+                <p class="text-gray-600 mb-4">Layanan pembuatan surat keterangan dan administrasi</p>
+                <a href="/layanan-surat" class="text-primary-600 hover:text-primary-700 font-semibold">Akses Layanan</a>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover text-center">
+                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-store text-primary-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">UMKM Desa</h3>
+                <p class="text-gray-600 mb-4">Direktori usaha mikro kecil menengah desa</p>
+                <a href="/umkm" class="text-primary-600 hover:text-primary-700 font-semibold">Lihat UMKM</a>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover text-center">
+                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-map-marked-alt text-primary-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Wisata Desa</h3>
+                <p class="text-gray-600 mb-4">Destinasi wisata dan objek menarik di desa</p>
+                <a href="/wisata" class="text-primary-600 hover:text-primary-700 font-semibold">Jelajahi Wisata</a>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow-md card-hover text-center">
+                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-users text-primary-600 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold mb-2">Data Penduduk</h3>
+                <p class="text-gray-600 mb-4">Informasi demografis dan statistik penduduk</p>
+                <a href="/penduduk" class="text-primary-600 hover:text-primary-700 font-semibold">Lihat Data</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- News Detail Modal -->
+<div id="news-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="news-modal-title" class="text-2xl font-bold text-gray-900"></h2>
+                    <button onclick="closeModal('news-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="news-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Detail Modal -->
+<div id="event-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="event-modal-title" class="text-2xl font-bold text-gray-900"></h2>
+                    <button onclick="closeModal('event-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="event-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class HomePage {
+        constructor() {
+            this.init();
+        }
+        
+        async init() {
+            await this.loadStats();
+            await this.loadNews();
+            await this.loadEvents();
+        }
+        
+        async loadStats() {
+            try {
+                const data = await apiCall('/api/stats/');
+                this.renderStats(data);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Fallback with dummy data
+                this.renderStats({
+                    total_population: 2500,
+                    total_events: 15,
+                    total_news: 25,
+                    total_businesses: 45
+                });
+            }
+        }
+        
+        renderStats(stats) {
+            const container = document.getElementById('stats-container');
+            const statsData = [
+                { icon: 'fas fa-users', label: 'Total Penduduk', value: stats.total_population || 0, color: 'blue' },
+                { icon: 'fas fa-calendar-alt', label: 'Total Kegiatan', value: stats.total_events || 0, color: 'green' },
+                { icon: 'fas fa-newspaper', label: 'Berita', value: stats.total_news || 0, color: 'purple' },
+                { icon: 'fas fa-store', label: 'UMKM', value: stats.total_businesses || 0, color: 'orange' }
+            ];
+            
+            container.innerHTML = statsData.map(stat => `
+                <div class="bg-white p-6 rounded-lg shadow-md card-hover text-center">
+                    <div class="w-16 h-16 bg-${stat.color}-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">${formatNumber(stat.value)}</h3>
+                    <p class="text-gray-600">${stat.label}</p>
+                </div>
+            `).join('');
+        }
+        
+        async loadNews() {
+            try {
+                const data = await apiCall('/api/news/');
+                this.renderNews(data.news || data.results || data || []);
+            } catch (error) {
+                console.error('Error loading news:', error);
+                document.getElementById('news-container').innerHTML = '<p class="text-gray-500 col-span-full text-center">Gagal memuat berita</p>';
+            }
+        }
+        
+        renderNews(news) {
+            const container = document.getElementById('news-container');
+            if (news.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 col-span-full text-center">Belum ada berita</p>';
+                return;
+            }
+            
+            container.innerHTML = news.map(item => `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover cursor-pointer" onclick="showNewsDetail(${item.id})">
+                    <div class="h-48 bg-gray-200 flex items-center justify-center">
+                        ${item.image ? 
+                            `<img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover">` :
+                            `<i class="fas fa-newspaper text-gray-400 text-4xl"></i>`
+                        }
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <i class="fas fa-calendar-alt mr-2"></i>
+                            <span>${formatDate(item.created_at)}</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">${item.title}</h3>
+                        <p class="text-gray-600 line-clamp-3">${(item.content || item.excerpt || '').replace(/<[^>]*>/g, '').substring(0, 150)}...</p>
+                        <div class="mt-4 flex items-center text-primary-600 font-semibold">
+                            <span>Baca Selengkapnya</span>
+                            <i class="fas fa-arrow-right ml-2"></i>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async loadEvents() {
+            try {
+                const data = await apiCall('/api/events/');
+                this.renderEvents(data.events || data.results || data || []);
+            } catch (error) {
+                console.error('Error loading events:', error);
+                document.getElementById('events-container').innerHTML = '<p class="text-gray-500 col-span-full text-center">Gagal memuat kegiatan</p>';
+            }
+        }
+        
+        renderEvents(events) {
+            const container = document.getElementById('events-container');
+            if (events.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 col-span-full text-center">Belum ada kegiatan</p>';
+                return;
+            }
+            
+            container.innerHTML = events.map(item => `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover cursor-pointer" onclick="showEventDetail(${item.id})">
+                    <div class="p-6">
+                        <div class="flex items-center text-sm text-gray-500 mb-2">
+                            <i class="fas fa-calendar-alt mr-2"></i>
+                            <span>${formatDate(item.date)}</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${item.title}</h3>
+                        <p class="text-gray-600 mb-4">${item.description.substring(0, 100)}...</p>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                <span>${item.location}</span>
+                            </div>
+                            <span class="px-3 py-1 bg-primary-100 text-primary-600 rounded-full text-sm font-medium">
+                                ${item.status === 'upcoming' ? 'Mendatang' : item.status === 'ongoing' ? 'Berlangsung' : 'Selesai'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+    
+    async function showNewsDetail(newsId) {
+        try {
+            const data = await apiCall(`/pulosarok/news/news/${newsId}/`);
+            document.getElementById('news-modal-title').textContent = data.title;
+            document.getElementById('news-modal-content').innerHTML = `
+                <div class="mb-4">
+                    ${data.image ? `<img src="${data.image}" alt="${data.title}" class="w-full h-64 object-cover rounded-lg mb-4">` : ''}
+                    <div class="flex items-center text-sm text-gray-500 mb-4">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        <span>${formatDate(data.created_at)}</span>
+                        <i class="fas fa-user ml-4 mr-2"></i>
+                        <span>${data.author || 'Admin'}</span>
+                    </div>
+                    <div class="prose max-w-none">
+                        ${data.content}
+                    </div>
+                </div>
+            `;
+            openModal('news-modal');
+        } catch (error) {
+            console.error('Error loading news detail:', error);
+        }
+    }
+    
+    async function showEventDetail(eventId) {
+        try {
+            const data = await apiCall(`/pulosarok/events/api/events/${eventId}/`);
+            document.getElementById('event-modal-title').textContent = data.title;
+            document.getElementById('event-modal-content').innerHTML = `
+                <div class="mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-calendar-alt mr-3 text-primary-600"></i>
+                            <span>${formatDate(data.date)}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-clock mr-3 text-primary-600"></i>
+                            <span>${data.time || 'Belum ditentukan'}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-map-marker-alt mr-3 text-primary-600"></i>
+                            <span>${data.location}</span>
+                        </div>
+                        <div class="flex items-center text-gray-600">
+                            <i class="fas fa-tag mr-3 text-primary-600"></i>
+                            <span class="px-3 py-1 bg-primary-100 text-primary-600 rounded-full text-sm font-medium">
+                                ${data.status === 'upcoming' ? 'Mendatang' : data.status === 'ongoing' ? 'Berlangsung' : 'Selesai'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="prose max-w-none">
+                        <h4>Deskripsi Kegiatan</h4>
+                        <p>${data.description}</p>
+                    </div>
+                </div>
+            `;
+            openModal('event-modal');
+        } catch (error) {
+            console.error('Error loading event detail:', error);
+        }
+    }
+    
+    // Initialize homepage
+    document.addEventListener('DOMContentLoaded', function() {
+        new HomePage();
+    });
+</script>
+{% endblock %}

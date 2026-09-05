@@ -1,0 +1,1013 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Template Surat{% endblock %}
+
+{% block page_title %}Template Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .template-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .template-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+    .template-preview {
+        max-height: 200px;
+        overflow: hidden;
+        position: relative;
+    }
+    .template-preview::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        background: linear-gradient(transparent, white);
+    }
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .category-kependudukan {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    .category-perizinan {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .category-keuangan {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    .category-umum {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
+    .template-stats {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .template-actions {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .template-card:hover .template-actions {
+        opacity: 1;
+    }
+    .search-filters {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .filter-chip:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    .filter-chip.active {
+        background: rgba(255, 255, 255, 0.4);
+        font-weight: 600;
+    }
+    .template-editor {
+        min-height: 400px;
+    }
+    .variable-tag {
+        display: inline-block;
+        background: #3b82f6;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        margin: 0.125rem;
+        cursor: pointer;
+    }
+    .variable-tag:hover {
+        background: #2563eb;
+    }
+    .template-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+    .usage-indicator {
+        width: 100%;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    .usage-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981 0%, #f59e0b 70%, #ef4444 100%);
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="search-filters rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">
+                    <i class="fas fa-file-contract mr-3"></i>
+                    Template Surat
+                </h2>
+                <p class="opacity-90">Kelola dan gunakan template surat untuk mempercepat pembuatan dokumen</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="showCreateTemplateModal()" class="bg-white text-purple-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-medium">
+                    <i class="fas fa-plus mr-2"></i>
+                    Buat Template
+                </button>
+                <button onclick="importTemplate()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-colors duration-200">
+                    <i class="fas fa-upload mr-2"></i>
+                    Import
+                </button>
+            </div>
+        </div>
+        
+        <!-- Search and Filters -->
+        <div class="space-y-4">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <div class="relative">
+                        <input type="text" id="search-templates" placeholder="Cari template surat..." class="w-full px-4 py-3 pl-12 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white placeholder-white placeholder-opacity-70 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+                        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-white opacity-70"></i>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <select id="sort-templates" class="px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+                        <option value="name">Nama A-Z</option>
+                        <option value="usage">Paling Sering Digunakan</option>
+                        <option value="date">Terbaru</option>
+                        <option value="category">Kategori</option>
+                    </select>
+                    <button onclick="toggleView()" id="view-toggle" class="px-4 py-3 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white hover:bg-opacity-30 transition-colors duration-200">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Category Filters -->
+            <div class="flex flex-wrap gap-2">
+                <div class="filter-chip active" data-category="all">
+                    <i class="fas fa-list mr-2"></i>
+                    Semua Template
+                </div>
+                <div class="filter-chip" data-category="kependudukan">
+                    <i class="fas fa-users mr-2"></i>
+                    Kependudukan
+                </div>
+                <div class="filter-chip" data-category="perizinan">
+                    <i class="fas fa-file-signature mr-2"></i>
+                    Perizinan
+                </div>
+                <div class="filter-chip" data-category="keuangan">
+                    <i class="fas fa-money-bill mr-2"></i>
+                    Keuangan
+                </div>
+                <div class="filter-chip" data-category="umum">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Umum
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Template</p>
+                    <p class="text-2xl font-bold text-gray-900">24</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-contract text-blue-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Paling Populer</p>
+                    <p class="text-2xl font-bold text-gray-900">Surat Keterangan</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-star text-green-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Digunakan Bulan Ini</p>
+                    <p class="text-2xl font-bold text-gray-900">156</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Template Baru</p>
+                    <p class="text-2xl font-bold text-gray-900">3</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-plus-circle text-orange-600 text-xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Templates Grid -->
+    <div id="templates-container" class="template-grid">
+        <!-- Templates will be loaded here -->
+    </div>
+    
+    <!-- Pagination -->
+    <div class="mt-8 flex justify-center">
+        <nav class="flex items-center space-x-2">
+            <button class="px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="px-3 py-2 bg-blue-600 text-white rounded-lg">1</button>
+            <button class="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200">2</button>
+            <button class="px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200">3</button>
+            <button class="px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </nav>
+    </div>
+</div>
+
+<!-- Create/Edit Template Modal -->
+<div id="template-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-6xl sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-title" class="text-xl leading-6 font-bold text-gray-900">
+                        <i class="fas fa-plus mr-2 text-blue-600"></i>
+                        Buat Template Baru
+                    </h3>
+                    <button onclick="closeTemplateModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="template-form" class="space-y-6">
+                    <!-- Basic Information -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Template</label>
+                            <input type="text" id="template-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Contoh: Surat Keterangan Domisili">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
+                            <select id="template-category" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Pilih Kategori</option>
+                                <option value="kependudukan">Kependudukan</option>
+                                <option value="perizinan">Perizinan</option>
+                                <option value="keuangan">Keuangan</option>
+                                <option value="umum">Umum</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
+                        <textarea id="template-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Deskripsi singkat tentang template ini..."></textarea>
+                    </div>
+                    
+                    <!-- Template Content -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Konten Template</label>
+                        <div class="border border-gray-300 rounded-lg">
+                            <div class="bg-gray-50 px-4 py-2 border-b border-gray-300 flex justify-between items-center">
+                                <div class="flex space-x-2">
+                                    <button type="button" onclick="insertVariable('nama_pemohon')" class="variable-tag">
+                                        {nama_pemohon}
+                                    </button>
+                                    <button type="button" onclick="insertVariable('nik')" class="variable-tag">
+                                        {nik}
+                                    </button>
+                                    <button type="button" onclick="insertVariable('alamat')" class="variable-tag">
+                                        {alamat}
+                                    </button>
+                                    <button type="button" onclick="insertVariable('tanggal')" class="variable-tag">
+                                        {tanggal}
+                                    </button>
+                                    <button type="button" onclick="insertVariable('keperluan')" class="variable-tag">
+                                        {keperluan}
+                                    </button>
+                                </div>
+                                <button type="button" onclick="showVariableHelper()" class="text-blue-600 hover:text-blue-800 text-sm">
+                                    <i class="fas fa-question-circle mr-1"></i>
+                                    Bantuan Variabel
+                                </button>
+                            </div>
+                            <div id="template-editor" class="template-editor p-4">
+                                <!-- Quill editor will be initialized here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="template-active" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="template-active" class="ml-2 block text-sm text-gray-900">Template Aktif</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="template-public" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="template-public" class="ml-2 block text-sm text-gray-900">Publik (Dapat digunakan semua user)</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" id="template-ai-enabled" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="template-ai-enabled" class="ml-2 block text-sm text-gray-900">AI Enhancement</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button onclick="closeTemplateModal()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    Batal
+                </button>
+                <button onclick="previewTemplate()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-eye mr-2"></i>
+                    Preview
+                </button>
+                <button onclick="saveTemplate()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    Simpan Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Preview Modal -->
+<div id="preview-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl leading-6 font-bold text-gray-900">
+                        <i class="fas fa-eye mr-2 text-green-600"></i>
+                        Preview Template
+                    </h3>
+                    <button onclick="closePreviewModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div id="preview-content" class="border border-gray-300 rounded-lg p-6 bg-white min-h-96">
+                    <!-- Preview content will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
+                <button onclick="closePreviewModal()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    Tutup
+                </button>
+                <button onclick="exportTemplate()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>
+                    Export Template
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Variable Helper Modal -->
+<div id="variable-helper-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-6 pt-6 pb-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl leading-6 font-bold text-gray-900">
+                        <i class="fas fa-question-circle mr-2 text-blue-600"></i>
+                        Bantuan Variabel Template
+                    </h3>
+                    <button onclick="closeVariableHelper()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-900 mb-2">Cara Menggunakan Variabel</h4>
+                        <p class="text-blue-800 text-sm">Variabel adalah placeholder yang akan diganti dengan data aktual saat surat dibuat. Gunakan format {nama_variabel} dalam template.</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">Variabel Pemohon</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{nama_pemohon}</code>
+                                    <button onclick="insertVariable('nama_pemohon')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{nik}</code>
+                                    <button onclick="insertVariable('nik')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{alamat}</code>
+                                    <button onclick="insertVariable('alamat')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{tempat_lahir}</code>
+                                    <button onclick="insertVariable('tempat_lahir')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{tanggal_lahir}</code>
+                                    <button onclick="insertVariable('tanggal_lahir')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">Variabel Sistem</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{tanggal}</code>
+                                    <button onclick="insertVariable('tanggal')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{nomor_surat}</code>
+                                    <button onclick="insertVariable('nomor_surat')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{kepala_desa}</code>
+                                    <button onclick="insertVariable('kepala_desa')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{nama_desa}</code>
+                                    <button onclick="insertVariable('nama_desa')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                    <code class="text-sm">{keperluan}</code>
+                                    <button onclick="insertVariable('keperluan')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-6 py-4 flex justify-end">
+                <button onclick="closeVariableHelper()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+<script>
+    let quillEditor;
+    let currentTemplateId = null;
+    let currentView = 'grid';
+    
+    // Sample template data
+    const sampleTemplates = [
+        {
+            id: 1,
+            name: 'Surat Keterangan Domisili',
+            category: 'kependudukan',
+            description: 'Template untuk surat keterangan domisili penduduk',
+            usage_count: 45,
+            last_used: '2025-01-15',
+            is_active: true,
+            is_public: true,
+            content: 'Yang bertanda tangan di bawah ini, Kepala Desa {nama_desa}, menerangkan bahwa: Nama: {nama_pemohon}, NIK: {nik}, Alamat: {alamat}, adalah benar penduduk desa kami dan berdomisili di alamat tersebut.'
+        },
+        {
+            id: 2,
+            name: 'Surat Keterangan Usaha',
+            category: 'perizinan',
+            description: 'Template untuk surat keterangan usaha',
+            usage_count: 32,
+            last_used: '2025-01-14',
+            is_active: true,
+            is_public: true,
+            content: 'Yang bertanda tangan di bawah ini menerangkan bahwa {nama_pemohon} dengan NIK {nik} adalah benar memiliki usaha {jenis_usaha} di {alamat_usaha}.'
+        },
+        {
+            id: 3,
+            name: 'Surat Keterangan Tidak Mampu',
+            category: 'keuangan',
+            description: 'Template untuk surat keterangan tidak mampu',
+            usage_count: 28,
+            last_used: '2025-01-13',
+            is_active: true,
+            is_public: false,
+            content: 'Yang bertanda tangan di bawah ini menerangkan bahwa {nama_pemohon} dengan NIK {nik} adalah benar termasuk keluarga tidak mampu berdasarkan data yang ada di kantor desa.'
+        },
+        {
+            id: 4,
+            name: 'Surat Pengantar',
+            category: 'umum',
+            description: 'Template untuk surat pengantar umum',
+            usage_count: 51,
+            last_used: '2025-01-15',
+            is_active: true,
+            is_public: true,
+            content: 'Yang bertanda tangan di bawah ini mengantar {nama_pemohon} untuk keperluan {keperluan} di {tujuan}.'
+        }
+    ];
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTemplates();
+        setupEventListeners();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        // Search
+        document.getElementById('search-templates').addEventListener('input', function() {
+            filterTemplates();
+        });
+        
+        // Sort
+        document.getElementById('sort-templates').addEventListener('change', function() {
+            loadTemplates();
+        });
+        
+        // Category filters
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                filterTemplates();
+            });
+        });
+    }
+    
+    // Load templates
+    function loadTemplates() {
+        const container = document.getElementById('templates-container');
+        const sortBy = document.getElementById('sort-templates').value;
+        
+        // Sort templates
+        let sortedTemplates = [...sampleTemplates];
+        switch(sortBy) {
+            case 'usage':
+                sortedTemplates.sort((a, b) => b.usage_count - a.usage_count);
+                break;
+            case 'date':
+                sortedTemplates.sort((a, b) => new Date(b.last_used) - new Date(a.last_used));
+                break;
+            case 'category':
+                sortedTemplates.sort((a, b) => a.category.localeCompare(b.category));
+                break;
+            default:
+                sortedTemplates.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        
+        container.innerHTML = sortedTemplates.map(template => createTemplateCard(template)).join('');
+    }
+    
+    // Create template card
+    function createTemplateCard(template) {
+        const categoryColors = {
+            'kependudukan': 'category-kependudukan',
+            'perizinan': 'category-perizinan',
+            'keuangan': 'category-keuangan',
+            'umum': 'category-umum'
+        };
+        
+        const categoryIcons = {
+            'kependudukan': 'fas fa-users',
+            'perizinan': 'fas fa-file-signature',
+            'keuangan': 'fas fa-money-bill',
+            'umum': 'fas fa-file-alt'
+        };
+        
+        return `
+            <div class="template-card bg-white rounded-lg shadow-md overflow-hidden" onclick="useTemplate(${template.id})">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">${template.name}</h3>
+                            <span class="category-badge ${categoryColors[template.category]}">
+                                <i class="${categoryIcons[template.category]} mr-1"></i>
+                                ${template.category.charAt(0).toUpperCase() + template.category.slice(1)}
+                            </span>
+                        </div>
+                        <div class="template-actions flex space-x-2">
+                            <button onclick="event.stopPropagation(); editTemplate(${template.id})" class="text-blue-600 hover:text-blue-800 p-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); duplicateTemplate(${template.id})" class="text-green-600 hover:text-green-800 p-2">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); deleteTemplate(${template.id})" class="text-red-600 hover:text-red-800 p-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="template-preview mb-4">
+                        <p class="text-sm text-gray-600">${template.description}</p>
+                        <div class="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-700 font-mono">
+                            ${template.content.substring(0, 150)}${template.content.length > 150 ? '...' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="template-stats">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-bar mr-1"></i>
+                            <span>Digunakan ${template.usage_count}x</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-clock mr-1"></i>
+                            <span>Terakhir: ${formatDate(template.last_used)}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-${template.is_public ? 'globe' : 'lock'} mr-1"></i>
+                            <span>${template.is_public ? 'Publik' : 'Pribadi'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="usage-indicator">
+                            <div class="usage-fill" style="width: ${Math.min(template.usage_count, 100)}%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-3 flex justify-between items-center">
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            template.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }">
+                            <i class="fas fa-${template.is_active ? 'check' : 'times'} mr-1"></i>
+                            ${template.is_active ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                    </div>
+                    <button onclick="event.stopPropagation(); useTemplate(${template.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-play mr-1"></i>
+                        Gunakan
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Filter templates
+    function filterTemplates() {
+        const searchTerm = document.getElementById('search-templates').value.toLowerCase();
+        const activeCategory = document.querySelector('.filter-chip.active').dataset.category;
+        
+        let filteredTemplates = sampleTemplates.filter(template => {
+            const matchesSearch = template.name.toLowerCase().includes(searchTerm) || 
+                                template.description.toLowerCase().includes(searchTerm);
+            const matchesCategory = activeCategory === 'all' || template.category === activeCategory;
+            
+            return matchesSearch && matchesCategory;
+        });
+        
+        const container = document.getElementById('templates-container');
+        container.innerHTML = filteredTemplates.map(template => createTemplateCard(template)).join('');
+    }
+    
+    // Toggle view
+    function toggleView() {
+        const container = document.getElementById('templates-container');
+        const toggleBtn = document.getElementById('view-toggle');
+        
+        if (currentView === 'grid') {
+            currentView = 'list';
+            container.className = 'space-y-4';
+            toggleBtn.innerHTML = '<i class="fas fa-th-large"></i>';
+        } else {
+            currentView = 'grid';
+            container.className = 'template-grid';
+            toggleBtn.innerHTML = '<i class="fas fa-list"></i>';
+        }
+        
+        loadTemplates();
+    }
+    
+    // Template actions
+    function useTemplate(templateId) {
+        const template = sampleTemplates.find(t => t.id === templateId);
+        if (template) {
+            // Redirect to create letter page with template
+            window.location.href = `/admin/letters/create/?template=${templateId}`;
+        }
+    }
+    
+    function editTemplate(templateId) {
+        const template = sampleTemplates.find(t => t.id === templateId);
+        if (template) {
+            currentTemplateId = templateId;
+            
+            // Fill form with template data
+            document.getElementById('template-name').value = template.name;
+            document.getElementById('template-category').value = template.category;
+            document.getElementById('template-description').value = template.description;
+            document.getElementById('template-active').checked = template.is_active;
+            document.getElementById('template-public').checked = template.is_public;
+            
+            // Update modal title
+            document.getElementById('modal-title').innerHTML = '<i class="fas fa-edit mr-2 text-blue-600"></i>Edit Template';
+            
+            // Initialize editor with content
+            initializeEditor(template.content);
+            
+            showTemplateModal();
+        }
+    }
+    
+    function duplicateTemplate(templateId) {
+        const template = sampleTemplates.find(t => t.id === templateId);
+        if (template) {
+            currentTemplateId = null;
+            
+            // Fill form with template data but modify name
+            document.getElementById('template-name').value = template.name + ' (Copy)';
+            document.getElementById('template-category').value = template.category;
+            document.getElementById('template-description').value = template.description;
+            document.getElementById('template-active').checked = true;
+            document.getElementById('template-public').checked = false;
+            
+            // Update modal title
+            document.getElementById('modal-title').innerHTML = '<i class="fas fa-copy mr-2 text-blue-600"></i>Duplikasi Template';
+            
+            // Initialize editor with content
+            initializeEditor(template.content);
+            
+            showTemplateModal();
+        }
+    }
+    
+    function deleteTemplate(templateId) {
+        const template = sampleTemplates.find(t => t.id === templateId);
+        if (template && confirm(`Hapus template "${template.name}"?`)) {
+            showNotification('Template berhasil dihapus!', 'success');
+            loadTemplates();
+        }
+    }
+    
+    // Modal functions
+    function showCreateTemplateModal() {
+        currentTemplateId = null;
+        document.getElementById('template-form').reset();
+        document.getElementById('modal-title').innerHTML = '<i class="fas fa-plus mr-2 text-blue-600"></i>Buat Template Baru';
+        
+        initializeEditor('');
+        showTemplateModal();
+    }
+    
+    function showTemplateModal() {
+        document.getElementById('template-modal').classList.remove('hidden');
+    }
+    
+    function closeTemplateModal() {
+        document.getElementById('template-modal').classList.add('hidden');
+        if (quillEditor) {
+            quillEditor = null;
+        }
+    }
+    
+    function showPreviewModal() {
+        document.getElementById('preview-modal').classList.remove('hidden');
+    }
+    
+    function closePreviewModal() {
+        document.getElementById('preview-modal').classList.add('hidden');
+    }
+    
+    function showVariableHelper() {
+        document.getElementById('variable-helper-modal').classList.remove('hidden');
+    }
+    
+    function closeVariableHelper() {
+        document.getElementById('variable-helper-modal').classList.add('hidden');
+    }
+    
+    // Editor functions
+    function initializeEditor(content = '') {
+        if (quillEditor) {
+            quillEditor = null;
+        }
+        
+        quillEditor = new Quill('#template-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link'],
+                    ['clean']
+                ]
+            }
+        });
+        
+        if (content) {
+            quillEditor.root.innerHTML = content;
+        }
+    }
+    
+    function insertVariable(variable) {
+        if (quillEditor) {
+            const range = quillEditor.getSelection();
+            if (range) {
+                quillEditor.insertText(range.index, `{${variable}}`);
+            } else {
+                quillEditor.insertText(0, `{${variable}}`);
+            }
+        }
+        closeVariableHelper();
+    }
+    
+    // Template operations
+    function saveTemplate() {
+        const form = document.getElementById('template-form');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        const templateData = {
+            name: document.getElementById('template-name').value,
+            category: document.getElementById('template-category').value,
+            description: document.getElementById('template-description').value,
+            content: quillEditor.root.innerHTML,
+            is_active: document.getElementById('template-active').checked,
+            is_public: document.getElementById('template-public').checked,
+            ai_enabled: document.getElementById('template-ai-enabled').checked
+        };
+        
+        showNotification('Menyimpan template...', 'info');
+        
+        setTimeout(() => {
+            if (currentTemplateId) {
+                showNotification('Template berhasil diupdate!', 'success');
+            } else {
+                showNotification('Template berhasil dibuat!', 'success');
+            }
+            closeTemplateModal();
+            loadTemplates();
+        }, 1500);
+    }
+    
+    function previewTemplate() {
+        const content = quillEditor.root.innerHTML;
+        const previewContent = document.getElementById('preview-content');
+        
+        // Replace variables with sample data for preview
+        let previewHtml = content
+            .replace(/{nama_pemohon}/g, 'John Doe')
+            .replace(/{nik}/g, '1234567890123456')
+            .replace(/{alamat}/g, 'Jl. Contoh No. 123, RT 01/RW 02')
+            .replace(/{tanggal}/g, formatDate(new Date()))
+            .replace(/{nomor_surat}/g, '001/KEL/PULOSAROK/2025')
+            .replace(/{kepala_desa}/g, 'Budi Santoso, S.Sos')
+            .replace(/{nama_desa}/g, 'Desa Pulosarok')
+            .replace(/{keperluan}/g, 'Keperluan administrasi');
+        
+        previewContent.innerHTML = previewHtml;
+        showPreviewModal();
+    }
+    
+    function exportTemplate() {
+        showNotification('Mengexport template...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Template berhasil diexport!', 'success');
+        }, 1500);
+    }
+    
+    function importTemplate() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                showNotification('Mengimport template...', 'info');
+                
+                setTimeout(() => {
+                    showNotification('Template berhasil diimport!', 'success');
+                    loadTemplates();
+                }, 2000);
+            }
+        };
+        input.click();
+    }
+    
+    // Utility functions
+    function formatDate(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        return date.toLocaleDateString('id-ID', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            'success': 'bg-green-500 text-white',
+            'error': 'bg-red-500 text-white',
+            'warning': 'bg-yellow-500 text-white',
+            'info': 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Hide notification after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

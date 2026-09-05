@@ -1,0 +1,90 @@
+<!-- Template untuk konfirmasi hapus kategori dalam modal -->
+<div class="modal-header flex justify-between items-center pb-3 mb-4 border-b border-gray-200">
+    <h3 class="text-xl font-semibold text-gray-900">Hapus Kategori Wisata</h3>
+    <button type="button" data-close-modal class="text-gray-400 hover:text-gray-500 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+    </button>
+</div>
+
+<div class="p-4 mb-4 rounded-md bg-yellow-50 text-yellow-800 border border-yellow-200">
+    <div class="flex">
+        <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+        </div>
+        <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800">Perhatian!</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+                <p>Anda akan menghapus kategori wisata <strong>{{ category.name }}</strong>. Tindakan ini tidak dapat dibatalkan.</p>
+                {% if category.locations.count > 0 %}
+                <p class="mt-2">Kategori ini memiliki <strong>{{ category.locations.count }}</strong> lokasi wisata terkait. Jika Anda menghapus kategori ini:</p>
+                <ul class="list-disc pl-5 space-y-1 mt-1">
+                    <li>Semua lokasi wisata yang terkait dengan kategori ini akan kehilangan kategorinya</li>
+                    <li>Anda perlu mengatur ulang kategori untuk lokasi-lokasi tersebut</li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<form method="post" action="{% url 'tourism:admin_category_delete' category.id %}" id="deleteCategoryForm">
+    {% csrf_token %}
+    
+    <div class="mb-4">
+        <div class="flex items-center mb-4">
+            <div class="flex-shrink-0 h-12 w-12 rounded-full flex items-center justify-center" style="background-color: {{ category.color|default:'#4F46E5' }}">
+                <i class="{{ category.icon|default:'fas fa-tag' }} text-white text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <h4 class="text-lg font-medium text-gray-900">{{ category.name }}</h4>
+                <p class="text-sm text-gray-500">{{ category.description|truncatechars:100 }}</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="bg-gray-50 p-3 rounded-md">
+                <p class="text-sm font-medium text-gray-700">Status:</p>
+                <p class="text-sm text-gray-900">{% if category.is_active %}Aktif{% else %}Tidak Aktif{% endif %}</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-md">
+                <p class="text-sm font-medium text-gray-700">Dibuat pada:</p>
+                <p class="text-sm text-gray-900">{{ category.created_at|date:"d M Y" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6">
+        <label for="id_delete_type" class="block text-sm font-medium text-gray-700 mb-1">Jenis Penghapusan</label>
+        <div class="relative inline-block w-full">
+            <select name="delete_type" id="id_delete_type" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                <option value="soft">Soft Delete (Nonaktifkan saja)</option>
+                <option value="hard">Hard Delete (Hapus permanen)</option>
+            </select>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Soft delete hanya menonaktifkan kategori, sedangkan hard delete akan menghapus kategori secara permanen.</p>
+    </div>
+    
+    <div class="mt-4">
+        <label for="id_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Penghapusan</label>
+        <div class="flex items-center">
+            <input type="checkbox" name="confirmation" id="id_confirmation" required class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+            <label for="id_confirmation" class="ml-2 block text-sm text-gray-900">Saya mengerti konsekuensi dari tindakan ini dan ingin melanjutkan</label>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" data-close-modal class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Batal
+        </button>
+        <button type="submit" id="confirmDeleteBtn" disabled class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            Hapus Kategori
+        </button>
+    </div>
+</form>
+
+<script>
+    // Enable/disable delete button based on confirmation checkbox
+    document.getElementById('id_confirmation').addEventListener('change', function() {
+        document.getElementById('confirmDeleteBtn').disabled = !this.checked;
+    });
+</script>

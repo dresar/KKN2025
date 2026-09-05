@@ -1,0 +1,740 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Data Balita - Posyandu{% endblock %}
+
+{% block page_title %}Data Balita{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Data Balita</h1>
+            <p class="mt-1 text-sm text-gray-600">Kelola data kesehatan dan tumbuh kembang balita</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <button onclick="openAddModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Tambah Data Balita
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-baby text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Balita</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="total-balita">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Gizi Normal</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="gizi-normal">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-2xl text-yellow-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Gizi Kurang</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="gizi-kurang">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-times-circle text-2xl text-red-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Stunting</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="stunting-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label for="search" class="block text-sm font-medium text-gray-700">Cari</label>
+                <input type="text" id="search" placeholder="Nama atau NIK..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="posyandu-filter" class="block text-sm font-medium text-gray-700">Posyandu</label>
+                <select id="posyandu-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <option value="">Semua Posyandu</option>
+                </select>
+            </div>
+            <div>
+                <label for="status-filter" class="block text-sm font-medium text-gray-700">Status Gizi</label>
+                <select id="status-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    <option value="">Semua Status</option>
+                    <option value="normal">Normal</option>
+                    <option value="kurang">Kurang Gizi</option>
+                    <option value="buruk">Gizi Buruk</option>
+                    <option value="lebih">Gizi Lebih</option>
+                    <option value="stunting">Stunting</option>
+                    <option value="wasting">Wasting</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="loadBalitaData()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-search mr-2"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Daftar Balita</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Balita</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NIK</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Umur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posyandu</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Gizi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terakhir Diukur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="balita-table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Standardized Pagination -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <span id="pagination-info">Menampilkan 0 dari 0 data</span>
+            </div>
+            <div class="pagination-controls">
+                <div class="pagination-nav">
+                    <button id="prev-btn" onclick="previousPage()" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="page-numbers" class="pagination flex space-x-1"></div>
+                    <button id="next-btn" onclick="nextPage()" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="balita-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="modal-title">Tambah Data Balita</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="balita-form" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="balita-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="penduduk-select" class="block text-sm font-medium text-gray-700">Pilih Balita</label>
+                        <select id="penduduk-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih balita...</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="posyandu-select" class="block text-sm font-medium text-gray-700">Posyandu</label>
+                        <select id="posyandu-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih posyandu...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="measurement-date" class="block text-sm font-medium text-gray-700">Tanggal Pengukuran</label>
+                        <input type="date" id="measurement-date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="age-months" class="block text-sm font-medium text-gray-700">Usia (bulan)</label>
+                        <input type="number" id="age-months" required min="0" max="60" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="weight" class="block text-sm font-medium text-gray-700">Berat Badan (kg)</label>
+                        <input type="number" id="weight" required step="0.1" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="height" class="block text-sm font-medium text-gray-700">Tinggi Badan (cm)</label>
+                        <input type="number" id="height" required step="0.1" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="head-circumference" class="block text-sm font-medium text-gray-700">Lingkar Kepala (cm)</label>
+                        <input type="number" id="head-circumference" step="0.1" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="arm-circumference" class="block text-sm font-medium text-gray-700">Lingkar Lengan (cm)</label>
+                        <input type="number" id="arm-circumference" step="0.1" min="0" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="nutrition-status" class="block text-sm font-medium text-gray-700">Status Gizi</label>
+                    <select id="nutrition-status" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Pilih status gizi...</option>
+                        <option value="normal">Normal</option>
+                        <option value="kurang">Kurang Gizi</option>
+                        <option value="buruk">Gizi Buruk</option>
+                        <option value="lebih">Gizi Lebih</option>
+                        <option value="stunting">Stunting</option>
+                        <option value="wasting">Wasting</option>
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="vitamin-a" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="vitamin-a" class="ml-2 block text-sm text-gray-900">Vitamin A diberikan</label>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="iron-supplement" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label for="iron-supplement" class="ml-2 block text-sm text-gray-900">Suplemen Zat Besi diberikan</label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="notes" class="block text-sm font-medium text-gray-700">Catatan</label>
+                    <textarea id="notes" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Catatan tambahan..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Hapus Data Balita</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">Apakah Anda yakin ingin menghapus data balita ini? Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let deleteId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadBalitaData();
+    loadPosyanduOptions();
+    loadPendudukOptions();
+    
+    // Setup form submission
+    document.getElementById('balita-form').addEventListener('submit', handleFormSubmit);
+    
+    // Setup search on enter
+    document.getElementById('search').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadBalitaData();
+        }
+    });
+});
+
+function loadBalitaData(page = 1) {
+    currentPage = page;
+    const search = document.getElementById('search').value;
+    const posyandu = document.getElementById('posyandu-filter').value;
+    const status = document.getElementById('status-filter').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 10,
+        search: search,
+        posyandu_id: posyandu,
+        nutrition_status: status
+    });
+    
+    fetch(`/pulosarok/posyandu/api/balita/?${params}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            updateTable(data.results || []);
+            const pagination = data.pagination || {};
+            currentPage = pagination.current_page || page;
+            totalPages = pagination.total_pages || 1;
+            updatePagination(pagination);
+            updateStats();
+        })
+        .catch(error => {
+            console.error('Error loading balita data:', error);
+            document.getElementById('balita-table-body').innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-red-500">Error loading data: ' + error.message + '</td></tr>';
+            showNotification('Error loading data: ' + error.message, 'error');
+        });
+}
+
+function updateTable(data) {
+    const tbody = document.getElementById('balita-table-body');
+    tbody.innerHTML = '';
+    
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">Tidak ada data balita</td></tr>';
+        return;
+    }
+    
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${item.patient_name}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.patient_nik}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.age_months} bulan</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.posyandu_name}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    getStatusColor(item.nutrition_status)
+                }">
+                    ${getStatusText(item.nutrition_status)}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.measurement_date}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button onclick="editBalita(${item.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteBalita(${item.id})" class="text-red-600 hover:text-red-900">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'normal': 'bg-green-100 text-green-800',
+        'kurang': 'bg-yellow-100 text-yellow-800',
+        'buruk': 'bg-red-100 text-red-800',
+        'lebih': 'bg-blue-100 text-blue-800',
+        'stunting': 'bg-orange-100 text-orange-800',
+        'wasting': 'bg-purple-100 text-purple-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+}
+
+function getStatusText(status) {
+    const texts = {
+        'normal': 'Normal',
+        'kurang': 'Kurang Gizi',
+        'buruk': 'Gizi Buruk',
+        'lebih': 'Gizi Lebih',
+        'stunting': 'Stunting',
+        'wasting': 'Wasting'
+    };
+    return texts[status] || status;
+}
+
+function updatePagination(pagination) {
+    // Update pagination info
+    const start = ((pagination.current_page - 1) * 10) + 1;
+    const end = Math.min(pagination.current_page * 10, pagination.total_items);
+    document.getElementById('pagination-info').textContent = `Menampilkan ${start}-${end} dari ${pagination.total_items} data`;
+    
+    // Update navigation buttons
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    
+    prevBtn.disabled = !pagination.has_previous;
+    nextBtn.disabled = !pagination.has_next;
+    
+    // Generate page numbers
+    const pageNumbers = document.getElementById('page-numbers');
+    pageNumbers.innerHTML = '';
+    
+    // Calculate page range
+    const startPage = Math.max(1, pagination.current_page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn ${
+            i === pagination.current_page ? 'active' : ''
+        }`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => loadBalitaData(i);
+        pageNumbers.appendChild(pageBtn);
+    }
+}
+
+// Add navigation functions
+let currentPage = 1;
+let totalPages = 1;
+
+function previousPage() {
+    if (currentPage > 1) {
+        loadBalitaData(currentPage - 1);
+    }
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        loadBalitaData(currentPage + 1);
+    }
+}
+
+function updateStats() {
+    // This would typically fetch stats from an API endpoint
+    // For now, we'll update based on current table data
+    fetch('/pulosarok/posyandu/api/balita/stats/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            const stats = data.data || data;
+            document.getElementById('total-balita').textContent = stats.total || 0;
+            document.getElementById('gizi-normal').textContent = stats.normal || 0;
+            document.getElementById('gizi-kurang').textContent = stats.kurang || 0;
+            document.getElementById('stunting-count').textContent = stats.stunting || 0;
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+            // Set default values on error
+            document.getElementById('total-balita').textContent = 0;
+            document.getElementById('gizi-normal').textContent = 0;
+            document.getElementById('gizi-kurang').textContent = 0;
+            document.getElementById('stunting-count').textContent = 0;
+        });
+}
+
+function loadPosyanduOptions() {
+    fetch('/pulosarok/posyandu/api/posyandu/list/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            const selects = ['posyandu-filter', 'posyandu-select'];
+            selects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                // Keep the first option
+                const firstOption = select.querySelector('option');
+                select.innerHTML = '';
+                select.appendChild(firstOption);
+                
+                const posyandus = data.results || data.data || data;
+                if (posyandus && Array.isArray(posyandus)) {
+                    posyandus.forEach(posyandu => {
+                        const option = document.createElement('option');
+                        option.value = posyandu.id;
+                        option.textContent = posyandu.name;
+                        select.appendChild(option);
+                    });
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading posyandu options:', error);
+            showNotification('Error loading posyandu options: ' + error.message, 'error');
+        });
+}
+
+function loadPendudukOptions() {
+    // Load children (balita) from residents API
+    fetch('/pulosarok/posyandu/api/residents/list/?age_max=5')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            const select = document.getElementById('penduduk-select');
+            const firstOption = select.querySelector('option');
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            const penduduks = data.results || data.data || data;
+            if (penduduks && Array.isArray(penduduks)) {
+                penduduks.forEach(penduduk => {
+                    const option = document.createElement('option');
+                    option.value = penduduk.id;
+                    option.textContent = `${penduduk.name} (${penduduk.nik})`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading resident options:', error);
+            showNotification('Error loading resident options: ' + error.message, 'error');
+        });
+}
+
+function openAddModal() {
+    document.getElementById('modal-title').textContent = 'Tambah Data Balita';
+    document.getElementById('balita-form').reset();
+    document.getElementById('balita-id').value = '';
+    document.getElementById('balita-modal').classList.remove('hidden');
+}
+
+function editBalita(id) {
+    document.getElementById('modal-title').textContent = 'Edit Data Balita';
+    document.getElementById('balita-id').value = id;
+    
+    // Fetch balita data
+    fetch(`/pulosarok/posyandu/api/balita/${id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            const balita = data.data || data;
+            document.getElementById('penduduk-select').value = balita.patient_id;
+            document.getElementById('posyandu-select').value = balita.posyandu_id;
+            document.getElementById('measurement-date').value = balita.measurement_date;
+            document.getElementById('age-months').value = balita.age_months;
+            document.getElementById('weight').value = balita.weight;
+            document.getElementById('height').value = balita.height;
+            document.getElementById('head-circumference').value = balita.head_circumference || '';
+            document.getElementById('arm-circumference').value = balita.arm_circumference || '';
+            document.getElementById('nutrition-status').value = balita.nutrition_status;
+            document.getElementById('vitamin-a').checked = balita.vitamin_a_given;
+            document.getElementById('iron-supplement').checked = balita.iron_supplement_given;
+            document.getElementById('notes').value = balita.notes || '';
+            
+            document.getElementById('balita-modal').classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Error loading balita data:', error);
+            showNotification('Error loading data: ' + error.message, 'error');
+        });
+}
+
+function deleteBalita(id) {
+    deleteId = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    fetch(`/pulosarok/posyandu/api/balita/${deleteId}/delete/`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        showNotification('Data berhasil dihapus', 'success');
+        closeDeleteModal();
+        loadBalitaData(currentPage);
+    })
+    .catch(error => {
+        console.error('Error deleting balita:', error);
+        showNotification('Gagal menghapus data: ' + error.message, 'error');
+        closeDeleteModal();
+    });
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const balitaId = document.getElementById('balita-id').value;
+    
+    // Add CSRF token
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+    
+    // Collect form data
+    formData.append('patient_id', document.getElementById('penduduk-select').value);
+    formData.append('posyandu_id', document.getElementById('posyandu-select').value);
+    formData.append('measurement_date', document.getElementById('measurement-date').value);
+    formData.append('age_months', document.getElementById('age-months').value);
+    formData.append('weight', document.getElementById('weight').value);
+    formData.append('height', document.getElementById('height').value);
+    formData.append('head_circumference', document.getElementById('head-circumference').value);
+    formData.append('arm_circumference', document.getElementById('arm-circumference').value);
+    formData.append('nutrition_status', document.getElementById('nutrition-status').value);
+    formData.append('vitamin_a_given', document.getElementById('vitamin-a').checked);
+    formData.append('iron_supplement_given', document.getElementById('iron-supplement').checked);
+    formData.append('notes', document.getElementById('notes').value);
+    
+    const url = balitaId ? `/pulosarok/posyandu/api/balita/${balitaId}/update/` : '/pulosarok/posyandu/api/balita/create/';
+    const method = balitaId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        showNotification(balitaId ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan', 'success');
+        closeModal();
+        loadBalitaData(currentPage);
+    })
+    .catch(error => {
+        console.error('Error saving balita data:', error);
+        showNotification('Terjadi kesalahan: ' + error.message, 'error');
+    });
+}
+
+function closeModal() {
+    document.getElementById('balita-modal').classList.add('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    deleteId = null;
+}
+
+function showNotification(message, type) {
+    // Create a simple notification
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

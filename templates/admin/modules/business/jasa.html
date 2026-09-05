@@ -1,0 +1,691 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Layanan Jasa{% endblock %}
+
+{% csrf_token %}
+
+{% block page_title %}Layanan Jasa - Manajemen Jasa Desa{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-green-600 to-green-800 rounded-lg p-6 text-white">
+            <h1 class="text-2xl font-bold mb-2">Layanan Jasa</h1>
+            <p class="text-green-100">Manajemen layanan jasa yang tersedia di desa</p>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-6 flex flex-wrap gap-4">
+        <button onclick="openAddModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Tambah Layanan
+        </button>
+        <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-download mr-2"></i>
+            Export Data
+        </button>
+        <button onclick="generateReport()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-chart-bar mr-2"></i>
+            Laporan Jasa
+        </button>
+        <button onclick="printCatalog()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-print mr-2"></i>
+            Cetak Katalog
+        </button>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cari Layanan</label>
+                <input type="text" id="searchInput" placeholder="Nama layanan atau penyedia..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Jasa</label>
+                <select id="kategoriFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="kesehatan">Kesehatan</option>
+                    <option value="pendidikan">Pendidikan</option>
+                    <option value="transportasi">Transportasi</option>
+                    <option value="konstruksi">Konstruksi</option>
+                    <option value="teknologi">Teknologi</option>
+                    <option value="keuangan">Keuangan</option>
+                    <option value="pertanian">Pertanian</option>
+                    <option value="lainnya">Lainnya</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <option value="">Semua Status</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="tidak_aktif">Tidak Aktif</option>
+                    <option value="pending">Pending</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="filterData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-concierge-bell text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Layanan</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="totalLayanan">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Layanan Aktif</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="layananAktif">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Penyedia Jasa</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="totalPenyedia">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-star text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Rating Rata-rata</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="ratingRataRata">0.0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Daftar Layanan Jasa</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200" id="jasaTable">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Layanan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penyedia</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="jasaTableBody">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Menampilkan <span id="showingStart">1</span> sampai <span id="showingEnd">10</span> dari <span id="totalRecords">0</span> data
+        </div>
+        <div class="flex space-x-2" id="pagination">
+            <!-- Pagination buttons will be generated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="jasaModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="modalTitle">Tambah Layanan Jasa</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="jasaForm" class="space-y-4">
+                <input type="hidden" id="jasaId">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Layanan *</label>
+                        <input type="text" id="namaLayanan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Penyedia *</label>
+                        <input type="text" id="namaPenyedia" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Alamat *</label>
+                    <textarea id="alamatPenyedia" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Jasa *</label>
+                        <select id="kategoriJasa" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">Pilih Kategori</option>
+                            <option value="kesehatan">Kesehatan</option>
+                            <option value="pendidikan">Pendidikan</option>
+                            <option value="transportasi">Transportasi</option>
+                            <option value="konstruksi">Konstruksi</option>
+                            <option value="teknologi">Teknologi</option>
+                            <option value="keuangan">Keuangan</option>
+                            <option value="pertanian">Pertanian</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Harga (Rp) *</label>
+                        <input type="number" id="hargaMin" required min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
+                        <input type="tel" id="teleponPenyedia" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="emailPenyedia" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Waktu Layanan</label>
+                        <input type="text" id="waktuLayanan" placeholder="Senin-Jumat 08:00-17:00" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Rating (1-5)</label>
+                        <select id="rating" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="">Belum ada rating</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                        <select id="statusLayanan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="aktif">Aktif</option>
+                            <option value="tidak_aktif">Tidak Aktif</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Layanan</label>
+                    <textarea id="deskripsiLayanan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables for API data
+let jasaData = [];
+let currentPage = 1;
+let totalRecords = 0;
+const recordsPerPage = 10;
+let editingId = null;
+
+// Get CSRF token
+async function getCSRFToken() {
+    try {
+        const response = await fetch('/pulosarok/business/csrf-token/');
+        const data = await response.json();
+        return data.csrf_token;
+    } catch (error) {
+        console.error('Error getting CSRF token:', error);
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+}
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadJasaData();
+});
+
+// Load Jasa data from API
+async function loadJasaData(page = 1) {
+    try {
+        const searchTerm = document.getElementById('searchInput').value;
+        const kategoriFilter = document.getElementById('kategoriFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        
+        let url = `/pulosarok/business/api/jasa/?page=${page}&page_size=${recordsPerPage}`;
+        
+        if (searchTerm) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        if (kategoriFilter) {
+            url += `&kategori=${kategoriFilter}`;
+        }
+        
+        if (statusFilter) {
+            url += `&status=${statusFilter}`;
+        }
+        
+        const token = await getCSRFToken();
+        const response = await fetch(url, {
+            headers: {
+                'X-CSRFToken': token,
+                'Content-Type': 'application/json'
+            }
+        });
+        const data = await response.json();
+        
+        if (response.ok && data.results) {
+            jasaData = data.results;
+            currentPage = data.current_page || page;
+            totalRecords = data.count || 0;
+            displayJasaData();
+            updatePagination(data.num_pages || 1, currentPage);
+            updateStatistics();
+        } else {
+            console.error('Error loading Jasa data:', data.message || 'Unknown error');
+        }
+    } catch (error) {
+        console.error('Error fetching Jasa data:', error);
+    }
+}
+
+// Format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+// Get category display name
+function getCategoryName(category) {
+    const categories = {
+        'kesehatan': 'Kesehatan',
+        'pendidikan': 'Pendidikan',
+        'transportasi': 'Transportasi',
+        'konstruksi': 'Konstruksi',
+        'teknologi': 'Teknologi',
+        'keuangan': 'Keuangan',
+        'pertanian': 'Pertanian',
+        'lainnya': 'Lainnya'
+    };
+    return categories[category] || category;
+}
+
+// Update statistics
+function updateStatistics() {
+    const totalLayanan = jasaData.length;
+    const layananAktif = jasaData.filter(item => item.status === 'aktif').length;
+    const totalPenyedia = new Set(jasaData.map(item => item.penyedia)).size;
+    const ratingRataRata = jasaData.reduce((sum, item) => sum + (item.rating || 0), 0) / jasaData.length;
+    
+    document.getElementById('totalLayanan').textContent = totalLayanan;
+    document.getElementById('layananAktif').textContent = layananAktif;
+    document.getElementById('totalPenyedia').textContent = totalPenyedia;
+    document.getElementById('ratingRataRata').textContent = ratingRataRata.toFixed(1);
+}
+
+// Display Jasa data
+function displayJasaData() {
+    const tbody = document.getElementById('jasaTableBody');
+    tbody.innerHTML = '';
+    
+    jasaData.forEach((item, index) => {
+        const statusColors = {
+            'aktif': 'bg-green-100 text-green-800',
+            'tidak_aktif': 'bg-red-100 text-red-800',
+            'pending': 'bg-yellow-100 text-yellow-800'
+        };
+        
+        const hargaRange = item.harga_min && item.harga_max ? 
+            `${formatCurrency(item.harga_min)} - ${formatCurrency(item.harga_max)}` : 
+            'Hubungi penyedia';
+        
+        const rating = item.rating ? 
+            `<div class="flex items-center">
+                <span class="text-yellow-400">★</span>
+                <span class="ml-1">${item.rating}</span>
+            </div>` : 
+            '<span class="text-gray-400">Belum ada</span>';
+        
+        // Calculate row number based on pagination
+        const rowNumber = (currentPage - 1) * recordsPerPage + index + 1;
+        
+        const row = `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rowNumber}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.nama || '-'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div>
+                        <div class="font-medium">${item.penyedia || '-'}</div>
+                        <div class="text-gray-500">${item.telepon || '-'}</div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                        ${getCategoryName(item.kategori) || '-'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${hargaRange}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rating}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'}">
+                        ${item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Tidak Diketahui'}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button onclick="editJasa(${item.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="deleteJasa(${item.id})" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        
+        // Mobile card view (hidden on desktop)
+        const mobileCard = `
+            <div class="md:hidden bg-white p-4 rounded-lg shadow mb-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-semibold text-gray-900">${item.nama || '-'}</h3>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full ${statusColors[item.status] || 'bg-gray-100 text-gray-800'}">
+                        ${item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Tidak Diketahui'}
+                    </span>
+                </div>
+                <div class="space-y-2 text-sm text-gray-600">
+                    <div><span class="font-medium">Penyedia:</span> ${item.penyedia || '-'}</div>
+                    <div><span class="font-medium">Telepon:</span> ${item.telepon || '-'}</div>
+                    <div><span class="font-medium">Kategori:</span> ${getCategoryName(item.kategori) || '-'}</div>
+                    <div><span class="font-medium">Harga:</span> ${hargaRange}</div>
+                    <div><span class="font-medium">Rating:</span> ${item.rating || 'Belum ada'}</div>
+                </div>
+                <div class="flex justify-end space-x-2 mt-3">
+                    <button onclick="editJasa(${item.id})" class="text-blue-600 hover:text-blue-900">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button onclick="deleteJasa(${item.id})" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i> Hapus
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        tbody.innerHTML += row;
+    });
+    
+    document.getElementById('totalRecords').textContent = totalRecords;
+}
+
+// Open add modal
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Tambah Layanan Jasa';
+    document.getElementById('jasaForm').reset();
+    document.getElementById('jasaId').value = '';
+    document.getElementById('jasaModal').classList.remove('hidden');
+}
+
+// Edit Jasa
+function editJasa(id) {
+    const jasa = jasaData.find(item => item.id === id);
+    if (jasa) {
+        document.getElementById('modalTitle').textContent = 'Edit Layanan Jasa';
+        document.getElementById('jasaId').value = jasa.id;
+        document.getElementById('namaLayanan').value = jasa.nama;
+        document.getElementById('kategoriJasa').value = jasa.kategori;
+        document.getElementById('deskripsiLayanan').value = jasa.deskripsi;
+        document.getElementById('namaPenyedia').value = jasa.penyedia;
+        document.getElementById('teleponPenyedia').value = jasa.telepon;
+        document.getElementById('emailPenyedia').value = jasa.email || '';
+        document.getElementById('pengalaman').value = jasa.pengalaman || '';
+        document.getElementById('alamatPenyedia').value = jasa.alamat;
+        document.getElementById('hargaMin').value = jasa.harga_min || '';
+        document.getElementById('hargaMax').value = jasa.harga_max || '';
+        document.getElementById('satuanHarga').value = jasa.satuan_harga || 'per_proyek';
+        document.getElementById('waktuLayanan').value = jasa.waktu_layanan || '';
+        document.getElementById('areaLayanan').value = jasa.area_layanan || '';
+        document.getElementById('statusLayanan').value = jasa.status;
+        document.getElementById('rating').value = jasa.rating || '';
+        document.getElementById('website').value = jasa.website || '';
+        document.getElementById('sertifikat').value = jasa.sertifikat || '';
+        document.getElementById('keunggulan').value = jasa.keunggulan || '';
+        document.getElementById('syaratKetentuan').value = jasa.syarat_ketentuan || '';
+        document.getElementById('jasaModal').classList.remove('hidden');
+    }
+}
+
+// Delete Jasa
+async function deleteJasa(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus layanan jasa ini?')) {
+        try {
+            const response = await fetch(`/pulosarok/business/api/jasa/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            });
+            
+            if (response.ok && response.status === 204) {
+                alert('Layanan jasa berhasil dihapus!');
+                loadJasaData(currentPage);
+            } else {
+                alert('Gagal menghapus layanan jasa!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menghapus layanan jasa!');
+        }
+    }
+}
+
+// Close modal
+function closeModal() {
+    document.getElementById('jasaModal').classList.add('hidden');
+}
+
+// Handle form submission
+document.getElementById('jasaForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        nama: document.getElementById('namaLayanan').value,
+        kategori: document.getElementById('kategoriJasa').value,
+        deskripsi: document.getElementById('deskripsiLayanan').value,
+        penyedia: document.getElementById('namaPenyedia').value,
+        telepon: document.getElementById('teleponPenyedia').value,
+        email: document.getElementById('emailPenyedia').value,
+        alamat: document.getElementById('alamatPenyedia').value,
+        harga_min: parseInt(document.getElementById('hargaMin').value) || 0,
+        waktu_layanan: document.getElementById('waktuLayanan').value,
+        status: document.getElementById('statusLayanan').value,
+        rating: parseFloat(document.getElementById('rating').value) || null
+    };
+    
+    const jasaId = document.getElementById('jasaId').value;
+    
+    try {
+        const token = await getCSRFToken();
+        let response;
+        if (jasaId) {
+            // Update existing jasa
+            formData.id = jasaId;
+            response = await fetch(`/pulosarok/business/api/jasa/${jasaId}/`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+        } else {
+            // Add new jasa
+            response = await fetch('/pulosarok/business/api/jasa/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+        }
+        
+        const data = await response.json();
+        
+        if (response.ok && (data.success || data.id)) {
+            alert('Layanan jasa berhasil disimpan!');
+            loadJasaData(currentPage);
+            closeModal();
+        } else {
+            alert('Gagal menyimpan layanan jasa!');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat menyimpan layanan jasa!');
+    }
+});
+
+// Filter data
+function filterData() {
+    loadJasaData(1);
+}
+
+// Export data
+function exportData() {
+    window.location.href = '/pulosarok/business/export/jasa/';
+}
+
+// Generate report
+function generateReport() {
+    // This would typically generate a comprehensive service report
+    alert('Fitur laporan jasa akan segera tersedia!');
+}
+
+// Print catalog
+function printCatalog() {
+    // This would typically generate a printable service catalog
+    alert('Fitur cetak katalog akan segera tersedia!');
+}
+
+// Update pagination
+function updatePagination(totalPages, current) {
+    const paginationContainer = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    if (current > 1) {
+        paginationHTML += `
+            <button onclick="changePage(${current - 1})" 
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Previous
+            </button>
+        `;
+    }
+    
+    // Calculate page range to show (max 5 pages)
+    let startPage = Math.max(1, current - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+    }
+    
+    // Page numbers
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === current) {
+            paginationHTML += `
+                <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                    ${i}
+                </button>
+            `;
+        } else {
+            paginationHTML += `
+                <button onclick="changePage(${i})" 
+                        class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    ${i}
+                </button>
+            `;
+        }
+    }
+    
+    // Next button
+    if (current < totalPages) {
+        paginationHTML += `
+            <button onclick="changePage(${current + 1})" 
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                Next
+            </button>
+        `;
+    }
+    
+    paginationContainer.innerHTML = paginationHTML;
+    
+    // Update showing info
+    const start = (current - 1) * recordsPerPage + 1;
+    const end = Math.min(current * recordsPerPage, totalRecords);
+    document.getElementById('showingStart').textContent = start;
+    document.getElementById('showingEnd').textContent = end;
+    document.getElementById('totalRecords').textContent = totalRecords;
+}
+
+// Change page function
+function changePage(page) {
+    if (page >= 1 && page <= Math.ceil(totalRecords / recordsPerPage)) {
+        currentPage = page;
+        loadJasaData(page);
+    }
+}
+</script>
+{% endblock %}

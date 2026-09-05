@@ -1,0 +1,961 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Laporan Surat{% endblock %}
+
+{% block page_title %}Laporan Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        transition: all 0.3s ease;
+    }
+    .report-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    .chart-container.large {
+        height: 400px;
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .trend-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .trend-up {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .trend-down {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    .trend-stable {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    .filter-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .date-range-picker {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+    .date-range-picker::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    .export-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        transition: all 0.3s ease;
+    }
+    .export-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    .progress-ring-circle {
+        transition: stroke-dashoffset 0.35s;
+        transform-origin: 50% 50%;
+    }
+    .table-responsive {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    .performance-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    .performance-excellent {
+        background-color: #10b981;
+    }
+    .performance-good {
+        background-color: #f59e0b;
+    }
+    .performance-poor {
+        background-color: #ef4444;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header with Filters -->
+    <div class="filter-section rounded-lg p-6 mb-6">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h2 class="text-2xl font-bold mb-2">
+                    <i class="fas fa-chart-bar mr-3"></i>
+                    Laporan Surat
+                </h2>
+                <p class="opacity-90">Analisis dan statistik penggunaan sistem surat desa</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="exportReport('pdf')" class="export-btn px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-file-pdf mr-2"></i>
+                    Export PDF
+                </button>
+                <button onclick="exportReport('excel')" class="export-btn px-4 py-2 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-file-excel mr-2"></i>
+                    Export Excel
+                </button>
+            </div>
+        </div>
+        
+        <!-- Filters -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium mb-2 opacity-90">Periode</label>
+                <select id="period-filter" class="w-full px-3 py-2 date-range-picker rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+                    <option value="today">Hari Ini</option>
+                    <option value="week">Minggu Ini</option>
+                    <option value="month" selected>Bulan Ini</option>
+                    <option value="quarter">Kuartal Ini</option>
+                    <option value="year">Tahun Ini</option>
+                    <option value="custom">Custom</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2 opacity-90">Dari Tanggal</label>
+                <input type="date" id="start-date" class="w-full px-3 py-2 date-range-picker rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2 opacity-90">Sampai Tanggal</label>
+                <input type="date" id="end-date" class="w-full px-3 py-2 date-range-picker rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-2 opacity-90">Jenis Surat</label>
+                <select id="letter-type-filter" class="w-full px-3 py-2 date-range-picker rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+                    <option value="all">Semua Jenis</option>
+                    <option value="kependudukan">Kependudukan</option>
+                    <option value="perizinan">Perizinan</option>
+                    <option value="keuangan">Keuangan</option>
+                    <option value="umum">Umum</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="mt-4 flex justify-end">
+            <button onclick="applyFilters()" class="bg-white text-purple-600 px-6 py-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-medium">
+                <i class="fas fa-filter mr-2"></i>
+                Terapkan Filter
+            </button>
+        </div>
+    </div>
+    
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Total Surat</p>
+                    <p class="stat-number text-blue-600">1,247</p>
+                    <div class="trend-indicator trend-up mt-2">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +12.5%
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-file-alt text-blue-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Surat Selesai</p>
+                    <p class="stat-number text-green-600">1,156</p>
+                    <div class="trend-indicator trend-up mt-2">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +8.3%
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Rata-rata Waktu</p>
+                    <p class="stat-number text-orange-600">2.3</p>
+                    <p class="text-sm text-gray-500">hari</p>
+                    <div class="trend-indicator trend-down mt-2">
+                        <i class="fas fa-arrow-down mr-1"></i>
+                        -15.2%
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-clock text-orange-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 mb-1">Tingkat Kepuasan</p>
+                    <p class="stat-number text-purple-600">94.2</p>
+                    <p class="text-sm text-gray-500">%</p>
+                    <div class="trend-indicator trend-stable mt-2">
+                        <i class="fas fa-minus mr-1"></i>
+                        +0.8%
+                    </div>
+                </div>
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-star text-purple-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Letter Trends Chart -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-chart-line mr-2 text-blue-600"></i>
+                    Tren Surat Bulanan
+                </h3>
+                <div class="flex space-x-2">
+                    <button onclick="changeChartType('line')" class="text-blue-600 hover:text-blue-800 p-2">
+                        <i class="fas fa-chart-line"></i>
+                    </button>
+                    <button onclick="changeChartType('bar')" class="text-gray-400 hover:text-gray-600 p-2">
+                        <i class="fas fa-chart-bar"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Letter Types Distribution -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-chart-pie mr-2 text-green-600"></i>
+                    Distribusi Jenis Surat
+                </h3>
+                <button onclick="toggleChartView('pie')" class="text-green-600 hover:text-green-800 p-2">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="chart-container">
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Analysis -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Processing Time Analysis -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                <i class="fas fa-stopwatch mr-2 text-orange-600"></i>
+                Analisis Waktu Proses
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="performance-indicator performance-excellent"></span>
+                        <span class="text-sm text-gray-700">≤ 1 hari</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 65%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">65%</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="performance-indicator performance-good"></span>
+                        <span class="text-sm text-gray-700">2-3 hari</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 25%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">25%</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="performance-indicator performance-poor"></span>
+                        <span class="text-sm text-gray-700">> 3 hari</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-24 bg-gray-200 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 10%"></div>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">10%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 p-4 bg-orange-50 rounded-lg">
+                <p class="text-sm text-orange-800">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    <strong>Rekomendasi:</strong> Tingkatkan efisiensi dengan menggunakan template AI dan validasi otomatis.
+                </p>
+            </div>
+        </div>
+        
+        <!-- User Activity -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                <i class="fas fa-users mr-2 text-purple-600"></i>
+                Aktivitas Pengguna
+            </h3>
+            
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Admin Desa</p>
+                            <p class="text-xs text-gray-500">156 surat dibuat</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-gray-900">45%</p>
+                        <p class="text-xs text-gray-500">dari total</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-green-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Sekretaris</p>
+                            <p class="text-xs text-gray-500">98 surat dibuat</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-gray-900">28%</p>
+                        <p class="text-xs text-gray-500">dari total</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-orange-600"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">Staff</p>
+                            <p class="text-xs text-gray-500">93 surat dibuat</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold text-gray-900">27%</p>
+                        <p class="text-xs text-gray-500">dari total</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Usage Statistics -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                <i class="fas fa-robot mr-2 text-indigo-600"></i>
+                Penggunaan AI
+            </h3>
+            
+            <div class="text-center mb-6">
+                <svg class="progress-ring w-24 h-24 mx-auto" width="96" height="96">
+                    <circle class="progress-ring-circle stroke-current text-gray-200" stroke-width="6" fill="transparent" r="42" cx="48" cy="48"/>
+                    <circle class="progress-ring-circle stroke-current text-indigo-600" stroke-width="6" fill="transparent" r="42" cx="48" cy="48" stroke-dasharray="264" stroke-dashoffset="79"/>
+                </svg>
+                <p class="text-2xl font-bold text-indigo-600 mt-2">70%</p>
+                <p class="text-sm text-gray-600">Surat menggunakan AI</p>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Validasi AI</span>
+                    <span class="text-sm font-medium text-gray-900">892 surat</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Saran Perbaikan</span>
+                    <span class="text-sm font-medium text-gray-900">654 surat</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Generate Otomatis</span>
+                    <span class="text-sm font-medium text-gray-900">234 surat</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Detailed Reports -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Top Templates -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                <i class="fas fa-trophy mr-2 text-yellow-600"></i>
+                Template Paling Populer
+            </h3>
+            
+            <div class="table-responsive">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-2 text-sm font-medium text-gray-600">Template</th>
+                            <th class="text-center py-3 px-2 text-sm font-medium text-gray-600">Penggunaan</th>
+                            <th class="text-center py-3 px-2 text-sm font-medium text-gray-600">Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-2">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                        <i class="fas fa-file-alt text-blue-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900">Surat Keterangan Domisili</span>
+                                </div>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="text-sm font-bold text-gray-900">156</span>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="trend-indicator trend-up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +12%
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-2">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-green-100 rounded flex items-center justify-center">
+                                        <i class="fas fa-file-signature text-green-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900">Surat Keterangan Usaha</span>
+                                </div>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="text-sm font-bold text-gray-900">98</span>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="trend-indicator trend-up">
+                                    <i class="fas fa-arrow-up"></i>
+                                    +8%
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-2">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-orange-100 rounded flex items-center justify-center">
+                                        <i class="fas fa-money-bill text-orange-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900">Surat Keterangan Tidak Mampu</span>
+                                </div>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="text-sm font-bold text-gray-900">76</span>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="trend-indicator trend-stable">
+                                    <i class="fas fa-minus"></i>
+                                    +2%
+                                </span>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-2">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
+                                        <i class="fas fa-file text-purple-600 text-sm"></i>
+                                    </div>
+                                    <span class="text-sm font-medium text-gray-900">Surat Pengantar</span>
+                                </div>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="text-sm font-bold text-gray-900">54</span>
+                            </td>
+                            <td class="text-center py-3 px-2">
+                                <span class="trend-indicator trend-down">
+                                    <i class="fas fa-arrow-down"></i>
+                                    -5%
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Monthly Comparison -->
+        <div class="report-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                <i class="fas fa-calendar-alt mr-2 text-blue-600"></i>
+                Perbandingan Bulanan
+            </h3>
+            
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Activity -->
+    <div class="report-card bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">
+            <i class="fas fa-history mr-2 text-gray-600"></i>
+            Aktivitas Terbaru
+        </h3>
+        
+        <div class="table-responsive">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Waktu</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Aktivitas</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">User</th>
+                        <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
+                        <th class="text-center py-3 px-4 text-sm font-medium text-gray-600">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm text-gray-900">15:30</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-plus-circle text-green-600"></i>
+                                <span class="text-sm text-gray-900">Surat Keterangan Domisili dibuat</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-900">Admin Desa</td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Selesai
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm text-gray-900">14:45</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-robot text-blue-600"></i>
+                                <span class="text-sm text-gray-900">AI Validation untuk Surat Usaha</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-900">Sekretaris</td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                Diproses
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-4 text-sm text-gray-900">13:20</td>
+                        <td class="py-3 px-4">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-file-export text-purple-600"></i>
+                                <span class="text-sm text-gray-900">Export laporan bulanan</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-sm text-gray-900">Admin Desa</td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Selesai
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    let trendsChart, distributionChart, comparisonChart;
+    
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+        setupEventListeners();
+        setDefaultDates();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        document.getElementById('period-filter').addEventListener('change', function() {
+            updateDateRange(this.value);
+        });
+    }
+    
+    // Set default dates
+    function setDefaultDates() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        document.getElementById('start-date').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('end-date').value = today.toISOString().split('T')[0];
+    }
+    
+    // Update date range based on period selection
+    function updateDateRange(period) {
+        const today = new Date();
+        let startDate, endDate = today;
+        
+        switch(period) {
+            case 'today':
+                startDate = today;
+                break;
+            case 'week':
+                startDate = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case 'month':
+                startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+                break;
+            case 'quarter':
+                const quarter = Math.floor(today.getMonth() / 3);
+                startDate = new Date(today.getFullYear(), quarter * 3, 1);
+                break;
+            case 'year':
+                startDate = new Date(today.getFullYear(), 0, 1);
+                break;
+            default:
+                return; // Custom - don't update
+        }
+        
+        document.getElementById('start-date').value = startDate.toISOString().split('T')[0];
+        document.getElementById('end-date').value = endDate.toISOString().split('T')[0];
+    }
+    
+    // Initialize all charts
+    function initializeCharts() {
+        initializeTrendsChart();
+        initializeDistributionChart();
+        initializeComparisonChart();
+    }
+    
+    // Initialize trends chart
+    function initializeTrendsChart() {
+        const ctx = document.getElementById('trendsChart').getContext('2d');
+        
+        trendsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                datasets: [{
+                    label: 'Total Surat',
+                    data: [85, 92, 78, 105, 98, 112, 125, 118, 134, 142, 156, 147],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Surat Selesai',
+                    data: [78, 85, 72, 98, 91, 105, 118, 112, 127, 135, 148, 140],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize distribution chart
+    function initializeDistributionChart() {
+        const ctx = document.getElementById('distributionChart').getContext('2d');
+        
+        distributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Kependudukan', 'Perizinan', 'Keuangan', 'Umum'],
+                datasets: [{
+                    data: [45, 25, 20, 10],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#f59e0b',
+                        '#8b5cf6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize comparison chart
+    function initializeComparisonChart() {
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        
+        comparisonChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Okt 2024', 'Nov 2024', 'Des 2024', 'Jan 2025'],
+                datasets: [{
+                    label: 'Bulan Ini',
+                    data: [142, 156, 147, 134],
+                    backgroundColor: '#3b82f6',
+                }, {
+                    label: 'Bulan Lalu',
+                    data: [134, 142, 156, 147],
+                    backgroundColor: '#e5e7eb',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+    
+    // Change chart type
+    function changeChartType(type) {
+        if (trendsChart) {
+            trendsChart.destroy();
+        }
+        
+        const ctx = document.getElementById('trendsChart').getContext('2d');
+        
+        trendsChart = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'],
+                datasets: [{
+                    label: 'Total Surat',
+                    data: [85, 92, 78, 105, 98, 112, 125, 118, 134, 142, 156, 147],
+                    borderColor: '#3b82f6',
+                    backgroundColor: type === 'line' ? 'rgba(59, 130, 246, 0.1)' : '#3b82f6',
+                    tension: type === 'line' ? 0.4 : 0,
+                    fill: type === 'line'
+                }, {
+                    label: 'Surat Selesai',
+                    data: [78, 85, 72, 98, 91, 105, 118, 112, 127, 135, 148, 140],
+                    borderColor: '#10b981',
+                    backgroundColor: type === 'line' ? 'rgba(16, 185, 129, 0.1)' : '#10b981',
+                    tension: type === 'line' ? 0.4 : 0,
+                    fill: type === 'line'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+    
+    // Toggle chart view
+    function toggleChartView(type) {
+        if (distributionChart) {
+            distributionChart.destroy();
+        }
+        
+        const ctx = document.getElementById('distributionChart').getContext('2d');
+        const newType = distributionChart?.config?.type === 'doughnut' ? 'bar' : 'doughnut';
+        
+        distributionChart = new Chart(ctx, {
+            type: newType,
+            data: {
+                labels: ['Kependudukan', 'Perizinan', 'Keuangan', 'Umum'],
+                datasets: [{
+                    data: [45, 25, 20, 10],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#f59e0b',
+                        '#8b5cf6'
+                    ],
+                    borderWidth: newType === 'doughnut' ? 2 : 0,
+                    borderColor: newType === 'doughnut' ? '#ffffff' : 'transparent'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: newType === 'doughnut' ? 'bottom' : 'top',
+                    }
+                },
+                scales: newType === 'bar' ? {
+                    y: {
+                        beginAtZero: true
+                    }
+                } : {}
+            }
+        });
+    }
+    
+    // Apply filters
+    function applyFilters() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        const letterType = document.getElementById('letter-type-filter').value;
+        
+        showNotification('Filter berhasil diterapkan!', 'success');
+        
+        // Simulate data refresh
+        setTimeout(() => {
+            // Update charts with filtered data
+            updateChartsWithFilteredData();
+        }, 1000);
+    }
+    
+    // Update charts with filtered data
+    function updateChartsWithFilteredData() {
+        // Simulate filtered data
+        const filteredData = {
+            trends: [75, 82, 68, 95, 88, 102, 115, 108, 124, 132, 146, 137],
+            distribution: [40, 30, 20, 10]
+        };
+        
+        // Update trends chart
+        trendsChart.data.datasets[0].data = filteredData.trends;
+        trendsChart.update();
+        
+        // Update distribution chart
+        distributionChart.data.datasets[0].data = filteredData.distribution;
+        distributionChart.update();
+    }
+    
+    // Export report
+    function exportReport(format) {
+        showNotification(`Mengexport laporan dalam format ${format.toUpperCase()}...`, 'info');
+        
+        setTimeout(() => {
+            showNotification(`Laporan ${format.toUpperCase()} berhasil diexport!`, 'success');
+        }, 2000);
+    }
+    
+    // Utility function for notifications
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            'success': 'bg-green-500 text-white',
+            'error': 'bg-red-500 text-white',
+            'warning': 'bg-yellow-500 text-white',
+            'info': 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Hide notification after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

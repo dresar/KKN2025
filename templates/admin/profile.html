@@ -1,0 +1,288 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Profil Admin{% endblock %}
+
+{% block page_title %}Profil Admin{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Profile Header -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="flex items-center space-x-6">
+                <div class="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-gray-600 text-3xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-gray-600">{{ user.email }}</p>
+                    <div class="flex items-center mt-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-circle text-green-400 mr-1" style="font-size: 6px;"></i>
+                            Administrator
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Profile Information -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-user-edit mr-2 text-blue-600"></i>
+                        Informasi Profil
+                    </h3>
+                    
+                    <form id="profile-form" method="post">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Depan</label>
+                                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Belakang</label>
+                                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="email" name="email" value="{{ user.email }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                                <input type="text" id="username" name="username" value="{{ user.username }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                                <p class="text-xs text-gray-500 mt-1">Username tidak dapat diubah</p>
+                            </div>
+                            
+                            <div>
+                                <label for="date_joined" class="block text-sm font-medium text-gray-700 mb-1">Bergabung Sejak</label>
+                                <input type="text" value="{{ user.date_joined|date:'d F Y' }}" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-save mr-2"></i>
+                                Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="bg-white rounded-lg shadow p-6 mt-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-lock mr-2 text-red-600"></i>
+                        Ubah Password
+                    </h3>
+                    
+                    <form id="password-form" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="password">
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Password Saat Ini</label>
+                                <input type="password" id="current_password" name="current_password" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+                                <input type="password" id="new_password" name="new_password" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Konfirmasi Password Baru</label>
+                                <input type="password" id="confirm_password" name="confirm_password" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200">
+                                <i class="fas fa-key mr-2"></i>
+                                Ubah Password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Activity Summary -->
+            <div class="space-y-6">
+                <!-- Login Activity -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-clock mr-2 text-green-600"></i>
+                        Aktivitas Login
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Login Terakhir</span>
+                            <span class="text-sm font-medium text-gray-900">{{ user.last_login|date:'d M Y H:i'|default:'Belum pernah' }}</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Status</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-circle text-green-400 mr-1" style="font-size: 6px;"></i>
+                                Online
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Account Security -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-shield-alt mr-2 text-blue-600"></i>
+                        Keamanan Akun
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span class="text-sm text-gray-600">Email Terverifikasi</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                <span class="text-sm text-gray-600">Akun Aktif</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <i class="fas fa-crown text-yellow-500 mr-2"></i>
+                                <span class="text-sm text-gray-600">Hak Admin</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+                        Statistik Cepat
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Total Login</span>
+                            <span class="text-sm font-medium text-gray-900">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Sesi Aktif</span>
+                            <span class="text-sm font-medium text-gray-900">1</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Akses Terakhir</span>
+                            <span class="text-sm font-medium text-gray-900">Sekarang</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle profile form submission
+    document.getElementById('profile-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        formData.append('form_type', 'profile');
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Profil berhasil diperbarui', 'success');
+            } else {
+                showNotification(data.message || 'Terjadi kesalahan', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Terjadi kesalahan saat menyimpan', 'error');
+        });
+    });
+    
+    // Handle password form submission
+    document.getElementById('password-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const newPassword = document.getElementById('new_password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (newPassword !== confirmPassword) {
+            showNotification('Konfirmasi password tidak cocok', 'error');
+            return;
+        }
+        
+        const formData = new FormData(this);
+        
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Password berhasil diubah', 'success');
+                this.reset();
+            } else {
+                showNotification(data.message || 'Terjadi kesalahan', 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Terjadi kesalahan saat mengubah password', 'error');
+        });
+    });
+    
+    // Notification function
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+            type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

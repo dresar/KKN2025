@@ -1,0 +1,796 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Data Kader - Posyandu{% endblock %}
+
+{% block page_title %}Data Kader{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Data Kader Posyandu</h1>
+            <p class="mt-1 text-sm text-gray-600">Manajemen kader dan petugas Posyandu</p>
+        </div>
+        <div class="mt-4 sm:mt-0">
+            <button onclick="openKaderModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <i class="fas fa-plus mr-2"></i>
+                Tambah Kader
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Kader</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="total-kader">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-check text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Kader Aktif</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="active-kader">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-tie text-2xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Ketua Kader</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="leader-kader">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-clock text-2xl text-orange-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Kader Tidak Aktif</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="inactive-kader">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="GET" action="{% url 'posyandu:kader_admin' %}">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700">Cari</label>
+                    <input type="text" name="search" id="search" value="{{ request.GET.search }}" placeholder="Nama atau NIK..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="posyandu-filter" class="block text-sm font-medium text-gray-700">Posyandu</label>
+                    <select name="posyandu_id" id="posyandu-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Posyandu</option>
+                        {% for posyandu in posyandu_list %}
+                            <option value="{{ posyandu.id }}" {% if request.GET.posyandu_id == posyandu.id|stringformat:'s' %}selected{% endif %}>{{ posyandu.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="role-filter" class="block text-sm font-medium text-gray-700">Peran</label>
+                    <select name="role" id="role-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Peran</option>
+                        <option value="ketua" {% if request.GET.role == 'ketua' %}selected{% endif %}>Ketua</option>
+                        <option value="wakil_ketua" {% if request.GET.role == 'wakil_ketua' %}selected{% endif %}>Wakil Ketua</option>
+                        <option value="sekretaris" {% if request.GET.role == 'sekretaris' %}selected{% endif %}>Sekretaris</option>
+                        <option value="bendahara" {% if request.GET.role == 'bendahara' %}selected{% endif %}>Bendahara</option>
+                        <option value="anggota" {% if request.GET.role == 'anggota' %}selected{% endif %}>Anggota</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select name="status" id="status-filter" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">Semua Status</option>
+                        <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Aktif</option>
+                        <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Tidak Aktif</option>
+                        <option value="training" {% if request.GET.status == 'training' %}selected{% endif %}>Pelatihan</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <i class="fas fa-search mr-2"></i>
+                        Filter
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Daftar Kader Posyandu</h3>
+        </div>
+        
+        <!-- Mobile Card View -->
+        <div class="block sm:hidden" id="kader-mobile-cards">
+            <!-- Mobile cards will be populated by JavaScript -->
+        </div>
+        
+        <!-- Desktop Table View -->
+        <div class="hidden sm:block overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Umur</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Peran</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Posyandu</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Telepon</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Bergabung</th>
+                        <th class="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="kader-table-body">
+                    {% for kader in kader_list %}
+                    <tr>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ kader.penduduk.name }}</div>
+                            <div class="text-sm text-gray-500">{{ kader.penduduk.nik }}</div>
+                        </td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">{{ kader.penduduk.age }} tahun</td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if kader.jabatan == 'ketua' %}bg-purple-100 text-purple-800{% elif kader.jabatan == 'sekretaris' %}bg-blue-100 text-blue-800{% elif kader.jabatan == 'bendahara' %}bg-green-100 text-green-800{% elif kader.jabatan == 'wakil_ketua' %}bg-indigo-100 text-indigo-800{% elif kader.jabatan == 'anggota' %}bg-gray-100 text-gray-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ kader.get_jabatan_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">{{ kader.posyandu.name }}</td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">{{ kader.nomor_hp|default:'-' }}</td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if kader.status == 'aktif' %}bg-green-100 text-green-800{% elif kader.status == 'nonaktif' %}bg-red-100 text-red-800{% elif kader.status == 'cuti' %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ kader.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">{{ kader.tanggal_mulai|date:'d/m/Y' }}</td>
+                        <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="editKader({{ kader.id }})" class="text-green-600 hover:text-green-900 mr-2 sm:mr-3" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteKader({{ kader.id }})" class="text-red-600 hover:text-red-900" title="Hapus">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">Tidak ada data kader</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ paginator.count }} results
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        {% if page_obj.has_previous %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Previous</a>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <span class="relative inline-flex items-center px-4 py-2 border text-sm font-medium z-10 bg-blue-50 border-blue-500 text-blue-600">{{ num }}</span>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" class="relative inline-flex items-center px-4 py-2 border text-sm font-medium bg-white border-gray-300 text-gray-500 hover:bg-gray-50">{{ num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">Next</a>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Kader Modal -->
+<div id="kader-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="kader-modal-title">Tambah Data Kader</h3>
+                <button onclick="closeKaderModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="kader-form" onsubmit="handleKaderSubmit(event)">
+                <input type="hidden" id="kader-id" value="">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Pilih Penduduk</label>
+                        <select id="resident-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih Penduduk...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Posyandu</label>
+                        <select id="posyandu-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih Posyandu...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Peran</label>
+                        <select id="role-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih Peran...</option>
+                            <option value="ketua">Ketua</option>
+                            <option value="wakil_ketua">Wakil Ketua</option>
+                            <option value="sekretaris">Sekretaris</option>
+                            <option value="bendahara">Bendahara</option>
+                            <option value="anggota">Anggota</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="status-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Tidak Aktif</option>
+                            <option value="training">Pelatihan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                        <input type="tel" id="phone-number" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="08xxxxxxxxxx">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tanggal Bergabung</label>
+                        <input type="date" id="join-date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Catatan</label>
+                        <textarea id="notes" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Catatan tambahan (opsional)"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeKaderModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Konfirmasi Hapus</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">Apakah Anda yakin ingin menghapus data kader ini? Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let deleteId = null;
+let currentPage = 1;
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadKaderData();
+    loadPosyanduOptions();
+    loadResidentOptions();
+    // Set default join date to today
+    document.getElementById('join-date').value = new Date().toISOString().split('T')[0];
+    
+    // Setup form submission
+    document.getElementById('kader-form').addEventListener('submit', handleKaderSubmit);
+    
+    // Setup search functionality
+    document.getElementById('search').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadKaderData();
+        }
+    });
+});
+
+// Load Kader Data
+function loadKaderData(page = 1) {
+    currentPage = page;
+    const search = document.getElementById('search').value;
+    const posyandu = document.getElementById('posyandu-filter').value;
+    const status = document.getElementById('status-filter').value;
+    const role = document.getElementById('role-filter').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        per_page: 10,
+        search: search,
+        posyandu_id: posyandu,
+        status: status,
+        jabatan: role
+    });
+    
+    fetch(`/pulosarok/posyandu/api/kader/?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateKaderTable(data.data);
+                updatePagination(data.pagination);
+                updateStats();
+            } else {
+                showNotification('Error loading data: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading kader data:', error);
+            showNotification('Error loading data', 'error');
+        });
+}
+
+// Update Kader Table
+function updateKaderTable(data) {
+    // Update desktop table
+    const tbody = document.getElementById('kader-table-body');
+    if (tbody) {
+        tbody.innerHTML = '';
+        
+        if (data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="px-4 lg:px-6 py-4 text-center text-gray-500">Tidak ada data kader</td></tr>';
+        } else {
+            data.forEach(kader => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${kader.nama || kader.penduduk_nama || '-'}</div>
+                        <div class="text-sm text-gray-500">${kader.nik || kader.penduduk_nik || '-'}</div>
+                    </td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">${kader.umur || kader.penduduk_umur || '-'} tahun</td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(kader.jabatan)}">
+                            ${getRoleText(kader.jabatan)}
+                        </span>
+                    </td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">${kader.posyandu_nama || '-'}</td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">${kader.nomor_hp || '-'}</td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(kader.status)}">
+                            ${getStatusText(kader.status)}
+                        </span>
+                    </td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">${kader.tanggal_bergabung || kader.tanggal_mulai || '-'}</td>
+                    <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editKader(${kader.id})" class="text-green-600 hover:text-green-900 mr-2 sm:mr-3" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteKader(${kader.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    }
+    
+    // Update mobile cards
+    updateMobileCards(data);
+}
+
+// Update Mobile Cards
+function updateMobileCards(data) {
+    const mobileContainer = document.getElementById('kader-mobile-cards');
+    if (!mobileContainer) return;
+    
+    mobileContainer.innerHTML = '';
+    
+    if (data.length === 0) {
+        mobileContainer.innerHTML = '<div class="p-4 text-center text-gray-500">Tidak ada data kader</div>';
+        return;
+    }
+    
+    data.forEach(kader => {
+        const card = document.createElement('div');
+        card.className = 'border-b border-gray-200 p-4';
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex-1">
+                    <h4 class="text-sm font-medium text-gray-900">${kader.nama || kader.penduduk_nama || '-'}</h4>
+                    <p class="text-xs text-gray-500">${kader.nik || kader.penduduk_nik || '-'}</p>
+                </div>
+                <div class="flex space-x-2 ml-2">
+                    <button onclick="editKader(${kader.id})" class="text-green-600 hover:text-green-900" title="Edit">
+                        <i class="fas fa-edit text-sm"></i>
+                    </button>
+                    <button onclick="deleteKader(${kader.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                        <i class="fas fa-trash text-sm"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                    <span class="text-gray-500">Peran:</span>
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(kader.jabatan)} ml-1">
+                        ${getRoleText(kader.jabatan)}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Status:</span>
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(kader.status)} ml-1">
+                        ${getStatusText(kader.status)}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Posyandu:</span>
+                    <span class="text-gray-900">${kader.posyandu_nama || '-'}</span>
+                </div>
+                <div>
+                    <span class="text-gray-500">Telepon:</span>
+                    <span class="text-gray-900">${kader.nomor_hp || '-'}</span>
+                </div>
+            </div>
+        `;
+        mobileContainer.appendChild(card);
+    });
+}
+
+// Get Status Color
+function getStatusColor(status) {
+    const colors = {
+        'aktif': 'bg-green-100 text-green-800',
+        'nonaktif': 'bg-red-100 text-red-800',
+        'cuti': 'bg-yellow-100 text-yellow-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+}
+
+// Get Status Text
+function getStatusText(status) {
+    const texts = {
+        'aktif': 'Aktif',
+        'nonaktif': 'Tidak Aktif',
+        'cuti': 'Cuti/Training'
+    };
+    return texts[status] || status;
+}
+
+// Get Role Color
+function getRoleColor(role) {
+    const colors = {
+        'ketua': 'bg-purple-100 text-purple-800',
+        'wakil_ketua': 'bg-indigo-100 text-indigo-800',
+        'sekretaris': 'bg-blue-100 text-blue-800',
+        'bendahara': 'bg-green-100 text-green-800',
+        'anggota': 'bg-gray-100 text-gray-800'
+    };
+    return colors[role] || 'bg-gray-100 text-gray-800';
+}
+
+// Get Role Text
+function getRoleText(role) {
+    const texts = {
+        'ketua': 'Ketua',
+        'wakil_ketua': 'Wakil Ketua',
+        'sekretaris': 'Sekretaris',
+        'bendahara': 'Bendahara',
+        'anggota': 'Anggota'
+    };
+    return texts[role] || role;
+}
+
+// Update Stats
+function updateStats() {
+    fetch('/pulosarok/posyandu/api/kader/stats/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('total-kader').textContent = data.data.total || 0;
+                document.getElementById('active-kader').textContent = data.data.aktif || 0;
+                document.getElementById('leader-kader').textContent = data.data.ketua || 0;
+                document.getElementById('inactive-kader').textContent = data.data.nonaktif || 0;
+            }
+        })
+        .catch(error => console.error('Error loading stats:', error));
+}
+
+// Update Pagination
+function updatePagination(pagination) {
+    // Implementation similar to other templates
+    // This would update pagination controls based on the pagination object
+}
+
+// Load Posyandu options
+function loadPosyanduOptions() {
+    fetch('/pulosarok/posyandu/api/posyandu/list/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('posyandu-select');
+            select.innerHTML = '<option value="">Pilih Posyandu...</option>';
+            
+            const posyandus = data.results || data;
+            if (Array.isArray(posyandus)) {
+                posyandus.forEach(posyandu => {
+                    const option = document.createElement('option');
+                    option.value = posyandu.id;
+                    option.textContent = posyandu.name;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading posyandu options:', error);
+            showNotification('Error loading posyandu options: ' + error.message, 'error');
+        });
+}
+
+// Load Resident options (all residents for kader)
+function loadResidentOptions() {
+    fetch('/pulosarok/posyandu/api/penduduk/?per_page=1000')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('resident-select');
+            select.innerHTML = '<option value="">Pilih Penduduk...</option>';
+            
+            if (data.success && Array.isArray(data.data)) {
+                data.data.forEach(resident => {
+                    const option = document.createElement('option');
+                    option.value = resident.id;
+                    option.textContent = `${resident.name} (${resident.nik})`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading resident options:', error);
+            showNotification('Error loading resident options: ' + error.message, 'error');
+        });
+}
+
+// Open Kader Modal
+function openKaderModal() {
+    document.getElementById('kader-modal-title').textContent = 'Tambah Data Kader';
+    document.getElementById('kader-form').reset();
+    document.getElementById('kader-id').value = '';
+    document.getElementById('join-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('status-select').value = 'active';
+    document.getElementById('kader-modal').classList.remove('hidden');
+}
+
+// Edit Kader
+function editKader(id) {
+    document.getElementById('kader-modal-title').textContent = 'Edit Data Kader';
+    document.getElementById('kader-id').value = id;
+    
+    fetch(`/pulosarok/posyandu/api/kader/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            const kader = data.data;
+            
+            // Map backend status to frontend status
+            const statusMapping = {
+                'aktif': 'active',
+                'nonaktif': 'inactive',
+                'cuti': 'training'
+            };
+            
+            document.getElementById('resident-select').value = kader.penduduk_id;
+            document.getElementById('posyandu-select').value = kader.posyandu_id;
+            document.getElementById('role-select').value = kader.jabatan;
+            document.getElementById('status-select').value = statusMapping[kader.status] || kader.status;
+            document.getElementById('phone-number').value = kader.nomor_hp || '';
+            document.getElementById('join-date').value = kader.tanggal_bergabung || '';
+            document.getElementById('notes').value = kader.keterangan || '';
+            
+            document.getElementById('kader-modal').classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Error loading kader data:', error);
+            showNotification('Error loading data', 'error');
+        });
+}
+
+// Delete Kader
+function deleteKader(id) {
+    deleteId = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+// Handle Kader form submission
+function handleKaderSubmit(e) {
+    e.preventDefault();
+    
+    // Map frontend status to backend status
+    const statusMapping = {
+        'active': 'aktif',
+        'inactive': 'nonaktif',
+        'training': 'cuti'
+    };
+    
+    const frontendStatus = document.getElementById('status-select').value;
+    const backendStatus = statusMapping[frontendStatus] || frontendStatus;
+    
+    const formData = {
+        penduduk_id: document.getElementById('resident-select').value,
+        posyandu_id: document.getElementById('posyandu-select').value,
+        jabatan: document.getElementById('role-select').value,
+        status: backendStatus,
+        nomor_hp: document.getElementById('phone-number').value,
+        tanggal_bergabung: document.getElementById('join-date').value,
+        keterangan: document.getElementById('notes').value
+    };
+    
+    const kaderId = document.getElementById('kader-id').value;
+    const url = kaderId ? `/pulosarok/posyandu/api/kader/${kaderId}/` : '/pulosarok/posyandu/api/kader/create/';
+    const method = kaderId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closeKaderModal();
+            location.reload(); // Reload page to show updated data
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving kader data:', error);
+        showNotification('Error saving data', 'error');
+    });
+}
+
+// Confirm delete
+function confirmDelete() {
+    if (!deleteId) return;
+    
+    fetch(`/pulosarok/posyandu/api/kader/${deleteId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            location.reload(); // Reload page to show updated data
+        } else {
+            showNotification(data.message, 'error');
+        }
+        closeDeleteModal();
+    })
+    .catch(error => {
+        console.error('Error deleting kader data:', error);
+        showNotification('Error deleting data', 'error');
+        closeDeleteModal();
+    });
+}
+
+// Close modals
+function closeKaderModal() {
+    document.getElementById('kader-modal').classList.add('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    deleteId = null;
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+{% endblock %}

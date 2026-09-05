@@ -1,0 +1,280 @@
+{% extends 'admin/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+            <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+        </div>
+        <a href="{% url 'tourism:admin_package_list' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors duration-150">
+            <i class="fas fa-arrow-left mr-2"></i>
+            <span>Kembali</span>
+        </a>
+    </div>
+
+    {% if form.errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Terdapat {{ form.errors|length }} kesalahan yang perlu diperbaiki:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <form method="post" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 gap-6">
+                <!-- Informasi Dasar -->
+                <div class="bg-gray-50 p-4 rounded-md">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Informasi Dasar</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Nama Paket -->
+                        <div class="md:col-span-2">
+                            <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Nama Paket <span class="text-red-600">*</span></label>
+                            <input type="text" name="title" id="id_title" value="{{ package.title|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Judul paket wisata" required>
+                            {% if form.title.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Lokasi Wisata -->
+                        <div>
+                            <label for="id_tourism_location" class="block text-sm font-medium text-gray-700 mb-1">Lokasi Wisata <span class="text-red-600">*</span></label>
+                            <select name="location" id="id_tourism_location" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">-- Pilih Lokasi --</option>
+                                {% for location in locations %}
+                                    <option value="{{ location.id }}" {% if package.tourism_location_id == location.id %}selected{% endif %}>{{ location.title }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.tourism_location.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tourism_location.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Tipe Paket -->
+                        <div>
+                            <label for="id_package_type" class="block text-sm font-medium text-gray-700 mb-1">Tipe Paket <span class="text-red-600">*</span></label>
+                            <select name="package_type" id="id_package_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">-- Pilih Tipe Paket --</option>
+                                {% for type_value, type_label in package_types %}
+                                    <option value="{{ type_value }}" {% if package.package_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.package_type.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.package_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Detail Paket -->
+                <div class="bg-gray-50 p-4 rounded-md">
+                    <h4 class="text-sm font-medium text-gray-700 mb-3">Detail Paket</h4>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Durasi -->
+                        <div>
+                            <label for="id_duration" class="block text-sm font-medium text-gray-700 mb-1">Durasi</label>
+                            <input type="text" name="duration" id="id_duration" value="{{ package.duration|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Contoh: 2 hari 1 malam">
+                            {% if form.duration.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.duration.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Harga -->
+                        <div>
+                            <label for="id_price" class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                            <input type="number" name="price" id="id_price" value="{{ package.price|default:'' }}" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Harga paket">
+                            {% if form.price.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Mata Uang -->
+                        <div>
+                            <label for="id_currency" class="block text-sm font-medium text-gray-700 mb-1">Mata Uang</label>
+                            <select name="currency" id="id_currency" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="IDR" {% if package.currency == 'IDR' %}selected{% endif %}>IDR - Rupiah</option>
+                                <option value="USD" {% if package.currency == 'USD' %}selected{% endif %}>USD - Dollar</option>
+                                <option value="EUR" {% if package.currency == 'EUR' %}selected{% endif %}>EUR - Euro</option>
+                            </select>
+                            {% if form.currency.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.currency.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Jumlah Peserta Maksimal -->
+                        <div>
+                            <label for="id_max_participants" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Peserta Maksimal</label>
+                            <input type="number" name="max_participants" id="id_max_participants" value="{{ package.max_participants|default:'' }}" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Maksimal peserta">
+                            {% if form.max_participants.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.max_participants.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Jumlah Peserta Minimal -->
+                        <div>
+                            <label for="id_min_participants" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Peserta Minimal</label>
+                            <input type="number" name="min_participants" id="id_min_participants" value="{{ package.min_participants|default:'' }}" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Minimal peserta">
+                            {% if form.min_participants.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.min_participants.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Batas Waktu Pemesanan -->
+                        <div>
+                            <label for="id_booking_deadline" class="block text-sm font-medium text-gray-700 mb-1">Batas Waktu Pemesanan</label>
+                            <input type="number" name="booking_deadline" id="id_booking_deadline" value="{{ package.booking_deadline|default:'' }}" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Deadline booking dalam hari">
+                            {% if form.booking_deadline.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.booking_deadline.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Deskripsi -->
+                <div>
+                    <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi <span class="text-red-600">*</span></label>
+                    <textarea name="description" id="id_description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Deskripsi lengkap paket wisata" required>{{ package.description|default:'' }}</textarea>
+                    {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Termasuk -->
+                <div>
+                    <label for="id_includes" class="block text-sm font-medium text-gray-700 mb-1">Termasuk</label>
+                    <textarea name="inclusions" id="id_includes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Apa saja yang termasuk dalam paket ini (transportasi, makan, dll).">{{ package.inclusions|default:'' }}</textarea>
+                    {% if form.includes.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.includes.errors.0 }}</p>
+                    {% else %}
+                    <p class="mt-1 text-xs text-gray-500">Apa saja yang termasuk dalam paket ini (transportasi, makan, dll).</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Tidak Termasuk -->
+                <div>
+                    <label for="id_excludes" class="block text-sm font-medium text-gray-700 mb-1">Tidak Termasuk</label>
+                    <textarea name="exclusions" id="id_excludes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Apa saja yang tidak termasuk dalam paket ini.">{{ package.exclusions|default:'' }}</textarea>
+                    {% if form.excludes.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.excludes.errors.0 }}</p>
+                    {% else %}
+                    <p class="mt-1 text-xs text-gray-500">Apa saja yang tidak termasuk dalam paket ini.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Itinerary -->
+                <div>
+                    <label for="id_itinerary" class="block text-sm font-medium text-gray-700 mb-1">Itinerary</label>
+                    <textarea name="itinerary" id="id_itinerary" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Jadwal kegiatan selama paket wisata berlangsung.">{{ package.itinerary|default:'' }}</textarea>
+                    {% if form.itinerary.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.itinerary.errors.0 }}</p>
+                    {% else %}
+                    <p class="mt-1 text-xs text-gray-500">Jadwal kegiatan selama paket wisata berlangsung.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Status -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox" name="is_featured" id="id_is_featured" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if package.is_featured %}checked{% endif %}>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="id_is_featured" class="font-medium text-gray-700">Tampilkan di Halaman Utama</label>
+                            <p class="text-gray-500">Paket ini akan ditampilkan di bagian unggulan di halaman utama.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start">
+                        <div class="flex items-center h-5">
+                            <input type="checkbox" name="is_active" id="id_is_active" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if package.is_active %}checked{% endif %}>
+                        </div>
+                        <div class="ml-3 text-sm">
+                            <label for="id_is_active" class="font-medium text-gray-700">Aktif</label>
+                            <p class="text-gray-500">Paket aktif akan ditampilkan di website.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 border-t border-gray-200 pt-6 flex justify-end">
+                <a href="{% url 'tourism:admin_package_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 mr-2">
+                    Batal
+                </a>
+                <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    {{ submit_text|default:"Simpan" }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inisialisasi form
+        const form = document.querySelector('form');
+        
+        // Validasi form sebelum submit
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Validasi field yang required
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('border-red-500');
+                    
+                    // Tambahkan pesan error jika belum ada
+                    const errorMsg = field.parentNode.querySelector('.text-red-600');
+                    if (!errorMsg) {
+                        const msg = document.createElement('p');
+                        msg.className = 'mt-1 text-sm text-red-600';
+                        msg.textContent = 'Field ini wajib diisi';
+                        field.parentNode.appendChild(msg);
+                    }
+                } else {
+                    field.classList.remove('border-red-500');
+                    
+                    // Hapus pesan error jika ada
+                    const errorMsg = field.parentNode.querySelector('.text-red-600');
+                    if (errorMsg) {
+                        errorMsg.remove();
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                window.scrollTo(0, 0);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends 'admin/base.html' %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ title }}</h1>
+            <p class="text-gray-600 mt-1">{{ subtitle }}</p>
+        </div>
+        <a href="{% url 'tourism:admin_location_list' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors duration-150">
+            <i class="fas fa-arrow-left mr-2"></i>
+            <span>Kembali</span>
+        </a>
+    </div>
+
+    {% if form.errors %}
+    <div class="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Terdapat {{ form.errors|length }} kesalahan yang perlu diperbaiki:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <form method="post" enctype="multipart/form-data" class="p-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Kolom kiri: Informasi dasar -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Dasar</h3>
+                        
+                        <div class="mb-4">
+                            <label for="id_title" class="block text-sm font-medium text-gray-700 mb-1">Nama Lokasi <span class="text-red-600">*</span></label>
+                            <input type="text" name="title" id="id_title" value="{{ location.title|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Nama lokasi wisata" required>
+                            {% if form.title.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_slug" class="block text-sm font-medium text-gray-700 mb-1">Slug <span class="text-red-600">*</span></label>
+                            <input type="text" name="slug" id="id_slug" value="{{ location.slug|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="URL friendly name" required>
+                            {% if form.slug.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.slug.errors.0 }}</p>
+                            {% else %}
+                            <p class="mt-1 text-sm text-gray-500">Identifier unik untuk URL. Dibuat otomatis dari nama.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_category" class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-600">*</span></label>
+                            <select name="category" id="id_category" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                <option value="">-- Pilih Kategori --</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if location.category_id == category.id %}selected{% endif %}>{{ category.title }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.category.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_location_type" class="block text-sm font-medium text-gray-700 mb-1">Tipe Lokasi <span class="text-red-600">*</span></label>
+                            <select name="location_type" id="id_location_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                                <option value="">-- Pilih Tipe Lokasi --</option>
+                                {% for type_value, type_label in location_types %}
+                                    <option value="{{ type_value }}" {% if location.location_type == type_value %}selected{% endif %}>{{ type_label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.location_type.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.location_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_short_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Singkat <span class="text-red-600">*</span></label>
+                            <textarea name="short_description" id="id_short_description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Deskripsi singkat lokasi">{{ location.short_description|default:'' }}</textarea>
+                            {% if form.short_description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.short_description.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="id_full_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Lengkap</label>
+                            <textarea name="full_description" id="id_full_description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Deskripsi lengkap lokasi">{{ location.full_description|default:'' }}</textarea>
+                            {% if form.full_description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.full_description.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Lokasi</h3>
+                        
+                        <div class="mb-4">
+                            <label for="id_address" class="block text-sm font-medium text-gray-700 mb-1">Alamat <span class="text-red-600">*</span></label>
+                            <textarea name="address" id="id_address" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Alamat lengkap lokasi">{{ location.address|default:'' }}</textarea>
+                            {% if form.address.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="id_latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                                <input type="text" name="latitude" id="id_latitude" value="{{ location.latitude|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Contoh: -7.123456">
+                                {% if form.latitude.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.latitude.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <label for="id_longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                                <input type="text" name="longitude" id="id_longitude" value="{{ location.longitude|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Contoh: 110.123456">
+                                {% if form.longitude.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.longitude.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Kolom kanan: Media dan Status -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Media</h3>
+                        
+                        <div class="mb-4">
+                            <label for="id_main_image" class="block text-sm font-medium text-gray-700 mb-1">Gambar Utama</label>
+                            <div class="mt-1 flex items-center">
+                                <div class="flex-shrink-0 h-32 w-32 bg-gray-100 rounded-md overflow-hidden">
+                                    {% if location.main_image %}
+                                    <img src="{{ location.main_image.url }}" alt="{{ location.title }}" class="h-full w-full object-cover">
+                                    {% else %}
+                                    <img id="imagePreview" src="#" alt="Preview" class="h-full w-full object-cover hidden">
+                                    <div id="imagePlaceholder" class="h-full w-full flex items-center justify-center">
+                                        <i class="fas fa-image text-gray-400 text-3xl"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <input type="file" name="main_image" id="id_main_image" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" accept="image/*">
+                                    {% if form.main_image.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.main_image.errors.0 }}</p>
+                                    {% else %}
+                                    <p class="mt-1 text-sm text-gray-500">Unggah gambar lokasi wisata. Format yang didukung: JPG, PNG. Maks: 2MB.</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Status</h3>
+                        
+                        <div class="mb-4 flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" name="featured" id="id_featured" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if location.featured %}checked{% endif %}>
+                            </div>
+                            <div class="ml-3 text-sm">
+                                    <label for="id_featured" class="font-medium text-gray-700">Tampilkan di Halaman Utama</label>
+                                    <p class="text-gray-500">Tampilkan lokasi ini di bagian featured di halaman utama.</p>
+                                </div>
+                        </div>
+                        
+                        <div class="mb-4 flex items-start">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" name="is_active" id="id_is_active" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" {% if location.is_active %}checked{% endif %}>
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <label for="id_is_active" class="font-medium text-gray-700">Aktif</label>
+                                <p class="text-gray-500">Lokasi aktif akan ditampilkan di website.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 border-t border-gray-200 pt-6 flex justify-end">
+                <a href="{% url 'tourism:admin_location_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 mr-2">
+                    Batal
+                </a>
+                <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Auto-generate slug from name
+    document.addEventListener('DOMContentLoaded', function() {
+        const nameInput = document.getElementById('id_title');
+        const slugInput = document.getElementById('id_slug');
+        
+        if (nameInput && slugInput) {
+            nameInput.addEventListener('keyup', function() {
+                if (!slugInput.value || slugInput.dataset.autoGenerated === 'true') {
+                    const slug = nameInput.value
+                        .toLowerCase()
+                        .replace(/[^\w\s-]/g, '') // Remove special characters
+                        .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+                        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+                    
+                    slugInput.value = slug;
+                    slugInput.dataset.autoGenerated = 'true';
+                }
+            });
+            
+            slugInput.addEventListener('input', function() {
+                slugInput.dataset.autoGenerated = 'false';
+            });
+        }
+        
+        // Image preview
+        const imageInput = document.getElementById('id_main_image');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePlaceholder = document.getElementById('imagePlaceholder');
+        
+        if (imageInput && imagePreview && imagePlaceholder) {
+            imageInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                        imagePlaceholder.classList.add('hidden');
+                    };
+                    
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

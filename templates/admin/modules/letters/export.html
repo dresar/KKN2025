@@ -1,0 +1,964 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Export Surat{% endblock %}
+
+{% block page_title %}Export Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .export-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    .export-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .export-card.selected {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    .format-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    .pdf-icon {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    .docx-icon {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: white;
+    }
+    .excel-icon {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        color: white;
+    }
+    .csv-icon {
+        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+        color: white;
+    }
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    .export-preview {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+    }
+    .template-option {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .template-option:hover {
+        background-color: #f3f4f6;
+    }
+    .template-option.selected {
+        background-color: #dbeafe;
+        border-color: #3b82f6;
+    }
+    .custom-checkbox {
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #d1d5db;
+        border-radius: 4px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .custom-checkbox:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    .custom-checkbox:checked::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    .step-indicator {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+    .step {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+        color: #6b7280;
+        font-weight: 600;
+        margin-right: 1rem;
+        position: relative;
+    }
+    .step.active {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .step.completed {
+        background-color: #10b981;
+        color: white;
+    }
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 100%;
+        width: 60px;
+        height: 2px;
+        background-color: #e5e7eb;
+        transform: translateY(-50%);
+    }
+    .step:last-child::after {
+        display: none;
+    }
+    .step.completed::after {
+        background-color: #10b981;
+    }
+    .watermark-preview {
+        position: relative;
+        background: #f9fafb;
+        border: 1px dashed #d1d5db;
+        border-radius: 8px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    .watermark-text {
+        position: absolute;
+        font-size: 24px;
+        font-weight: bold;
+        color: rgba(0, 0, 0, 0.1);
+        transform: rotate(-45deg);
+        user-select: none;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step-1">1</div>
+        <div class="step" id="step-2">2</div>
+        <div class="step" id="step-3">3</div>
+        <div class="step" id="step-4">4</div>
+    </div>
+    
+    <!-- Step 1: Select Export Format -->
+    <div id="step-1-content" class="step-content">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-file-export mr-3 text-blue-600"></i>
+                Pilih Format Export
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- PDF Format -->
+                <div class="export-card bg-white rounded-lg shadow p-6 cursor-pointer" onclick="selectFormat('pdf')" data-format="pdf">
+                    <div class="format-icon pdf-icon mx-auto">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">PDF</h3>
+                    <p class="text-sm text-gray-600 text-center mb-4">Format dokumen yang dapat dibaca di semua perangkat</p>
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <i class="fas fa-star mr-1"></i>
+                            Populer
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- DOCX Format -->
+                <div class="export-card bg-white rounded-lg shadow p-6 cursor-pointer" onclick="selectFormat('docx')" data-format="docx">
+                    <div class="format-icon docx-icon mx-auto">
+                        <i class="fas fa-file-word"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">DOCX</h3>
+                    <p class="text-sm text-gray-600 text-center mb-4">Format Microsoft Word yang dapat diedit</p>
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="fas fa-edit mr-1"></i>
+                            Editable
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Excel Format -->
+                <div class="export-card bg-white rounded-lg shadow p-6 cursor-pointer" onclick="selectFormat('excel')" data-format="excel">
+                    <div class="format-icon excel-icon mx-auto">
+                        <i class="fas fa-file-excel"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Excel</h3>
+                    <p class="text-sm text-gray-600 text-center mb-4">Format spreadsheet untuk analisis data</p>
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-chart-bar mr-1"></i>
+                            Data
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- CSV Format -->
+                <div class="export-card bg-white rounded-lg shadow p-6 cursor-pointer" onclick="selectFormat('csv')" data-format="csv">
+                    <div class="format-icon csv-icon mx-auto">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">CSV</h3>
+                    <p class="text-sm text-gray-600 text-center mb-4">Format data yang kompatibel universal</p>
+                    <div class="text-center">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            <i class="fas fa-database mr-1"></i>
+                            Simple
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-end">
+                <button onclick="nextStep(2)" id="next-step-1" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    Lanjut
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 2: Select Data -->
+    <div id="step-2-content" class="step-content hidden">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-database mr-3 text-green-600"></i>
+                Pilih Data yang Akan Diexport
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Data Selection -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Filter Data</h3>
+                    
+                    <!-- Date Range -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Rentang Tanggal</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="date" id="export-start-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <input type="date" id="export-end-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <!-- Letter Type -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat</label>
+                        <select id="export-letter-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">Semua Jenis</option>
+                            <option value="kependudukan">Kependudukan</option>
+                            <option value="perizinan">Perizinan</option>
+                            <option value="keuangan">Keuangan</option>
+                            <option value="umum">Umum</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Status -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="export-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="all">Semua Status</option>
+                            <option value="draft">Draft</option>
+                            <option value="pending">Menunggu</option>
+                            <option value="approved">Disetujui</option>
+                            <option value="rejected">Ditolak</option>
+                            <option value="completed">Selesai</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Fields Selection -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Field yang Diexport</label>
+                        <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" checked data-field="number">
+                                <span class="text-sm text-gray-700">Nomor Surat</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" checked data-field="type">
+                                <span class="text-sm text-gray-700">Jenis Surat</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" checked data-field="applicant">
+                                <span class="text-sm text-gray-700">Nama Pemohon</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" checked data-field="nik">
+                                <span class="text-sm text-gray-700">NIK</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" checked data-field="date">
+                                <span class="text-sm text-gray-700">Tanggal</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" checked data-field="status">
+                                <span class="text-sm text-gray-700">Status</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" data-field="content">
+                                <span class="text-sm text-gray-700">Isi Surat</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" class="custom-checkbox" data-field="signature">
+                                <span class="text-sm text-gray-700">Tanda Tangan Digital</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Preview -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Preview Data</h3>
+                    <div class="export-preview bg-gray-50 p-4">
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-search text-4xl mb-4"></i>
+                            <p>Pilih filter untuk melihat preview data</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center space-x-2 text-blue-800">
+                            <i class="fas fa-info-circle"></i>
+                            <span class="text-sm font-medium">Data yang akan diexport:</span>
+                        </div>
+                        <p class="text-sm text-blue-700 mt-1" id="data-count">0 surat ditemukan</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-between">
+                <button onclick="prevStep(1)" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                <button onclick="nextStep(3)" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    Lanjut
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 3: Customize Export -->
+    <div id="step-3-content" class="step-content hidden">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-cog mr-3 text-purple-600"></i>
+                Kustomisasi Export
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Export Settings -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Pengaturan Export</h3>
+                    
+                    <!-- Template Selection -->
+                    <div class="mb-6" id="template-section">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Template</label>
+                        <div class="space-y-2">
+                            <div class="template-option border border-gray-200 rounded-lg p-3 selected" data-template="official">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Template Resmi</h4>
+                                        <p class="text-sm text-gray-600">Template dengan kop surat dan format resmi</p>
+                                    </div>
+                                    <i class="fas fa-check-circle text-blue-600"></i>
+                                </div>
+                            </div>
+                            <div class="template-option border border-gray-200 rounded-lg p-3" data-template="simple">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Template Sederhana</h4>
+                                        <p class="text-sm text-gray-600">Template minimalis tanpa kop surat</p>
+                                    </div>
+                                    <i class="fas fa-circle text-gray-300"></i>
+                                </div>
+                            </div>
+                            <div class="template-option border border-gray-200 rounded-lg p-3" data-template="custom">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">Template Custom</h4>
+                                        <p class="text-sm text-gray-600">Template yang dapat disesuaikan</p>
+                                    </div>
+                                    <i class="fas fa-circle text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Page Settings -->
+                    <div class="mb-6" id="page-settings">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Pengaturan Halaman</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">Ukuran Kertas</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="a4">A4</option>
+                                    <option value="letter">Letter</option>
+                                    <option value="legal">Legal</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">Orientasi</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="portrait">Portrait</option>
+                                    <option value="landscape">Landscape</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Watermark Settings -->
+                    <div class="mb-6" id="watermark-settings">
+                        <label class="flex items-center space-x-2 mb-3">
+                            <input type="checkbox" class="custom-checkbox" id="enable-watermark">
+                            <span class="text-sm font-medium text-gray-700">Tambahkan Watermark</span>
+                        </label>
+                        <div id="watermark-options" class="hidden space-y-3">
+                            <input type="text" id="watermark-text" placeholder="Teks watermark" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">Opacity</label>
+                                    <input type="range" id="watermark-opacity" min="10" max="50" value="20" class="w-full">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">Ukuran</label>
+                                    <select id="watermark-size" class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="small">Kecil</option>
+                                        <option value="medium" selected>Sedang</option>
+                                        <option value="large">Besar</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Options -->
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="custom-checkbox" id="include-attachments">
+                            <span class="text-sm text-gray-700">Sertakan Lampiran</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="custom-checkbox" id="include-signatures" checked>
+                            <span class="text-sm text-gray-700">Sertakan Tanda Tangan Digital</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" class="custom-checkbox" id="include-qr">
+                            <span class="text-sm text-gray-700">Sertakan QR Code Verifikasi</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Preview -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+                    <div class="border border-gray-200 rounded-lg p-4 bg-white" style="min-height: 400px;">
+                        <div class="watermark-preview" id="preview-container">
+                            <div class="watermark-text" id="watermark-preview" style="display: none;">DESA PULOSAROK</div>
+                            <div class="w-full h-full flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fas fa-file-alt text-6xl text-gray-300 mb-4"></i>
+                                    <p class="text-gray-500">Preview akan muncul di sini</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-between">
+                <button onclick="prevStep(2)" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                <button onclick="nextStep(4)" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    Lanjut
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Step 4: Export Process -->
+    <div id="step-4-content" class="step-content hidden">
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-download mr-3 text-green-600"></i>
+                Export Surat
+            </h2>
+            
+            <!-- Export Summary -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Ringkasan Export</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-600">Format: <span class="font-medium text-gray-900" id="summary-format">PDF</span></p>
+                        <p class="text-sm text-gray-600">Jumlah Data: <span class="font-medium text-gray-900" id="summary-count">0 surat</span></p>
+                        <p class="text-sm text-gray-600">Template: <span class="font-medium text-gray-900" id="summary-template">Template Resmi</span></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-600">Rentang Tanggal: <span class="font-medium text-gray-900" id="summary-date-range">-</span></p>
+                        <p class="text-sm text-gray-600">Jenis Surat: <span class="font-medium text-gray-900" id="summary-letter-type">Semua</span></p>
+                        <p class="text-sm text-gray-600">Status: <span class="font-medium text-gray-900" id="summary-status">Semua</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Export Progress -->
+            <div class="mb-6" id="export-progress" style="display: none;">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-700">Progress Export</span>
+                    <span class="text-sm text-gray-500" id="progress-percentage">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="progress-bar bg-blue-600 h-2 rounded-full" style="width: 0%" id="progress-bar"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2" id="progress-status">Mempersiapkan export...</p>
+            </div>
+            
+            <!-- Export Result -->
+            <div class="mb-6" id="export-result" style="display: none;">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-sm font-medium text-green-800">Export Berhasil!</h3>
+                            <p class="text-sm text-green-700 mt-1">File telah berhasil dibuat dan siap didownload.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex space-x-3">
+                        <button onclick="downloadFile()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200 text-sm">
+                            <i class="fas fa-download mr-2"></i>
+                            Download File
+                        </button>
+                        <button onclick="previewFile()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 text-sm">
+                            <i class="fas fa-eye mr-2"></i>
+                            Preview
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-between">
+                <button onclick="prevStep(3)" id="back-btn" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Kembali
+                </button>
+                <div class="space-x-3">
+                    <button onclick="startExport()" id="export-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                        <i class="fas fa-download mr-2"></i>
+                        Mulai Export
+                    </button>
+                    <button onclick="resetExport()" id="reset-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200" style="display: none;">
+                        <i class="fas fa-redo mr-2"></i>
+                        Export Lagi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentStep = 1;
+    let selectedFormat = null;
+    let exportData = {
+        format: null,
+        dateRange: { start: null, end: null },
+        letterType: 'all',
+        status: 'all',
+        fields: [],
+        template: 'official',
+        pageSettings: { size: 'a4', orientation: 'portrait' },
+        watermark: { enabled: false, text: '', opacity: 20, size: 'medium' },
+        options: { attachments: false, signatures: true, qr: false }
+    };
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        setupEventListeners();
+        setDefaultDates();
+        updateDataPreview();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        // Template selection
+        document.querySelectorAll('.template-option').forEach(option => {
+            option.addEventListener('click', function() {
+                selectTemplate(this.dataset.template);
+            });
+        });
+        
+        // Watermark toggle
+        document.getElementById('enable-watermark').addEventListener('change', function() {
+            toggleWatermark(this.checked);
+        });
+        
+        // Watermark settings
+        document.getElementById('watermark-text').addEventListener('input', updateWatermarkPreview);
+        document.getElementById('watermark-opacity').addEventListener('input', updateWatermarkPreview);
+        document.getElementById('watermark-size').addEventListener('change', updateWatermarkPreview);
+        
+        // Data filters
+        document.getElementById('export-start-date').addEventListener('change', updateDataPreview);
+        document.getElementById('export-end-date').addEventListener('change', updateDataPreview);
+        document.getElementById('export-letter-type').addEventListener('change', updateDataPreview);
+        document.getElementById('export-status').addEventListener('change', updateDataPreview);
+    }
+    
+    // Set default dates
+    function setDefaultDates() {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        
+        document.getElementById('export-start-date').value = firstDay.toISOString().split('T')[0];
+        document.getElementById('export-end-date').value = today.toISOString().split('T')[0];
+    }
+    
+    // Select export format
+    function selectFormat(format) {
+        // Remove previous selection
+        document.querySelectorAll('.export-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selection to clicked card
+        document.querySelector(`[data-format="${format}"]`).classList.add('selected');
+        
+        selectedFormat = format;
+        exportData.format = format;
+        
+        // Enable next button
+        document.getElementById('next-step-1').disabled = false;
+        
+        // Show/hide format-specific options
+        updateFormatOptions(format);
+    }
+    
+    // Update format-specific options
+    function updateFormatOptions(format) {
+        const templateSection = document.getElementById('template-section');
+        const pageSettings = document.getElementById('page-settings');
+        const watermarkSettings = document.getElementById('watermark-settings');
+        
+        if (format === 'pdf' || format === 'docx') {
+            templateSection.style.display = 'block';
+            pageSettings.style.display = 'block';
+            watermarkSettings.style.display = 'block';
+        } else {
+            templateSection.style.display = 'none';
+            pageSettings.style.display = 'none';
+            watermarkSettings.style.display = 'none';
+        }
+    }
+    
+    // Select template
+    function selectTemplate(template) {
+        document.querySelectorAll('.template-option').forEach(option => {
+            option.classList.remove('selected');
+            option.querySelector('i').className = 'fas fa-circle text-gray-300';
+        });
+        
+        const selectedOption = document.querySelector(`[data-template="${template}"]`);
+        selectedOption.classList.add('selected');
+        selectedOption.querySelector('i').className = 'fas fa-check-circle text-blue-600';
+        
+        exportData.template = template;
+    }
+    
+    // Toggle watermark
+    function toggleWatermark(enabled) {
+        const options = document.getElementById('watermark-options');
+        const preview = document.getElementById('watermark-preview');
+        
+        if (enabled) {
+            options.classList.remove('hidden');
+            preview.style.display = 'block';
+            exportData.watermark.enabled = true;
+            updateWatermarkPreview();
+        } else {
+            options.classList.add('hidden');
+            preview.style.display = 'none';
+            exportData.watermark.enabled = false;
+        }
+    }
+    
+    // Update watermark preview
+    function updateWatermarkPreview() {
+        const preview = document.getElementById('watermark-preview');
+        const text = document.getElementById('watermark-text').value || 'DESA PULOSAROK';
+        const opacity = document.getElementById('watermark-opacity').value / 100;
+        const size = document.getElementById('watermark-size').value;
+        
+        const sizes = {
+            'small': '18px',
+            'medium': '24px',
+            'large': '32px'
+        };
+        
+        preview.textContent = text;
+        preview.style.color = `rgba(0, 0, 0, ${opacity})`;
+        preview.style.fontSize = sizes[size];
+        
+        exportData.watermark.text = text;
+        exportData.watermark.opacity = opacity * 100;
+        exportData.watermark.size = size;
+    }
+    
+    // Update data preview
+    function updateDataPreview() {
+        const startDate = document.getElementById('export-start-date').value;
+        const endDate = document.getElementById('export-end-date').value;
+        const letterType = document.getElementById('export-letter-type').value;
+        const status = document.getElementById('export-status').value;
+        
+        // Simulate data count
+        let count = Math.floor(Math.random() * 100) + 50;
+        
+        if (letterType !== 'all') count = Math.floor(count * 0.7);
+        if (status !== 'all') count = Math.floor(count * 0.8);
+        
+        document.getElementById('data-count').textContent = `${count} surat ditemukan`;
+        
+        // Update export data
+        exportData.dateRange.start = startDate;
+        exportData.dateRange.end = endDate;
+        exportData.letterType = letterType;
+        exportData.status = status;
+    }
+    
+    // Navigation functions
+    function nextStep(step) {
+        if (step > currentStep + 1) return;
+        
+        // Hide current step
+        document.getElementById(`step-${currentStep}-content`).classList.add('hidden');
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        document.getElementById(`step-${currentStep}`).classList.add('completed');
+        
+        // Show next step
+        currentStep = step;
+        document.getElementById(`step-${currentStep}-content`).classList.remove('hidden');
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        
+        // Update summary if on step 4
+        if (currentStep === 4) {
+            updateExportSummary();
+        }
+    }
+    
+    function prevStep(step) {
+        if (step < currentStep - 1) return;
+        
+        // Hide current step
+        document.getElementById(`step-${currentStep}-content`).classList.add('hidden');
+        document.getElementById(`step-${currentStep}`).classList.remove('active');
+        
+        // Show previous step
+        currentStep = step;
+        document.getElementById(`step-${currentStep}-content`).classList.remove('hidden');
+        document.getElementById(`step-${currentStep}`).classList.add('active');
+        document.getElementById(`step-${currentStep}`).classList.remove('completed');
+    }
+    
+    // Update export summary
+    function updateExportSummary() {
+        document.getElementById('summary-format').textContent = exportData.format.toUpperCase();
+        document.getElementById('summary-count').textContent = document.getElementById('data-count').textContent;
+        
+        const templateNames = {
+            'official': 'Template Resmi',
+            'simple': 'Template Sederhana',
+            'custom': 'Template Custom'
+        };
+        document.getElementById('summary-template').textContent = templateNames[exportData.template];
+        
+        const startDate = exportData.dateRange.start;
+        const endDate = exportData.dateRange.end;
+        if (startDate && endDate) {
+            document.getElementById('summary-date-range').textContent = `${startDate} - ${endDate}`;
+        }
+        
+        const letterTypeNames = {
+            'all': 'Semua',
+            'kependudukan': 'Kependudukan',
+            'perizinan': 'Perizinan',
+            'keuangan': 'Keuangan',
+            'umum': 'Umum'
+        };
+        document.getElementById('summary-letter-type').textContent = letterTypeNames[exportData.letterType];
+        
+        const statusNames = {
+            'all': 'Semua',
+            'draft': 'Draft',
+            'pending': 'Menunggu',
+            'approved': 'Disetujui',
+            'rejected': 'Ditolak',
+            'completed': 'Selesai'
+        };
+        document.getElementById('summary-status').textContent = statusNames[exportData.status];
+    }
+    
+    // Start export process
+    function startExport() {
+        document.getElementById('export-btn').style.display = 'none';
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('export-progress').style.display = 'block';
+        
+        simulateExportProgress();
+    }
+    
+    // Simulate export progress
+    function simulateExportProgress() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercentage = document.getElementById('progress-percentage');
+        const progressStatus = document.getElementById('progress-status');
+        
+        const steps = [
+            { progress: 10, status: 'Mempersiapkan data...' },
+            { progress: 30, status: 'Memproses template...' },
+            { progress: 50, status: 'Menggenerate dokumen...' },
+            { progress: 70, status: 'Menambahkan watermark...' },
+            { progress: 90, status: 'Menyelesaikan export...' },
+            { progress: 100, status: 'Export selesai!' }
+        ];
+        
+        let currentStepIndex = 0;
+        
+        const interval = setInterval(() => {
+            if (currentStepIndex < steps.length) {
+                const step = steps[currentStepIndex];
+                progressBar.style.width = step.progress + '%';
+                progressPercentage.textContent = step.progress + '%';
+                progressStatus.textContent = step.status;
+                currentStepIndex++;
+            } else {
+                clearInterval(interval);
+                showExportResult();
+            }
+        }, 1000);
+    }
+    
+    // Show export result
+    function showExportResult() {
+        document.getElementById('export-progress').style.display = 'none';
+        document.getElementById('export-result').style.display = 'block';
+        document.getElementById('reset-btn').style.display = 'inline-block';
+    }
+    
+    // Download file
+    function downloadFile() {
+        showNotification('File sedang didownload...', 'success');
+        
+        // Simulate file download
+        const link = document.createElement('a');
+        link.href = '#';
+        link.download = `export_surat_${new Date().getTime()}.${exportData.format}`;
+        link.click();
+    }
+    
+    // Preview file
+    function previewFile() {
+        showNotification('Membuka preview file...', 'info');
+        
+        // Simulate file preview
+        window.open('#', '_blank');
+    }
+    
+    // Reset export
+    function resetExport() {
+        currentStep = 1;
+        selectedFormat = null;
+        
+        // Reset UI
+        document.querySelectorAll('.step').forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+        document.getElementById('step-1').classList.add('active');
+        
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById('step-1-content').classList.remove('hidden');
+        
+        document.querySelectorAll('.export-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        document.getElementById('next-step-1').disabled = true;
+        document.getElementById('export-progress').style.display = 'none';
+        document.getElementById('export-result').style.display = 'none';
+        document.getElementById('export-btn').style.display = 'inline-block';
+        document.getElementById('back-btn').style.display = 'inline-block';
+        document.getElementById('reset-btn').style.display = 'none';
+        
+        // Reset progress
+        document.getElementById('progress-bar').style.width = '0%';
+        document.getElementById('progress-percentage').textContent = '0%';
+        document.getElementById('progress-status').textContent = 'Mempersiapkan export...';
+    }
+    
+    // Utility function for notifications
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            'success': 'bg-green-500 text-white',
+            'error': 'bg-red-500 text-white',
+            'warning': 'bg-yellow-500 text-white',
+            'info': 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

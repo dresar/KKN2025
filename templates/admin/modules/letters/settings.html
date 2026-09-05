@@ -1,0 +1,950 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pengaturan Surat{% endblock %}
+
+{% block page_title %}Pengaturan Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-card {
+        transition: all 0.3s ease;
+    }
+    .settings-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    .setting-item {
+        border-bottom: 1px solid #f3f4f6;
+        padding: 1rem 0;
+    }
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 60px;
+        height: 34px;
+    }
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 26px;
+        width: 26px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    input:checked + .slider {
+        background-color: #3b82f6;
+    }
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+    .preview-area {
+        border: 2px dashed #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        background: #f9fafb;
+    }
+    .letterhead-preview {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        background: white;
+        margin-top: 1rem;
+    }
+    .api-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .api-status.connected {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    .api-status.disconnected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    .usage-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .usage-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981 0%, #f59e0b 70%, #ef4444 100%);
+        transition: width 0.3s ease;
+    }
+    .backup-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        background: white;
+    }
+    .backup-item:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-cog mr-3 text-blue-600"></i>
+                    Pengaturan Surat
+                </h2>
+                <p class="text-gray-600">Kelola konfigurasi sistem surat desa</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="exportSettings()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>
+                    Export Pengaturan
+                </button>
+                <button onclick="importSettings()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                    <i class="fas fa-upload mr-2"></i>
+                    Import Pengaturan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Letterhead Settings -->
+            <div class="settings-card bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+                        Kop Surat
+                    </h3>
+                    <button onclick="resetLetterhead()" class="text-red-600 hover:text-red-800 text-sm">
+                        <i class="fas fa-undo mr-1"></i>
+                        Reset
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Desa</label>
+                            <input type="text" id="village-name" value="Desa Pulosarok" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kecamatan</label>
+                            <input type="text" id="district" value="Kecamatan Pulosarok" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kabupaten</label>
+                            <input type="text" id="regency" value="Kabupaten Pemalang" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Provinsi</label>
+                            <input type="text" id="province" value="Jawa Tengah" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Lengkap</label>
+                        <textarea id="full-address" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Masukkan alamat lengkap kantor desa">Jl. Raya Pulosarok No. 123, Pulosarok, Pemalang, Jawa Tengah 52355</textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Telepon</label>
+                            <input type="text" id="phone" value="(0284) 123456" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" value="pulosarok@pemalangkab.go.id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                            <input type="url" id="website" value="www.pulosarok.pemalangkab.go.id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Logo Desa</label>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                                <i class="fas fa-image text-gray-400 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="logo-upload" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+                                <button onclick="document.getElementById('logo-upload').click()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    Upload Logo
+                                </button>
+                                <p class="text-xs text-gray-500 mt-1">Format: PNG, JPG, SVG (Max: 2MB)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Letter Numbering -->
+            <div class="settings-card bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-sort-numeric-up mr-2 text-green-600"></i>
+                    Penomoran Surat
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Format Nomor</label>
+                            <select id="number-format" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="{number}/KEL/{village}/{year}">{number}/KEL/{village}/{year}</option>
+                                <option value="{number}/{type}/{village}/{year}">{number}/{type}/{village}/{year}</option>
+                                <option value="{village}-{number}-{year}">{village}-{number}-{year}</option>
+                                <option value="custom">Custom Format</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Awal</label>
+                            <input type="number" id="start-number" value="1" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div id="custom-format-container" style="display: none;">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Format Custom</label>
+                        <input type="text" id="custom-format" placeholder="Contoh: {number}/SURAT/{village}/{month}/{year}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <p class="text-xs text-gray-500 mt-1">
+                            Variabel: {number}, {type}, {village}, {year}, {month}, {day}
+                        </p>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Reset Nomor Setiap Tahun</h4>
+                                <p class="text-xs text-gray-500">Nomor surat akan direset ke 1 setiap awal tahun</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="reset-yearly" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Penomoran Otomatis</h4>
+                                <p class="text-xs text-gray-500">Sistem akan memberikan nomor secara otomatis</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-numbering" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            <strong>Preview:</strong> <span id="number-preview">001/KEL/PULOSAROK/2025</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Digital Signature -->
+            <div class="settings-card bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-signature mr-2 text-purple-600"></i>
+                    Tanda Tangan Digital
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Kepala Desa</label>
+                            <input type="text" id="village-head-name" value="Budi Santoso, S.Sos" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">NIP</label>
+                            <input type="text" id="village-head-nip" value="196512121990031001" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan</label>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-32 h-20 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                                <i class="fas fa-signature text-gray-400 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <input type="file" id="signature-upload" accept="image/*" class="hidden" onchange="handleSignatureUpload(event)">
+                                <button onclick="document.getElementById('signature-upload').click()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    Upload Tanda Tangan
+                                </button>
+                                <p class="text-xs text-gray-500 mt-1">Format: PNG dengan background transparan</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Tanda Tangan Digital Aktif</h4>
+                                <p class="text-xs text-gray-500">Aktifkan fitur tanda tangan digital</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="digital-signature-enabled" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Verifikasi QR Code</h4>
+                                <p class="text-xs text-gray-500">Tambahkan QR code untuk verifikasi keaslian surat</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="qr-verification" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="space-y-6">
+            <!-- AI Configuration -->
+            <div class="settings-card bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-robot mr-2 text-indigo-600"></i>
+                    Konfigurasi AI
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-medium text-gray-700">Status Koneksi</label>
+                            <span id="ai-status" class="api-status connected">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Terhubung
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">API Key Gemini</label>
+                        <div class="relative">
+                            <input type="password" id="gemini-api-key" value="AIzaSyC..." class="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <button onclick="toggleApiKeyVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <i id="api-key-icon" class="fas fa-eye text-gray-400"></i>
+                            </button>
+                        </div>
+                        <button onclick="testApiConnection()" class="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-plug mr-1"></i>
+                            Test Koneksi
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Model AI</label>
+                        <select id="ai-model" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
+                            <option value="gemini-1.5-pro" selected>Gemini 1.5 Pro</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Penggunaan API Bulan Ini</label>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">7,500 / 10,000 requests</span>
+                                <span class="text-gray-900 font-medium">75%</span>
+                            </div>
+                            <div class="usage-bar">
+                                <div class="usage-fill" style="width: 75%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Validasi AI Otomatis</h4>
+                                <p class="text-xs text-gray-500">Validasi surat secara otomatis dengan AI</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-ai-validation" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Saran AI</h4>
+                                <p class="text-xs text-gray-500">Tampilkan saran perbaikan dari AI</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="ai-suggestions" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview -->
+            <div class="settings-card bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-eye mr-2 text-green-600"></i>
+                    Preview Kop Surat
+                </h3>
+                
+                <div class="letterhead-preview">
+                    <div class="text-center">
+                        <div class="flex items-center justify-center mb-3">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-university text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-bold text-gray-900">PEMERINTAH KABUPATEN PEMALANG</h4>
+                                <h5 class="text-md font-semibold text-gray-800">DESA PULOSAROK</h5>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 space-y-1">
+                            <p>Jl. Raya Pulosarok No. 123, Pulosarok, Pemalang, Jawa Tengah 52355</p>
+                            <p>Telp: (0284) 123456 | Email: pulosarok@pemalangkab.go.id</p>
+                            <p>Website: www.pulosarok.pemalangkab.go.id</p>
+                        </div>
+                        <hr class="border-t-2 border-gray-800 mt-3">
+                    </div>
+                </div>
+                
+                <button onclick="updatePreview()" class="w-full mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-sync mr-2"></i>
+                    Update Preview
+                </button>
+            </div>
+            
+            <!-- Backup & Restore -->
+            <div class="settings-card bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">
+                    <i class="fas fa-database mr-2 text-orange-600"></i>
+                    Backup & Restore
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="flex space-x-3">
+                        <button onclick="createBackup()" class="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors duration-200">
+                            <i class="fas fa-save mr-2"></i>
+                            Buat Backup
+                        </button>
+                        <button onclick="showRestoreModal()" class="flex-1 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                            <i class="fas fa-upload mr-2"></i>
+                            Restore
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Backup Terbaru</h4>
+                        <div class="space-y-2 max-h-32 overflow-y-auto">
+                            <div class="backup-item">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">backup_2025_01_15.json</p>
+                                        <p class="text-xs text-gray-500">15 Jan 2025, 14:30</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="downloadBackup('backup_2025_01_15.json')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-download text-sm"></i>
+                                        </button>
+                                        <button onclick="deleteBackup('backup_2025_01_15.json')" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="backup-item">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">backup_2025_01_10.json</p>
+                                        <p class="text-xs text-gray-500">10 Jan 2025, 09:15</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="downloadBackup('backup_2025_01_10.json')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-download text-sm"></i>
+                                        </button>
+                                        <button onclick="deleteBackup('backup_2025_01_10.json')" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-trash text-sm"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Auto Backup</h4>
+                                <p class="text-xs text-gray-500">Backup otomatis setiap minggu</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="auto-backup" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save Button -->
+    <div class="mt-6 flex justify-end space-x-3">
+        <button onclick="resetAllSettings()" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+            <i class="fas fa-undo mr-2"></i>
+            Reset Semua
+        </button>
+        <button onclick="saveSettings()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            <i class="fas fa-save mr-2"></i>
+            Simpan Pengaturan
+        </button>
+    </div>
+</div>
+
+<!-- Restore Modal -->
+<div id="restore-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        <i class="fas fa-upload mr-2 text-orange-600"></i>
+                        Restore Pengaturan
+                    </h3>
+                    <button onclick="closeRestoreModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File Backup</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-orange-400 transition-colors duration-200">
+                            <input type="file" id="restore-file" accept=".json" class="hidden" onchange="handleRestoreFileSelect(event)">
+                            <div id="restore-drop-area" onclick="document.getElementById('restore-file').click()" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
+                                <p class="text-gray-600">Klik untuk memilih file backup</p>
+                                <p class="text-xs text-gray-500 mt-1">Format: JSON</p>
+                            </div>
+                            <div id="restore-file-info" class="hidden">
+                                <i class="fas fa-file-code text-2xl text-orange-600 mb-2"></i>
+                                <p id="restore-file-name" class="text-sm font-medium text-gray-900"></p>
+                                <p id="restore-file-size" class="text-xs text-gray-500"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <p class="text-sm text-yellow-800">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Peringatan:</strong> Restore akan mengganti semua pengaturan saat ini. Pastikan Anda telah membuat backup terlebih dahulu.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button onclick="startRestore()" id="restore-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-600 text-base font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm" disabled>
+                    <i class="fas fa-upload mr-2"></i>
+                    Restore
+                </button>
+                <button onclick="closeRestoreModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:w-auto sm:text-sm">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize settings
+    document.addEventListener('DOMContentLoaded', function() {
+        updateNumberPreview();
+        setupEventListeners();
+    });
+    
+    // Setup event listeners
+    function setupEventListeners() {
+        // Number format change
+        document.getElementById('number-format').addEventListener('change', function() {
+            const customContainer = document.getElementById('custom-format-container');
+            if (this.value === 'custom') {
+                customContainer.style.display = 'block';
+            } else {
+                customContainer.style.display = 'none';
+            }
+            updateNumberPreview();
+        });
+        
+        // Update preview on input changes
+        ['village-name', 'district', 'regency', 'province', 'start-number', 'custom-format'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', updateNumberPreview);
+            }
+        });
+    }
+    
+    // Update number preview
+    function updateNumberPreview() {
+        const format = document.getElementById('number-format').value;
+        const startNumber = document.getElementById('start-number').value || '1';
+        const villageName = document.getElementById('village-name').value || 'PULOSAROK';
+        const customFormat = document.getElementById('custom-format').value;
+        
+        let preview = '';
+        const year = new Date().getFullYear();
+        const month = String(new Date().getMonth() + 1).padStart(2, '0');
+        const day = String(new Date().getDate()).padStart(2, '0');
+        
+        if (format === 'custom' && customFormat) {
+            preview = customFormat
+                .replace('{number}', String(startNumber).padStart(3, '0'))
+                .replace('{type}', 'KEL')
+                .replace('{village}', villageName.toUpperCase())
+                .replace('{year}', year)
+                .replace('{month}', month)
+                .replace('{day}', day);
+        } else {
+            preview = format
+                .replace('{number}', String(startNumber).padStart(3, '0'))
+                .replace('{type}', 'KEL')
+                .replace('{village}', villageName.toUpperCase())
+                .replace('{year}', year)
+                .replace('{month}', month)
+                .replace('{day}', day);
+        }
+        
+        document.getElementById('number-preview').textContent = preview;
+    }
+    
+    // Update letterhead preview
+    function updatePreview() {
+        const villageName = document.getElementById('village-name').value;
+        const district = document.getElementById('district').value;
+        const regency = document.getElementById('regency').value;
+        const province = document.getElementById('province').value;
+        const fullAddress = document.getElementById('full-address').value;
+        const phone = document.getElementById('phone').value;
+        const email = document.getElementById('email').value;
+        const website = document.getElementById('website').value;
+        
+        const preview = document.querySelector('.letterhead-preview');
+        preview.innerHTML = `
+            <div class="text-center">
+                <div class="flex items-center justify-center mb-3">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-university text-blue-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-gray-900">PEMERINTAH ${regency.toUpperCase()}</h4>
+                        <h5 class="text-md font-semibold text-gray-800">${villageName.toUpperCase()}</h5>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-600 space-y-1">
+                    <p>${fullAddress}</p>
+                    <p>Telp: ${phone} | Email: ${email}</p>
+                    <p>Website: ${website}</p>
+                </div>
+                <hr class="border-t-2 border-gray-800 mt-3">
+            </div>
+        `;
+        
+        showNotification('Preview berhasil diupdate!', 'success');
+    }
+    
+    // Handle logo upload
+    function handleLogoUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                showNotification('Ukuran file terlalu besar! Maksimal 2MB.', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Update logo preview
+                showNotification('Logo berhasil diupload!', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // Handle signature upload
+    function handleSignatureUpload(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Update signature preview
+                showNotification('Tanda tangan berhasil diupload!', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+    
+    // Toggle API key visibility
+    function toggleApiKeyVisibility() {
+        const input = document.getElementById('gemini-api-key');
+        const icon = document.getElementById('api-key-icon');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash text-gray-400';
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye text-gray-400';
+        }
+    }
+    
+    // Test API connection
+    function testApiConnection() {
+        const statusElement = document.getElementById('ai-status');
+        
+        statusElement.className = 'api-status disconnected';
+        statusElement.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Testing...';
+        
+        setTimeout(() => {
+            const isConnected = Math.random() > 0.2; // 80% success rate
+            
+            if (isConnected) {
+                statusElement.className = 'api-status connected';
+                statusElement.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Terhubung';
+                showNotification('Koneksi API berhasil!', 'success');
+            } else {
+                statusElement.className = 'api-status disconnected';
+                statusElement.innerHTML = '<i class="fas fa-times-circle mr-1"></i>Gagal';
+                showNotification('Koneksi API gagal! Periksa API key.', 'error');
+            }
+        }, 2000);
+    }
+    
+    // Save settings
+    function saveSettings() {
+        showNotification('Menyimpan pengaturan...', 'info');
+        
+        // Simulate save process
+        setTimeout(() => {
+            showNotification('Pengaturan berhasil disimpan!', 'success');
+        }, 1500);
+    }
+    
+    // Reset functions
+    function resetLetterhead() {
+        if (confirm('Reset pengaturan kop surat ke default?')) {
+            document.getElementById('village-name').value = 'Desa Pulosarok';
+            document.getElementById('district').value = 'Kecamatan Pulosarok';
+            document.getElementById('regency').value = 'Kabupaten Pemalang';
+            document.getElementById('province').value = 'Jawa Tengah';
+            document.getElementById('full-address').value = 'Jl. Raya Pulosarok No. 123, Pulosarok, Pemalang, Jawa Tengah 52355';
+            document.getElementById('phone').value = '(0284) 123456';
+            document.getElementById('email').value = 'pulosarok@pemalangkab.go.id';
+            document.getElementById('website').value = 'www.pulosarok.pemalangkab.go.id';
+            
+            updatePreview();
+            showNotification('Kop surat berhasil direset!', 'success');
+        }
+    }
+    
+    function resetAllSettings() {
+        if (confirm('Reset semua pengaturan ke default? Tindakan ini tidak dapat dibatalkan.')) {
+            location.reload();
+        }
+    }
+    
+    // Export/Import functions
+    function exportSettings() {
+        showNotification('Mengexport pengaturan...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Pengaturan berhasil diexport!', 'success');
+        }, 1500);
+    }
+    
+    function importSettings() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                showNotification('Mengimport pengaturan...', 'info');
+                
+                setTimeout(() => {
+                    showNotification('Pengaturan berhasil diimport!', 'success');
+                    location.reload();
+                }, 2000);
+            }
+        };
+        input.click();
+    }
+    
+    // Backup functions
+    function createBackup() {
+        showNotification('Membuat backup...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Backup berhasil dibuat!', 'success');
+        }, 2000);
+    }
+    
+    function downloadBackup(filename) {
+        showNotification(`Mengunduh ${filename}...`, 'info');
+        
+        setTimeout(() => {
+            showNotification('Backup berhasil diunduh!', 'success');
+        }, 1000);
+    }
+    
+    function deleteBackup(filename) {
+        if (confirm(`Hapus backup ${filename}?`)) {
+            showNotification('Backup berhasil dihapus!', 'success');
+        }
+    }
+    
+    // Restore modal functions
+    function showRestoreModal() {
+        document.getElementById('restore-modal').classList.remove('hidden');
+    }
+    
+    function closeRestoreModal() {
+        document.getElementById('restore-modal').classList.add('hidden');
+        document.getElementById('restore-file').value = '';
+        document.getElementById('restore-file-info').classList.add('hidden');
+        document.getElementById('restore-drop-area').style.display = 'block';
+        document.getElementById('restore-btn').disabled = true;
+    }
+    
+    function handleRestoreFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            document.getElementById('restore-drop-area').style.display = 'none';
+            document.getElementById('restore-file-info').classList.remove('hidden');
+            document.getElementById('restore-file-name').textContent = file.name;
+            document.getElementById('restore-file-size').textContent = formatFileSize(file.size);
+            document.getElementById('restore-btn').disabled = false;
+        }
+    }
+    
+    function startRestore() {
+        const file = document.getElementById('restore-file').files[0];
+        if (!file) return;
+        
+        showNotification('Memulai restore...', 'info');
+        closeRestoreModal();
+        
+        setTimeout(() => {
+            showNotification('Restore berhasil! Halaman akan dimuat ulang.', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        }, 3000);
+    }
+    
+    // Utility functions
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            'success': 'bg-green-500 text-white',
+            'error': 'bg-red-500 text-white',
+            'warning': 'bg-yellow-500 text-white',
+            'info': 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Hide notification after 3 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,457 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pengaturan Sistem{% endblock %}
+
+{% block page_title %}Pengaturan Sistem{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Settings Navigation -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+                    <button class="settings-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="general">
+                        <i class="fas fa-cog mr-2"></i>
+                        Umum
+                    </button>
+                    <button class="settings-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="users">
+                        <i class="fas fa-users mr-2"></i>
+                        Pengguna
+                    </button>
+                    <button class="settings-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="backup">
+                        <i class="fas fa-database mr-2"></i>
+                        Backup
+                    </button>
+                    <button class="settings-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="system">
+                        <i class="fas fa-server mr-2"></i>
+                        Sistem
+                    </button>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- General Settings -->
+        <div id="general-tab" class="settings-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Site Information -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                        Informasi Situs
+                    </h3>
+                    
+                    <form id="site-info-form">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="site_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Situs</label>
+                                <input type="text" id="site_name" name="site_name" value="Website Desa Pulosarok" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label for="site_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                                <textarea id="site_description" name="site_description" rows="3" 
+                                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">Portal informasi dan layanan digital Desa Pulosarok</textarea>
+                            </div>
+                            
+                            <div>
+                                <label for="contact_email" class="block text-sm font-medium text-gray-700 mb-1">Email Kontak</label>
+                                <input type="email" id="contact_email" name="contact_email" value="admin@pulosarok.desa.id" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            
+                            <div>
+                                <label for="contact_phone" class="block text-sm font-medium text-gray-700 mb-1">Telepon</label>
+                                <input type="tel" id="contact_phone" name="contact_phone" value="+62 xxx xxxx xxxx" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-save mr-2"></i>
+                                Simpan Perubahan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- System Preferences -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-sliders-h mr-2 text-green-600"></i>
+                        Preferensi Sistem
+                    </h3>
+                    
+                    <form id="system-prefs-form">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">Zona Waktu</label>
+                                <select id="timezone" name="timezone" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="Asia/Jakarta" selected>Asia/Jakarta (WIB)</option>
+                                    <option value="Asia/Makassar">Asia/Makassar (WITA)</option>
+                                    <option value="Asia/Jayapura">Asia/Jayapura (WIT)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="date_format" class="block text-sm font-medium text-gray-700 mb-1">Format Tanggal</label>
+                                <select id="date_format" name="date_format" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="d/m/Y" selected>DD/MM/YYYY</option>
+                                    <option value="Y-m-d">YYYY-MM-DD</option>
+                                    <option value="d F Y">DD Month YYYY</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="items_per_page" class="block text-sm font-medium text-gray-700 mb-1">Item per Halaman</label>
+                                <select id="items_per_page" name="items_per_page" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <input type="checkbox" id="maintenance_mode" name="maintenance_mode" 
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="maintenance_mode" class="ml-2 block text-sm text-gray-700">
+                                    Mode Maintenance
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200">
+                                <i class="fas fa-save mr-2"></i>
+                                Simpan Preferensi
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users Management -->
+        <div id="users-tab" class="settings-content hidden">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <i class="fas fa-users mr-2 text-purple-600"></i>
+                        Manajemen Pengguna
+                    </h3>
+                    <button id="add-user-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+                        <i class="fas fa-plus mr-2"></i>
+                        Tambah Pengguna
+                    </button>
+                </div>
+                
+                <!-- Users Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengguna</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login Terakhir</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Users will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Backup Settings -->
+        <div id="backup-tab" class="settings-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Backup Operations -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-download mr-2 text-green-600"></i>
+                        Operasi Backup
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <h4 class="font-medium text-blue-900 mb-2">Backup Database</h4>
+                            <p class="text-sm text-blue-700 mb-3">Backup semua data dalam database</p>
+                            <button id="backup-database-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-database mr-2"></i>
+                                Backup Database
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-green-50 rounded-lg">
+                            <h4 class="font-medium text-green-900 mb-2">Backup Media Files</h4>
+                            <p class="text-sm text-green-700 mb-3">Backup semua file media yang diupload</p>
+                            <button id="backup-media-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200">
+                                <i class="fas fa-images mr-2"></i>
+                                Backup Media
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-purple-50 rounded-lg">
+                            <h4 class="font-medium text-purple-900 mb-2">Backup Lengkap</h4>
+                            <p class="text-sm text-purple-700 mb-3">Backup database dan media files</p>
+                            <button id="backup-full-btn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors duration-200">
+                                <i class="fas fa-archive mr-2"></i>
+                                Backup Lengkap
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Backup History -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-history mr-2 text-orange-600"></i>
+                        Riwayat Backup
+                    </h3>
+                    
+                    <div id="backup-history" class="space-y-3">
+                        <!-- Backup history will be loaded here -->
+                        <div class="text-center py-8">
+                            <i class="fas fa-inbox text-gray-400 text-3xl mb-2"></i>
+                            <p class="text-gray-500">Belum ada riwayat backup</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- System Information -->
+        <div id="system-tab" class="settings-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- System Info -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>
+                        Informasi Sistem
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">Versi Django</span>
+                            <span class="text-sm text-gray-900" id="django-version">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">Versi Python</span>
+                            <span class="text-sm text-gray-900" id="python-version">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">Database</span>
+                            <span class="text-sm text-gray-900" id="database-info">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                            <span class="text-sm font-medium text-gray-600">Server</span>
+                            <span class="text-sm text-gray-900" id="server-info">-</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center py-2">
+                            <span class="text-sm font-medium text-gray-600">Uptime</span>
+                            <span class="text-sm text-gray-900" id="uptime-info">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Actions -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-tools mr-2 text-red-600"></i>
+                        Aksi Sistem
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 bg-yellow-50 rounded-lg">
+                            <h4 class="font-medium text-yellow-900 mb-2">Clear Cache</h4>
+                            <p class="text-sm text-yellow-700 mb-3">Hapus semua cache sistem</p>
+                            <button id="clear-cache-btn" class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition-colors duration-200">
+                                <i class="fas fa-broom mr-2"></i>
+                                Clear Cache
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <h4 class="font-medium text-blue-900 mb-2">Collect Static Files</h4>
+                            <p class="text-sm text-blue-700 mb-3">Kumpulkan file static untuk production</p>
+                            <button id="collect-static-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200">
+                                <i class="fas fa-file-code mr-2"></i>
+                                Collect Static
+                            </button>
+                        </div>
+                        
+                        <div class="p-4 bg-red-50 rounded-lg">
+                            <h4 class="font-medium text-red-900 mb-2">Restart Server</h4>
+                            <p class="text-sm text-red-700 mb-3">Restart server aplikasi (hati-hati!)</p>
+                            <button id="restart-server-btn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200">
+                                <i class="fas fa-power-off mr-2"></i>
+                                Restart Server
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Tab switching functionality
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.settings-tab').forEach(t => {
+                t.classList.remove('border-blue-500', 'text-blue-600');
+                t.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Add active class to clicked tab
+            this.classList.remove('border-transparent', 'text-gray-500');
+            this.classList.add('border-blue-500', 'text-blue-600');
+            
+            // Hide all content
+            document.querySelectorAll('.settings-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Show target content
+            document.getElementById(targetTab + '-tab').classList.remove('hidden');
+        });
+    });
+    
+    // Set default active tab
+    document.querySelector('.settings-tab[data-tab="general"]').click();
+    
+    // Load system information
+    function loadSystemInfo() {
+        // This would typically fetch from an API
+        document.getElementById('django-version').textContent = '4.2.x';
+        document.getElementById('python-version').textContent = '3.11.x';
+        document.getElementById('database-info').textContent = 'SQLite';
+        document.getElementById('server-info').textContent = 'Development Server';
+        document.getElementById('uptime-info').textContent = 'Running';
+    }
+    
+    // Load users table
+    function loadUsers() {
+        // This would typically fetch from an API
+        const usersTableBody = document.getElementById('users-table-body');
+        usersTableBody.innerHTML = `
+            <tr>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-gray-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="text-sm text-gray-500">{{ user.username }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.email }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                        Administrator
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        Aktif
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ user.last_login|date:'d M Y H:i'|default:'Belum pernah' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                    <button class="text-red-600 hover:text-red-900">Hapus</button>
+                </td>
+            </tr>
+        `;
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSystemInfo();
+        loadUsers();
+    });
+    
+    // Form submissions
+    document.getElementById('site-info-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        showNotification('Informasi situs berhasil disimpan', 'success');
+    });
+    
+    document.getElementById('system-prefs-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        showNotification('Preferensi sistem berhasil disimpan', 'success');
+    });
+    
+    // System actions
+    document.getElementById('clear-cache-btn').addEventListener('click', function() {
+        if (confirm('Yakin ingin menghapus cache?')) {
+            showNotification('Cache berhasil dihapus', 'success');
+        }
+    });
+    
+    document.getElementById('collect-static-btn').addEventListener('click', function() {
+        showNotification('Static files berhasil dikumpulkan', 'success');
+    });
+    
+    document.getElementById('restart-server-btn').addEventListener('click', function() {
+        if (confirm('Yakin ingin restart server? Ini akan memutus semua koneksi.')) {
+            showNotification('Server akan direstart...', 'warning');
+        }
+    });
+    
+    // Backup actions
+    document.getElementById('backup-database-btn').addEventListener('click', function() {
+        showNotification('Backup database dimulai...', 'info');
+    });
+    
+    document.getElementById('backup-media-btn').addEventListener('click', function() {
+        showNotification('Backup media files dimulai...', 'info');
+    });
+    
+    document.getElementById('backup-full-btn').addEventListener('click', function() {
+        showNotification('Backup lengkap dimulai...', 'info');
+    });
+    
+    // Notification function
+    function showNotification(message, type) {
+        const colors = {
+            success: 'bg-green-500',
+            error: 'bg-red-500',
+            warning: 'bg-yellow-500',
+            info: 'bg-blue-500'
+        };
+        
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${colors[type]} text-white`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

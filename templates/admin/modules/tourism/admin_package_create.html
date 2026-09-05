@@ -1,0 +1,269 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Tambah Paket Wisata{% endblock %}
+
+{% block content %}
+<!-- Template untuk form tambah paket dalam modal -->
+<div class="modal-header flex justify-between items-center pb-3 mb-4 border-b border-gray-200">
+    <h3 class="text-xl font-semibold text-gray-900">Tambah Paket Wisata</h3>
+    <button type="button" data-close-modal class="text-gray-400 hover:text-gray-500 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+    </button>
+</div>
+
+<form method="post" action="{% url 'tourism:admin_package_create' %}" enctype="multipart/form-data" id="packageForm">
+    {% csrf_token %}
+    
+    <!-- Pesan error -->
+    {% if form.errors %}
+    <div class="p-4 mb-4 rounded-md bg-red-50 text-red-800 border border-red-200">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Terdapat kesalahan pada form:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if form.non_field_errors %}
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="grid grid-cols-1 gap-6">
+        <!-- Informasi Dasar -->
+        <div class="bg-gray-50 p-4 rounded-md">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Informasi Dasar</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Nama Paket -->
+                <div class="md:col-span-2">
+                    <label for="id_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Paket <span class="text-red-600">*</span></label>
+                    <input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Masukkan nama paket wisata">
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Slug -->
+                <div class="md:col-span-2">
+                    <label for="id_slug" class="block text-sm font-medium text-gray-700 mb-1">Slug <span class="text-red-600">*</span></label>
+                    <div class="flex">
+                        <input type="text" name="slug" id="id_slug" value="{{ form.slug.value|default:'' }}" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="paket-wisata">
+                        <button type="button" id="generateSlug" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    {% if form.slug.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.slug.errors.0 }}</p>
+                    {% else %}
+                    <p class="mt-1 text-xs text-gray-500">URL yang digunakan untuk paket ini. Hanya boleh berisi huruf, angka, dan tanda hubung (-).</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Kategori -->
+                <div>
+                    <label for="id_category" class="block text-sm font-medium text-gray-700 mb-1">Kategori <span class="text-red-600">*</span></label>
+                    <select name="category" id="id_category" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="">Pilih Kategori</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if form.category.value|stringformat:"s" == category.id|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.category.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Lokasi -->
+                <div>
+                    <label for="id_location" class="block text-sm font-medium text-gray-700 mb-1">Lokasi <span class="text-red-600">*</span></label>
+                    <select name="location" id="id_location" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="">Pilih Lokasi</option>
+                        {% for location in locations %}
+                        <option value="{{ location.id }}" {% if form.location.value|stringformat:"s" == location.id|stringformat:"s" %}selected{% endif %}>{{ location.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.location.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.location.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detail Paket -->
+        <div class="bg-gray-50 p-4 rounded-md">
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Detail Paket</h4>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Durasi -->
+                <div>
+                    <label for="id_duration" class="block text-sm font-medium text-gray-700 mb-1">Durasi</label>
+                    <input type="text" name="duration" id="id_duration" value="{{ form.duration.value|default:'' }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Contoh: 2 Hari 1 Malam">
+                    {% if form.duration.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.duration.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Harga -->
+                <div>
+                    <label for="id_price" class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                    <input type="number" name="price" id="id_price" value="{{ form.price.value|default:'' }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Contoh: 500000">
+                    {% if form.price.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.price.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Kapasitas -->
+                <div>
+                    <label for="id_capacity" class="block text-sm font-medium text-gray-700 mb-1">Kapasitas</label>
+                    <input type="number" name="capacity" id="id_capacity" value="{{ form.capacity.value|default:'' }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Contoh: 10">
+                    {% if form.capacity.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.capacity.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Fasilitas -->
+                <div class="md:col-span-2">
+                    <label for="id_facilities" class="block text-sm font-medium text-gray-700 mb-1">Fasilitas</label>
+                    <input type="text" name="facilities" id="id_facilities" value="{{ form.facilities.value|default:'' }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Contoh: Transportasi, Makan 3x, Pemandu">
+                    {% if form.facilities.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.facilities.errors.0 }}</p>
+                    {% else %}
+                    <p class="mt-1 text-xs text-gray-500">Pisahkan dengan koma untuk setiap fasilitas.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Deskripsi -->
+        <div>
+            <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi <span class="text-red-600">*</span></label>
+            <textarea name="description" id="id_description" rows="4" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Deskripsi lengkap tentang paket wisata ini">{{ form.description.value|default:'' }}</textarea>
+            {% if form.description.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Gambar -->
+        <div>
+            <label for="id_image" class="block text-sm font-medium text-gray-700 mb-1">Gambar Paket</label>
+            <div class="flex items-center">
+                <div class="flex-shrink-0 h-24 w-24 rounded-md overflow-hidden bg-gray-100 mr-4">
+                    <img id="imagePreview" class="h-full w-full object-cover hidden">
+                    <div id="imagePreviewPlaceholder" class="h-full w-full flex items-center justify-center text-gray-400">
+                        <i class="fas fa-image text-2xl"></i>
+                    </div>
+                </div>
+                <div class="flex-grow">
+                    <input type="file" name="image" id="id_image" class="hidden" accept="image/*">
+                    <label for="id_image" class="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-upload mr-2"></i> Pilih Gambar
+                    </label>
+                    <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG. Ukuran maks: 2MB.</p>
+                </div>
+            </div>
+            {% if form.image.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Status -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="id_is_active" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <div class="relative inline-block w-full">
+                    <select name="is_active" id="id_is_active" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="True" {% if form.is_active.value %}selected{% endif %}>Aktif</option>
+                        <option value="False" {% if form.is_active.value == False %}selected{% endif %}>Tidak Aktif</option>
+                    </select>
+                </div>
+                {% if form.is_active.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="id_featured" class="block text-sm font-medium text-gray-700 mb-1">Unggulan</label>
+                <div class="relative inline-block w-full">
+                    <select name="featured" id="id_featured" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="True" {% if form.featured.value %}selected{% endif %}>Ya</option>
+                        <option value="False" {% if form.featured.value == False %}selected{% endif %}>Tidak</option>
+                    </select>
+                </div>
+                {% if form.featured.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.featured.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" data-close-modal class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Batal
+        </button>
+        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Simpan
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+<script>
+    // Fungsi untuk menghasilkan slug dari nama
+    function slugify(text) {
+        return text.toString().toLowerCase()
+            .replace(/\s+/g, '-')           // Ganti spasi dengan -
+            .replace(/[^\w\-]+/g, '')       // Hapus semua karakter non-word
+            .replace(/\-\-+/g, '-')         // Ganti multiple - dengan single -
+            .replace(/^-+/, '')             // Trim - dari awal teks
+            .replace(/-+$/, '');            // Trim - dari akhir teks
+    }
+    
+    // Event listener untuk tombol generate slug
+    document.getElementById('generateSlug').addEventListener('click', function() {
+        const nameInput = document.getElementById('id_name');
+        const slugInput = document.getElementById('id_slug');
+        
+        if (nameInput.value) {
+            slugInput.value = slugify(nameInput.value);
+        }
+    });
+    
+    // Preview gambar saat dipilih
+    document.getElementById('id_image').addEventListener('change', function() {
+        const file = this.files[0];
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewPlaceholder = document.getElementById('imagePreviewPlaceholder');
+        
+        if (file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+                imagePreviewPlaceholder.classList.add('hidden');
+            };
+            
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.classList.add('hidden');
+            imagePreviewPlaceholder.classList.remove('hidden');
+        }
+    });
+</script>

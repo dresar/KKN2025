@@ -1,0 +1,1262 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Services{% endblock %}
+
+{% block page_title %}Services{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Manajemen Layanan Desa</h2>
+                <p class="text-gray-600 mt-1 text-sm sm:text-base">Kelola layanan dan fasilitas desa</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <button id="add-service-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm sm:text-base">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Layanan
+                </button>
+                <button id="import-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 text-sm sm:text-base">
+                    <i class="fas fa-upload mr-2"></i>
+                    Import Data
+                </button>
+                <button id="bulk-actions-btn" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors duration-200 text-sm sm:text-base hidden" onclick="openBulkModal()">
+                    <i class="fas fa-tasks mr-2"></i>
+                    Aksi Massal
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-concierge-bell text-lg sm:text-2xl"></i>
+                </div>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Layanan</p>
+                    <p class="text-lg sm:text-2xl font-semibold text-gray-900" id="total-services">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-check-circle text-lg sm:text-2xl"></i>
+                </div>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Layanan Aktif</p>
+                    <p class="text-lg sm:text-2xl font-semibold text-gray-900" id="active-services">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-users text-lg sm:text-2xl"></i>
+                </div>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Pengguna</p>
+                    <p class="text-lg sm:text-2xl font-semibold text-gray-900" id="total-users">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6">
+            <div class="flex items-center">
+                <div class="p-2 sm:p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-calendar-week text-lg sm:text-2xl"></i>
+                </div>
+                <div class="ml-3 sm:ml-4">
+                    <p class="text-xs sm:text-sm font-medium text-gray-600">Bulan Ini</p>
+                    <p class="text-lg sm:text-2xl font-semibold text-gray-900">156</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Services Management Tabs -->
+    <div class="bg-white rounded-lg shadow-sm border">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex flex-wrap px-4 sm:px-6" aria-label="Tabs">
+                <button class="services-tab border-blue-500 text-blue-600 whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-sm" data-tab="list">
+                    <i class="fas fa-list mr-1 sm:mr-2"></i>
+                    <span class="hidden sm:inline">Daftar </span>Layanan
+                </button>
+                <button class="services-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-sm" data-tab="categories">
+                    <i class="fas fa-tags mr-1 sm:mr-2"></i>
+                    <span class="hidden sm:inline">Kategori </span>Layanan
+                </button>
+                <button class="services-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-sm" data-tab="requests">
+                    <i class="fas fa-file-alt mr-1 sm:mr-2"></i>
+                    <span class="hidden sm:inline">Permohonan </span>Layanan
+                </button>
+                <button class="services-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-sm" data-tab="requirements">
+                    <i class="fas fa-clipboard-list mr-1 sm:mr-2"></i>
+                    <span class="hidden sm:inline">Syarat </span>Layanan
+                </button>
+                <button class="services-tab border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-2 sm:px-4 border-b-2 font-medium text-sm" data-tab="reports">
+                    <i class="fas fa-chart-bar mr-1 sm:mr-2"></i>
+                    <span class="hidden sm:inline">Laporan </span>Layanan
+                </button>
+            </nav>
+        </div>
+        
+        <!-- Services List Tab -->
+        <div id="list-tab" class="services-content p-4 sm:p-6">
+            <!-- Search and Filter -->
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+                <div class="flex flex-col sm:flex-row gap-3 flex-1">
+                    <div class="relative flex-1 sm:max-w-xs">
+                        <input type="text" id="search-services" placeholder="Cari layanan..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <select id="filter-category" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        <option value="">Semua Kategori</option>
+                        <option value="administrasi">Administrasi</option>
+                        <option value="kesehatan">Kesehatan</option>
+                        <option value="pendidikan">Pendidikan</option>
+                        <option value="sosial">Sosial</option>
+                        <option value="infrastruktur">Infrastruktur</option>
+                    </select>
+                    
+                    <select id="filter-status" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        <option value="">Semua Status</option>
+                        <option value="active">Aktif</option>
+                        <option value="inactive">Tidak Aktif</option>
+                        <option value="maintenance">Maintenance</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button id="export-excel-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-file-excel mr-2"></i>
+                        Excel
+                    </button>
+                    <button id="export-pdf-btn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-file-pdf mr-2"></i>
+                        PDF
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Services Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" id="select-all-services" class="rounded border-gray-300">
+                            </th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Layanan</th>
+                            <th class="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                            <th class="hidden md:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                            <th class="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu Proses</th>
+                            <th class="hidden lg:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biaya</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="services-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mt-6">
+                <div class="text-sm text-gray-700">
+                    Menampilkan <span id="showing-start">1</span> sampai <span id="showing-end">25</span> dari <span id="total-records">0</span> data
+                </div>
+                <div class="flex justify-center sm:justify-end">
+                    <nav class="flex space-x-1" aria-label="Pagination">
+                        <button id="prev-page" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div id="page-numbers" class="flex space-x-1">
+                            <!-- Page numbers will be generated here -->
+                        </div>
+                        <button id="next-page" class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Categories Tab -->
+        <div id="categories-tab" class="services-content p-4 sm:p-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Kategori Layanan</h3>
+                <button id="add-category-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Kategori
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="text-lg font-semibold">Administrasi</h4>
+                                <p class="text-sm text-gray-500">12 layanan</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm">Layanan administrasi kependudukan dan surat menyurat</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-green-100 text-green-600 rounded-lg">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="text-lg font-semibold">Kesehatan</h4>
+                                <p class="text-sm text-gray-500">8 layanan</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm">Layanan kesehatan masyarakat dan posyandu</p>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h4 class="text-lg font-semibold">Pendidikan</h4>
+                                <p class="text-sm text-gray-500">6 layanan</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm">Layanan pendidikan dan beasiswa</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Requests Tab -->
+        <div id="requests-tab" class="services-content p-4 sm:p-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Permohonan Layanan</h3>
+                <div class="flex gap-2">
+                    <select id="filter-request-status" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        <option value="">Semua Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Diproses</option>
+                        <option value="completed">Selesai</option>
+                        <option value="rejected">Ditolak</option>
+                    </select>
+                    <button id="export-requests-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-download mr-2"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Permohonan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Pemohon</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Layanan</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="requests-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Requirements Tab -->
+        <div id="requirements-tab" class="services-content p-4 sm:p-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Syarat Layanan</h3>
+                <button id="add-requirement-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Syarat
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold">Surat Keterangan Domisili</h4>
+                        <div class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Fotokopi KTP yang masih berlaku
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Fotokopi Kartu Keluarga
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Surat pengantar dari RT/RW
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Materai 10.000
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-gray-200 rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold">Surat Keterangan Usaha</h4>
+                        <div class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Fotokopi KTP yang masih berlaku
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Fotokopi Kartu Keluarga
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Surat keterangan dari RT/RW
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Foto tempat usaha
+                        </div>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Materai 10.000
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reports Tab -->
+        <div id="reports-tab" class="services-content p-4 sm:p-6 hidden">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Laporan Layanan</h3>
+                <div class="flex gap-2">
+                    <select id="report-period" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        <option value="bulan">Bulan Ini</option>
+                        <option value="triwulan">Triwulan</option>
+                        <option value="semester">Semester</option>
+                        <option value="tahun">Tahun</option>
+                    </select>
+                    <button id="generate-report-btn" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        Generate
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4">Layanan Terpopuler</h4>
+                    <div class="h-64 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-chart-pie text-4xl mb-4"></i>
+                            <p>Grafik layanan terpopuler akan ditampilkan di sini</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold mb-4">Trend Permohonan</h4>
+                    <div class="h-64 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-chart-line text-4xl mb-4"></i>
+                            <p>Grafik trend permohonan akan ditampilkan di sini</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 class="text-lg font-semibold mb-4">Ringkasan Laporan</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600">26</div>
+                        <div class="text-sm text-gray-600">Total Layanan</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600">156</div>
+                        <div class="text-sm text-gray-600">Permohonan Bulan Ini</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-yellow-600">92%</div>
+                        <div class="text-sm text-gray-600">Tingkat Kepuasan</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-purple-600">3.2</div>
+                        <div class="text-sm text-gray-600">Rata-rata Hari Proses</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Service Modal -->
+<div id="service-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-4 sm:top-10 mx-auto p-4 sm:p-5 border w-11/12 sm:w-4/5 lg:w-3/4 xl:w-2/3 shadow-lg rounded-md bg-white max-h-screen overflow-y-auto">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900" id="service-modal-title">Tambah Layanan</h3>
+                <button id="close-service-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="service-form">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="nama_layanan" class="block text-sm font-medium text-gray-700 mb-1">Nama Layanan *</label>
+                            <input type="text" id="nama_layanan" name="nama_layanan" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="kategori_layanan" class="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
+                            <select id="kategori_layanan" name="kategori_layanan" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="">Pilih Kategori</option>
+                                <option value="administrasi">Administrasi</option>
+                                <option value="kesehatan">Kesehatan</option>
+                                <option value="pendidikan">Pendidikan</option>
+                                <option value="sosial">Sosial</option>
+                                <option value="infrastruktur">Infrastruktur</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="deskripsi_layanan" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi Layanan *</label>
+                            <textarea id="deskripsi_layanan" name="deskripsi_layanan" rows="4" required 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="waktu_proses" class="block text-sm font-medium text-gray-700 mb-1">Waktu Proses (Hari)</label>
+                                <input type="number" id="waktu_proses" name="waktu_proses" min="1" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                            </div>
+                            
+                            <div>
+                                <label for="biaya_layanan" class="block text-sm font-medium text-gray-700 mb-1">Biaya (Rp)</label>
+                                <input type="number" id="biaya_layanan" name="biaya_layanan" min="0" 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="penanggung_jawab" class="block text-sm font-medium text-gray-700 mb-1">Penanggung Jawab</label>
+                            <input type="text" id="penanggung_jawab" name="penanggung_jawab" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label for="syarat_layanan" class="block text-sm font-medium text-gray-700 mb-1">Syarat Layanan</label>
+                            <textarea id="syarat_layanan" name="syarat_layanan" rows="6" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" 
+                                      placeholder="Masukkan syarat-syarat yang diperlukan, pisahkan dengan enter"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="prosedur_layanan" class="block text-sm font-medium text-gray-700 mb-1">Prosedur Layanan</label>
+                            <textarea id="prosedur_layanan" name="prosedur_layanan" rows="4" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm" 
+                                      placeholder="Langkah-langkah prosedur layanan"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label for="jam_layanan" class="block text-sm font-medium text-gray-700 mb-1">Jam Layanan</label>
+                            <input type="text" id="jam_layanan" name="jam_layanan" placeholder="Senin-Jumat 08:00-16:00" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="kontak_layanan" class="block text-sm font-medium text-gray-700 mb-1">Kontak Layanan</label>
+                            <input type="text" id="kontak_layanan" name="kontak_layanan" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="status_layanan" class="block text-sm font-medium text-gray-700 mb-1">Status *</label>
+                            <select id="status_layanan" name="status_layanan" required 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Tidak Aktif</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="catatan_layanan" class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                            <textarea id="catatan_layanan" name="catatan_layanan" rows="3" 
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row justify-end gap-3 mt-6 pt-6 border-t">
+                    <button type="button" id="cancel-service-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div id="category-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 sm:w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Tambah Kategori</h3>
+                <button id="close-category-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="category-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="nama_kategori" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori *</label>
+                        <input type="text" id="nama_kategori" name="nama_kategori" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="deskripsi_kategori" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                        <textarea id="deskripsi_kategori" name="deskripsi_kategori" rows="3" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="icon_kategori" class="block text-sm font-medium text-gray-700 mb-1">Icon (FontAwesome)</label>
+                        <input type="text" id="icon_kategori" name="icon_kategori" placeholder="fas fa-file-alt" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="warna_kategori" class="block text-sm font-medium text-gray-700 mb-1">Warna</label>
+                        <select id="warna_kategori" name="warna_kategori" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                            <option value="blue">Biru</option>
+                            <option value="green">Hijau</option>
+                            <option value="yellow">Kuning</option>
+                            <option value="red">Merah</option>
+                            <option value="purple">Ungu</option>
+                            <option value="indigo">Indigo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancel-category-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Requirement Modal -->
+<div id="requirement-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 sm:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Tambah Syarat Layanan</h3>
+                <button id="close-requirement-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="requirement-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="layanan_requirement" class="block text-sm font-medium text-gray-700 mb-1">Pilih Layanan *</label>
+                        <select id="layanan_requirement" name="layanan_requirement" required 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                            <option value="">Pilih Layanan</option>
+                            <option value="surat_domisili">Surat Keterangan Domisili</option>
+                            <option value="surat_usaha">Surat Keterangan Usaha</option>
+                            <option value="surat_tidak_mampu">Surat Keterangan Tidak Mampu</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="syarat_items" class="block text-sm font-medium text-gray-700 mb-1">Daftar Syarat *</label>
+                        <div id="syarat-container" class="space-y-2">
+                            <div class="flex items-center gap-2">
+                                <input type="text" name="syarat[]" placeholder="Masukkan syarat" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                                <button type="button" onclick="removeRequirement(this)" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="add-requirement-item" class="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-plus mr-1"></i>
+                            Tambah Syarat
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancel-requirement-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 sm:w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4">Konfirmasi Hapus</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="flex justify-center gap-3 mt-4">
+                <button id="cancel-delete" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 text-sm">
+                    Batal
+                </button>
+                <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 text-sm">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Global variables
+    let currentPage = 1;
+    let totalPages = 1;
+    let selectedItems = [];
+    let editingId = null;
+    let currentTab = 'list';
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        loadStatistics();
+        loadTabData('list');
+        initializeEventListeners();
+    });
+    
+    function initializeEventListeners() {
+        // Tab switching
+        document.querySelectorAll('.services-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                switchTab(targetTab);
+            });
+        });
+        
+        // Modal controls
+        setupModalControls();
+        
+        // Form submissions
+        setupFormHandlers();
+        
+        // Search and filters
+        setupSearchAndFilters();
+        
+        // Requirement management
+        setupRequirementManagement();
+    }
+    
+    function switchTab(targetTab) {
+        currentTab = targetTab;
+        
+        // Update tab appearance
+        document.querySelectorAll('.services-tab').forEach(t => {
+            t.classList.remove('border-blue-500', 'text-blue-600');
+            t.classList.add('border-transparent', 'text-gray-500');
+        });
+        
+        document.querySelector(`[data-tab="${targetTab}"]`).classList.remove('border-transparent', 'text-gray-500');
+        document.querySelector(`[data-tab="${targetTab}"]`).classList.add('border-blue-500', 'text-blue-600');
+        
+        // Hide all content
+        document.querySelectorAll('.services-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // Show target content
+        document.getElementById(targetTab + '-tab').classList.remove('hidden');
+        
+        // Load data for the active tab
+        loadTabData(targetTab);
+    }
+    
+    function setupModalControls() {
+        // Service modal
+        document.getElementById('add-service-btn').addEventListener('click', () => openServiceModal());
+        document.getElementById('close-service-modal').addEventListener('click', () => closeServiceModal());
+        document.getElementById('cancel-service-btn').addEventListener('click', () => closeServiceModal());
+        
+        // Category modal
+        document.getElementById('add-category-btn').addEventListener('click', () => openCategoryModal());
+        document.getElementById('close-category-modal').addEventListener('click', () => closeCategoryModal());
+        document.getElementById('cancel-category-btn').addEventListener('click', () => closeCategoryModal());
+        
+        // Requirement modal
+        document.getElementById('add-requirement-btn').addEventListener('click', () => openRequirementModal());
+        document.getElementById('close-requirement-modal').addEventListener('click', () => closeRequirementModal());
+        document.getElementById('cancel-requirement-btn').addEventListener('click', () => closeRequirementModal());
+        
+        // Delete modal
+        document.getElementById('cancel-delete').addEventListener('click', () => closeDeleteModal());
+        document.getElementById('confirm-delete').addEventListener('click', () => confirmDelete());
+    }
+    
+    function setupFormHandlers() {
+        document.getElementById('service-form').addEventListener('submit', handleServiceSubmit);
+        document.getElementById('category-form').addEventListener('submit', handleCategorySubmit);
+        document.getElementById('requirement-form').addEventListener('submit', handleRequirementSubmit);
+    }
+    
+    function setupSearchAndFilters() {
+        document.getElementById('search-services').addEventListener('input', debounce(handleSearch, 300));
+        document.getElementById('filter-category').addEventListener('change', handleFilter);
+        document.getElementById('filter-status').addEventListener('change', handleFilter);
+        
+        // Select all checkbox
+        document.getElementById('select-all-services').addEventListener('change', handleSelectAll);
+    }
+    
+    function setupRequirementManagement() {
+        document.getElementById('add-requirement-item').addEventListener('click', addRequirementItem);
+    }
+    
+    function loadStatistics() {
+        document.getElementById('total-services').textContent = '26';
+        document.getElementById('active-services').textContent = '24';
+        document.getElementById('total-users').textContent = '1,456';
+    }
+    
+    function loadTabData(tab) {
+        switch(tab) {
+            case 'list':
+                loadServicesData();
+                break;
+            case 'categories':
+                loadCategoriesData();
+                break;
+            case 'requests':
+                loadRequestsData();
+                break;
+            case 'requirements':
+                loadRequirementsData();
+                break;
+            case 'reports':
+                loadReportsData();
+                break;
+        }
+    }
+    
+    function loadServicesData() {
+        const tableBody = document.getElementById('services-table-body');
+        
+        // Show loading
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...</td></tr>';
+        
+        // Simulate API call
+        setTimeout(() => {
+            const sampleData = [
+                { id: 1, nama: 'Surat Keterangan Domisili', kategori: 'Administrasi', deskripsi: 'Surat keterangan tempat tinggal', waktu: '3 hari', biaya: 'Gratis', status: 'active' },
+                { id: 2, nama: 'Surat Keterangan Usaha', kategori: 'Administrasi', deskripsi: 'Surat keterangan untuk usaha', waktu: '5 hari', biaya: 'Rp 10.000', status: 'active' },
+                { id: 3, nama: 'Pelayanan Posyandu', kategori: 'Kesehatan', deskripsi: 'Layanan kesehatan ibu dan anak', waktu: '1 hari', biaya: 'Gratis', status: 'active' }
+            ];
+            
+            let html = '';
+            sampleData.forEach(item => {
+                html += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" class="item-checkbox rounded border-gray-300" value="${item.id}">
+                        </td>
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${item.nama}</div>
+                        </td>
+                        <td class="hidden sm:table-cell px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${item.kategori}</div>
+                        </td>
+                        <td class="hidden md:table-cell px-6 py-4">
+                            <div class="text-sm text-gray-900">${item.deskripsi}</div>
+                        </td>
+                        <td class="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${item.waktu}</div>
+                        </td>
+                        <td class="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${item.biaya}</div>
+                        </td>
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                item.status === 'active' ? 'bg-green-100 text-green-800' :
+                                item.status === 'inactive' ? 'bg-red-100 text-red-800' :
+                                'bg-yellow-100 text-yellow-800'
+                            }">
+                                ${item.status === 'active' ? 'Aktif' : item.status === 'inactive' ? 'Tidak Aktif' : 'Maintenance'}
+                            </span>
+                        </td>
+                        <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button onclick="viewService(${item.id})" class="text-blue-600 hover:text-blue-900" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editService(${item.id})" class="text-indigo-600 hover:text-indigo-900" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteService(${item.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+            updatePagination(1, 5, sampleData.length);
+        }, 1000);
+    }
+    
+    function loadCategoriesData() {
+        console.log('Loading categories data...');
+    }
+    
+    function loadRequestsData() {
+        const tableBody = document.getElementById('requests-table-body');
+        
+        // Show loading
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...</td></tr>';
+        
+        // Simulate API call
+        setTimeout(() => {
+            const sampleData = [
+                { id: 1, nomor: 'REQ-2024-001', pemohon: 'Ahmad Suryadi', layanan: 'Surat Keterangan Domisili', tanggal: '2024-01-15', status: 'pending' },
+                { id: 2, nomor: 'REQ-2024-002', pemohon: 'Siti Nurhaliza', layanan: 'Surat Keterangan Usaha', tanggal: '2024-01-14', status: 'processing' },
+                { id: 3, nomor: 'REQ-2024-003', pemohon: 'Budi Santoso', layanan: 'Surat Keterangan Tidak Mampu', tanggal: '2024-01-13', status: 'completed' }
+            ];
+            
+            let html = '';
+            sampleData.forEach(item => {
+                html += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">${item.nomor}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${item.pemohon}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${item.layanan}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">${item.tanggal}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                item.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                item.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                item.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                'bg-red-100 text-red-800'
+                            }">
+                                ${item.status === 'pending' ? 'Pending' : 
+                                  item.status === 'processing' ? 'Diproses' :
+                                  item.status === 'completed' ? 'Selesai' : 'Ditolak'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button onclick="viewRequest(${item.id})" class="text-blue-600 hover:text-blue-900" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="processRequest(${item.id})" class="text-green-600 hover:text-green-900" title="Proses">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button onclick="rejectRequest(${item.id})" class="text-red-600 hover:text-red-900" title="Tolak">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }, 1000);
+    }
+    
+    function loadRequirementsData() {
+        console.log('Loading requirements data...');
+    }
+    
+    function loadReportsData() {
+        console.log('Loading reports data...');
+    }
+    
+    // Modal functions
+    function openServiceModal(id = null) {
+        editingId = id;
+        const modal = document.getElementById('service-modal');
+        const title = document.getElementById('service-modal-title');
+        
+        if (id) {
+            title.textContent = 'Edit Layanan';
+            // Load service data for editing
+        } else {
+            title.textContent = 'Tambah Layanan';
+            document.getElementById('service-form').reset();
+        }
+        
+        modal.classList.remove('hidden');
+    }
+    
+    function closeServiceModal() {
+        document.getElementById('service-modal').classList.add('hidden');
+        editingId = null;
+    }
+    
+    function openCategoryModal() {
+        document.getElementById('category-modal').classList.remove('hidden');
+    }
+    
+    function closeCategoryModal() {
+        document.getElementById('category-modal').classList.add('hidden');
+    }
+    
+    function openRequirementModal() {
+        document.getElementById('requirement-modal').classList.remove('hidden');
+    }
+    
+    function closeRequirementModal() {
+        document.getElementById('requirement-modal').classList.add('hidden');
+    }
+    
+    function openDeleteModal() {
+        document.getElementById('delete-modal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.add('hidden');
+    }
+    
+    // Form handlers
+    function handleServiceSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        console.log('Service data:', data);
+        
+        // Simulate API call
+        setTimeout(() => {
+            showNotification('Layanan berhasil disimpan!', 'success');
+            closeServiceModal();
+            loadServicesData();
+        }, 1000);
+    }
+    
+    function handleCategorySubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        
+        console.log('Category data:', data);
+        
+        // Simulate API call
+        setTimeout(() => {
+            showNotification('Kategori berhasil disimpan!', 'success');
+            closeCategoryModal();
+            loadCategoriesData();
+        }, 1000);
+    }
+    
+    function handleRequirementSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const syaratItems = Array.from(document.querySelectorAll('input[name="syarat[]"]')).map(input => input.value).filter(val => val.trim());
+        
+        const data = {
+            layanan: formData.get('layanan_requirement'),
+            syarat: syaratItems
+        };
+        
+        console.log('Requirement data:', data);
+        
+        // Simulate API call
+        setTimeout(() => {
+            showNotification('Syarat layanan berhasil disimpan!', 'success');
+            closeRequirementModal();
+            loadRequirementsData();
+        }, 1000);
+    }
+    
+    // Action functions
+    function viewService(id) {
+        console.log('View service:', id);
+        showNotification('Fitur detail layanan akan segera tersedia', 'info');
+    }
+    
+    function editService(id) {
+        openServiceModal(id);
+    }
+    
+    function deleteService(id) {
+        editingId = id;
+        openDeleteModal();
+    }
+    
+    function viewRequest(id) {
+        console.log('View request:', id);
+        showNotification('Fitur detail permohonan akan segera tersedia', 'info');
+    }
+    
+    function processRequest(id) {
+        console.log('Process request:', id);
+        showNotification('Permohonan sedang diproses', 'success');
+    }
+    
+    function rejectRequest(id) {
+        console.log('Reject request:', id);
+        showNotification('Permohonan ditolak', 'warning');
+    }
+    
+    function confirmDelete() {
+        if (editingId) {
+            console.log('Delete item:', editingId);
+            showNotification('Data berhasil dihapus!', 'success');
+            closeDeleteModal();
+            loadTabData(currentTab);
+            editingId = null;
+        }
+    }
+    
+    // Requirement management
+    function addRequirementItem() {
+        const container = document.getElementById('syarat-container');
+        const newItem = document.createElement('div');
+        newItem.className = 'flex items-center gap-2';
+        newItem.innerHTML = `
+            <input type="text" name="syarat[]" placeholder="Masukkan syarat" 
+                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+            <button type="button" onclick="removeRequirement(this)" class="text-red-600 hover:text-red-800">
+                <i class="fas fa-trash"></i>
+            </button>
+        `;
+        container.appendChild(newItem);
+    }
+    
+    function removeRequirement(button) {
+        button.parentElement.remove();
+    }
+    
+    // Search and filter functions
+    function handleSearch() {
+        const searchTerm = document.getElementById('search-services').value.toLowerCase();
+        console.log('Search:', searchTerm);
+        loadServicesData();
+    }
+    
+    function handleFilter() {
+        const category = document.getElementById('filter-category').value;
+        const status = document.getElementById('filter-status').value;
+        console.log('Filter:', { category, status });
+        loadServicesData();
+    }
+    
+    function handleSelectAll() {
+        const selectAll = document.getElementById('select-all-services');
+        const checkboxes = document.querySelectorAll('.item-checkbox');
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll.checked;
+        });
+        
+        updateBulkActions();
+    }
+    
+    function updateBulkActions() {
+        const checkedBoxes = document.querySelectorAll('.item-checkbox:checked');
+        const bulkBtn = document.getElementById('bulk-actions-btn');
+        
+        if (checkedBoxes.length > 0) {
+            bulkBtn.classList.remove('hidden');
+        } else {
+            bulkBtn.classList.add('hidden');
+        }
+    }
+    
+    // Pagination
+    function updatePagination(current, total, totalRecords) {
+        currentPage = current;
+        totalPages = total;
+        
+        document.getElementById('showing-start').textContent = ((current - 1) * 25) + 1;
+        document.getElementById('showing-end').textContent = Math.min(current * 25, totalRecords);
+        document.getElementById('total-records').textContent = totalRecords;
+        
+        // Update page numbers
+        const pageNumbers = document.getElementById('page-numbers');
+        pageNumbers.innerHTML = '';
+        
+        for (let i = 1; i <= total; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            button.className = `px-3 py-2 border rounded-md text-sm font-medium ${
+                i === current ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`;
+            button.onclick = () => changePage(i);
+            pageNumbers.appendChild(button);
+        }
+        
+        // Update prev/next buttons
+        document.getElementById('prev-page').disabled = current === 1;
+        document.getElementById('next-page').disabled = current === total;
+    }
+    
+    function changePage(page) {
+        if (page >= 1 && page <= totalPages) {
+            loadTabData(currentTab);
+        }
+    }
+    
+    // Utility functions
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+            type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+            type === 'warning' ? 'bg-yellow-500 text-white' :
+            'bg-blue-500 text-white'
+        }`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas ${
+                    type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                    type === 'warning' ? 'fa-exclamation-triangle' :
+                    'fa-info-circle'
+                } mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

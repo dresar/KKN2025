@@ -1,0 +1,930 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Data Ibu Hamil - Posyandu{% endblock %}
+
+{% block page_title %}Data Ibu Hamil{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Data Ibu Hamil</h1>
+            <p class="mt-1 text-sm text-gray-600">Monitoring kesehatan ibu hamil dan pemeriksaan rutin</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex space-x-3">
+            <button onclick="openPemeriksaanModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <i class="fas fa-stethoscope mr-2"></i>
+                Tambah Pemeriksaan
+            </button>
+            <button onclick="openIbuHamilModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                <i class="fas fa-plus mr-2"></i>
+                Tambah Ibu Hamil
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-female text-2xl text-pink-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Ibu Hamil</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.total_pregnant|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-calendar-check text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Trimester 1</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.trimester_1|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-heartbeat text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Trimester 2</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.trimester_2|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-baby text-2xl text-purple-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Trimester 3</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ stats.trimester_3|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label for="search-input" class="block text-sm font-medium text-gray-700">Cari</label>
+                <input type="text" name="search" id="search-input" placeholder="Nama atau NIK..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="filter-posyandu" class="block text-sm font-medium text-gray-700">Posyandu</label>
+                <select name="posyandu_id" id="filter-posyandu" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                    <option value="">Semua Posyandu</option>
+                </select>
+            </div>
+            <div>
+                <label for="filter-trimester" class="block text-sm font-medium text-gray-700">Trimester</label>
+                <select name="trimester" id="filter-trimester" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                    <option value="">Semua Trimester</option>
+                    <option value="1">Trimester 1</option>
+                    <option value="2">Trimester 2</option>
+                    <option value="3">Trimester 3</option>
+                </select>
+            </div>
+            <div>
+                <label for="filter-risk" class="block text-sm font-medium text-gray-700">Risiko Kehamilan</label>
+                <select name="risk_level" id="filter-risk" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                    <option value="">Semua Risiko</option>
+                    <option value="rendah">Risiko Rendah</option>
+                    <option value="sedang">Risiko Sedang</option>
+                    <option value="tinggi">Risiko Tinggi</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500">
+                    <i class="fas fa-search mr-2"></i>
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Daftar Ibu Hamil</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Umur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usia Kehamilan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trimester</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HPL</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risiko</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posyandu</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="ibu-hamil-table-body" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be loaded via JavaScript -->
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Memuat data...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Standardized Pagination -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <span id="pagination-info">Menampilkan 0 dari 0 data</span>
+            </div>
+            <div class="pagination-controls">
+                <div class="pagination-nav">
+                    <button id="prev-btn" onclick="previousPage()" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="page-numbers" class="pagination flex space-x-1"></div>
+                    <button id="next-btn" onclick="nextPage()" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Ibu Hamil Modal -->
+<div id="ibu-hamil-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="ibu-hamil-modal-title">Tambah Data Ibu Hamil</h3>
+                <button onclick="closeIbuHamilModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="ibu-hamil-form" onsubmit="handleIbuHamilSubmit(event)">
+                <input type="hidden" id="ibu-hamil-id" value="">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Pilih Penduduk</label>
+                        <select id="resident-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                            <option value="">Pilih Penduduk...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Posyandu</label>
+                        <select id="posyandu-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                            <option value="">Pilih Posyandu...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">HPHT (Hari Pertama Haid Terakhir)</label>
+                        <input type="date" id="lmp-date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">HPL (Hari Perkiraan Lahir)</label>
+                        <input type="date" id="edd-date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Usia Kehamilan (minggu)</label>
+                        <input type="number" id="gestational-age" min="0" max="42" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tingkat Risiko</label>
+                        <select id="risk-level" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm">
+                            <option value="low">Risiko Rendah</option>
+                            <option value="medium">Risiko Sedang</option>
+                            <option value="high">Risiko Tinggi</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Catatan</label>
+                        <textarea id="notes" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500 sm:text-sm"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeIbuHamilModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-pink-600 hover:bg-pink-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Pemeriksaan Modal -->
+<div id="pemeriksaan-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="pemeriksaan-modal-title">Tambah Pemeriksaan</h3>
+                <button onclick="closePemeriksaanModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="pemeriksaan-form" onsubmit="handlePemeriksaanSubmit(event)">
+                <input type="hidden" id="pemeriksaan-id" value="">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Pilih Ibu Hamil</label>
+                        <select id="ibu-hamil-select" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                            <option value="">Pilih Ibu Hamil...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tanggal Pemeriksaan</label>
+                        <input type="date" id="checkup-date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Usia Kehamilan (minggu)</label>
+                        <input type="number" id="checkup-gestational-age" min="0" max="42" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Berat Badan (kg)</label>
+                        <input type="number" id="weight" step="0.1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tekanan Darah</label>
+                        <input type="text" id="blood-pressure" placeholder="120/80" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Tinggi Fundus (cm)</label>
+                        <input type="number" id="fundal-height" step="0.1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Hemoglobin (g/dL)</label>
+                        <input type="number" id="hemoglobin" step="0.1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Protein Urin</label>
+                        <select id="protein-urine" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                            <option value="negative">Negatif</option>
+                            <option value="trace">Trace</option>
+                            <option value="1plus">1+</option>
+                            <option value="2plus">2+</option>
+                            <option value="3plus">3+</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Kondisi Janin</label>
+                        <select id="fetal-condition" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                            <option value="normal">Normal</option>
+                            <option value="abnormal">Abnormal</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Keluhan</label>
+                        <textarea id="complaints" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"></textarea>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-gray-700">Catatan Pemeriksaan</label>
+                        <textarea id="checkup-notes" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closePemeriksaanModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Konfirmasi Hapus</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let deleteId = null;
+let currentPage = 1;
+
+// Load initial data
+document.addEventListener('DOMContentLoaded', function() {
+    loadPosyanduOptions();
+    loadResidentOptions();
+    loadIbuHamilOptions();
+    loadIbuHamilData();
+});
+
+// Load Ibu Hamil data into table
+function loadIbuHamilData(page = 1) {
+    const searchParams = new URLSearchParams(window.location.search);
+    let apiUrl = `/pulosarok/posyandu/api/ibu-hamil/?page=${page}`;
+    
+    // Add search and filter parameters
+    if (searchParams.get('search')) {
+        apiUrl += `&search=${encodeURIComponent(searchParams.get('search'))}`;
+    }
+    if (searchParams.get('posyandu_id')) {
+        apiUrl += `&posyandu_id=${searchParams.get('posyandu_id')}`;
+    }
+    if (searchParams.get('risk_level')) {
+        apiUrl += `&risk_level=${searchParams.get('risk_level')}`;
+    }
+    
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+            
+            if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+                data.data.forEach(ibuHamil => {
+                    const row = createIbuHamilRow(ibuHamil);
+                    tbody.appendChild(row);
+                });
+                
+                // Set pagination variables
+                currentPage = data.pagination ? data.pagination.current_page : 1;
+                totalPages = data.pagination ? data.pagination.total_pages : 1;
+                
+                // Update pagination
+                if (data.pagination) {
+                    updatePagination(data.pagination);
+                }
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-gray-500">Tidak ada data ibu hamil</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading ibu hamil data:', error);
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-4 text-center text-red-500">Error loading data: ' + error.message + '</td></tr>';
+        });
+}
+
+// Create table row for ibu hamil
+function createIbuHamilRow(ibuHamil) {
+    const row = document.createElement('tr');
+    
+    // Calculate age if birth_date is available
+    let age = '-';
+    if (ibuHamil.penduduk && ibuHamil.penduduk.birth_date) {
+        const birthDate = new Date(ibuHamil.penduduk.birth_date);
+        const today = new Date();
+        age = today.getFullYear() - birthDate.getFullYear();
+        if (today.getMonth() < birthDate.getMonth() || 
+            (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+    }
+    
+    // Format date
+    let hpl = '-';
+    if (ibuHamil.tanggal_perkiraan_lahir) {
+        const date = new Date(ibuHamil.tanggal_perkiraan_lahir);
+        hpl = date.toLocaleDateString('id-ID');
+    }
+    
+    // Determine trimester
+    let trimester = '-';
+    let trimesterClass = 'bg-gray-100 text-gray-800';
+    if (ibuHamil.usia_kehamilan) {
+        if (ibuHamil.usia_kehamilan <= 12) {
+            trimester = '1';
+            trimesterClass = 'bg-green-100 text-green-800';
+        } else if (ibuHamil.usia_kehamilan <= 28) {
+            trimester = '2';
+            trimesterClass = 'bg-blue-100 text-blue-800';
+        } else {
+            trimester = '3';
+            trimesterClass = 'bg-purple-100 text-purple-800';
+        }
+    }
+    
+    // Risk level styling
+    let riskClass = 'bg-gray-100 text-gray-800';
+    let riskText = ibuHamil.risiko_kehamilan || '-';
+    if (ibuHamil.risiko_kehamilan === 'rendah') {
+        riskClass = 'bg-green-100 text-green-800';
+        riskText = 'Rendah';
+    } else if (ibuHamil.risiko_kehamilan === 'sedang') {
+        riskClass = 'bg-yellow-100 text-yellow-800';
+        riskText = 'Sedang';
+    } else if (ibuHamil.risiko_kehamilan === 'tinggi') {
+        riskClass = 'bg-red-100 text-red-800';
+        riskText = 'Tinggi';
+    }
+    
+    row.innerHTML = `
+        <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-gray-900">${ibuHamil.nama || '-'}</div>
+            <div class="text-sm text-gray-500">${ibuHamil.nik || '-'}</div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${age} tahun</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${ibuHamil.usia_kehamilan || '-'} minggu</td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${trimesterClass}">
+                Trimester ${trimester}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${hpl}</td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${riskClass}">
+                ${riskText}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${ibuHamil.posyandu_name || '-'}</td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <button onclick="viewPemeriksaan(${ibuHamil.id})" class="text-blue-600 hover:text-blue-900 mr-3" title="Lihat Pemeriksaan">
+                <i class="fas fa-stethoscope"></i>
+            </button>
+            <button onclick="editIbuHamil(${ibuHamil.id})" class="text-green-600 hover:text-green-900 mr-3" title="Edit">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteIbuHamil(${ibuHamil.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    return row;
+}
+
+// Standardized pagination variables
+let currentPage = 1;
+let totalPages = 1;
+
+// Update pagination based on API response
+function updatePagination(pagination) {
+    // Update pagination info
+    const start = ((pagination.current_page - 1) * 10) + 1;
+    const end = Math.min(pagination.current_page * 10, pagination.total_items);
+    document.getElementById('pagination-info').textContent = `Menampilkan ${start}-${end} dari ${pagination.total_items} data`;
+    
+    // Update navigation buttons
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    
+    prevBtn.disabled = !pagination.has_previous;
+    nextBtn.disabled = !pagination.has_next;
+    
+    // Generate page numbers
+    const pageNumbers = document.getElementById('page-numbers');
+    pageNumbers.innerHTML = '';
+    
+    // Calculate page range
+    const startPage = Math.max(1, pagination.current_page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn ${
+            i === pagination.current_page ? 'active' : ''
+        }`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => loadIbuHamilData(i);
+        pageNumbers.appendChild(pageBtn);
+    }
+}
+
+// Navigation functions
+function previousPage() {
+    if (currentPage > 1) {
+        loadIbuHamilData(currentPage - 1);
+    }
+}
+
+function nextPage() {
+    if (currentPage < totalPages) {
+        loadIbuHamilData(currentPage + 1);
+    }
+}
+
+
+// Handle search and filter functionality
+function handleSearch() {
+    loadIbuHamilData(1); // Reset to first page when searching
+}
+
+function handleFilter() {
+    loadIbuHamilData(1); // Reset to first page when filtering
+}
+
+// Load Posyandu options
+function loadPosyanduOptions() {
+    fetch('/pulosarok/posyandu/api/posyandu/list/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('posyandu-select');
+            const filterSelect = document.getElementById('filter-posyandu');
+            
+            // Clear existing options
+            if (select) {
+                select.innerHTML = '<option value="">Pilih Posyandu...</option>';
+            }
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">Semua Posyandu</option>';
+            }
+            
+            if (data.results && Array.isArray(data.results)) {
+                data.results.forEach(posyandu => {
+                    if (select) {
+                        const option = document.createElement('option');
+                        option.value = posyandu.id;
+                        option.textContent = posyandu.name;
+                        select.appendChild(option);
+                    }
+                    if (filterSelect) {
+                        const filterOption = document.createElement('option');
+                        filterOption.value = posyandu.id;
+                        filterOption.textContent = posyandu.name;
+                        filterSelect.appendChild(filterOption);
+                    }
+                });
+            } else if (Array.isArray(data)) {
+                data.forEach(posyandu => {
+                    if (select) {
+                        const option = document.createElement('option');
+                        option.value = posyandu.id;
+                        option.textContent = posyandu.name;
+                        select.appendChild(option);
+                    }
+                    if (filterSelect) {
+                        const filterOption = document.createElement('option');
+                        filterOption.value = posyandu.id;
+                        filterOption.textContent = posyandu.name;
+                        filterSelect.appendChild(filterOption);
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading posyandu options:', error);
+            showNotification('Error loading posyandu options: ' + error.message, 'error');
+        });
+}
+
+// Load Resident options (female residents for pregnancy)
+function loadResidentOptions() {
+    fetch('/pulosarok/posyandu/api/residents/?gender=P')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('resident-select');
+            select.innerHTML = '<option value="">Pilih Penduduk...</option>';
+            
+            if (Array.isArray(data)) {
+                data.forEach(resident => {
+                    const option = document.createElement('option');
+                    option.value = resident.id;
+                    option.textContent = `${resident.name} (${resident.nik})`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading resident options:', error);
+            showNotification('Error loading resident options: ' + error.message, 'error');
+        });
+}
+
+// Load Ibu Hamil options for pemeriksaan
+function loadIbuHamilOptions() {
+    fetch('/pulosarok/posyandu/api/ibu-hamil/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('ibu-hamil-select');
+            select.innerHTML = '<option value="">Pilih Ibu Hamil...</option>';
+            
+            if (data.success && Array.isArray(data.data)) {
+                data.data.forEach(ibuHamil => {
+                    const option = document.createElement('option');
+                    option.value = ibuHamil.id;
+                    option.textContent = `${ibuHamil.resident ? ibuHamil.resident.name : ibuHamil.penduduk_nama} (${ibuHamil.resident ? ibuHamil.resident.nik : ibuHamil.penduduk_nik})`;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading ibu hamil options:', error);
+            showNotification('Error loading ibu hamil options: ' + error.message, 'error');
+        });
+}
+
+// Open Ibu Hamil Modal
+function openIbuHamilModal() {
+    document.getElementById('ibu-hamil-modal-title').textContent = 'Tambah Data Ibu Hamil';
+    document.getElementById('ibu-hamil-form').reset();
+    document.getElementById('ibu-hamil-id').value = '';
+    document.getElementById('ibu-hamil-modal').classList.remove('hidden');
+}
+
+// Edit Ibu Hamil
+function editIbuHamil(id) {
+    document.getElementById('ibu-hamil-modal-title').textContent = 'Edit Data Ibu Hamil';
+    document.getElementById('ibu-hamil-id').value = id;
+    
+    fetch(`/pulosarok/posyandu/api/ibu-hamil/${id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const ibuHamil = data.data;
+            document.getElementById('resident-select').value = ibuHamil.penduduk_id;
+            document.getElementById('posyandu-select').value = ibuHamil.posyandu_id;
+            document.getElementById('lmp-date').value = ibuHamil.tanggal_hpht;
+            document.getElementById('edd-date').value = ibuHamil.tanggal_perkiraan_lahir;
+            document.getElementById('gestational-age').value = ibuHamil.usia_kehamilan;
+            document.getElementById('risk-level').value = ibuHamil.risiko_kehamilan;
+            document.getElementById('notes').value = ibuHamil.keterangan || '';
+            
+            document.getElementById('ibu-hamil-modal').classList.remove('hidden');
+        })
+        .catch(error => {
+            console.error('Error loading ibu hamil data:', error);
+            showNotification('Error loading data: ' + error.message, 'error');
+        });
+}
+
+// Open Pemeriksaan Modal
+function openPemeriksaanModal() {
+    document.getElementById('pemeriksaan-modal-title').textContent = 'Tambah Pemeriksaan';
+    document.getElementById('pemeriksaan-form').reset();
+    document.getElementById('pemeriksaan-id').value = '';
+    document.getElementById('checkup-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('pemeriksaan-modal').classList.remove('hidden');
+}
+
+// View Pemeriksaan
+function viewPemeriksaan(id) {
+    // This would open a detailed view of all checkups for this pregnant woman
+    window.location.href = `/pulosarok/posyandu/ibu-hamil/${id}/pemeriksaan/`;
+}
+
+// Delete Ibu Hamil
+function deleteIbuHamil(id) {
+    deleteId = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+// Handle Ibu Hamil form submission
+function handleIbuHamilSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        penduduk_id: document.getElementById('resident-select').value,
+        posyandu_id: document.getElementById('posyandu-select').value,
+        tanggal_hpht: document.getElementById('lmp-date').value,
+        usia_kehamilan: document.getElementById('gestational-age').value,
+        riwayat_kehamilan: 'primigravida',
+        risiko_kehamilan: document.getElementById('risk-level').value,
+        keterangan: document.getElementById('notes').value
+    };
+    
+    const ibuHamilId = document.getElementById('ibu-hamil-id').value;
+    const url = ibuHamilId ? `/pulosarok/posyandu/api/ibu-hamil/${ibuHamilId}/` : '/pulosarok/posyandu/api/ibu-hamil/';
+    const method = ibuHamilId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closeIbuHamilModal();
+            loadIbuHamilData(); // Reload data without page refresh
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving ibu hamil data:', error);
+        showNotification('Error saving data', 'error');
+    });
+}
+
+// Handle Pemeriksaan form submission
+function handlePemeriksaanSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        ibu_hamil_id: document.getElementById('ibu-hamil-select').value,
+        checkup_date: document.getElementById('checkup-date').value,
+        gestational_age: document.getElementById('checkup-gestational-age').value,
+        weight: document.getElementById('weight').value,
+        blood_pressure: document.getElementById('blood-pressure').value,
+        fundal_height: document.getElementById('fundal-height').value,
+        hemoglobin: document.getElementById('hemoglobin').value,
+        protein_urine: document.getElementById('protein-urine').value,
+        fetal_condition: document.getElementById('fetal-condition').value,
+        complaints: document.getElementById('complaints').value,
+        notes: document.getElementById('checkup-notes').value
+    };
+    
+    const pemeriksaanId = document.getElementById('pemeriksaan-id').value;
+    const url = pemeriksaanId ? `/pulosarok/posyandu/api/pregnancy-checkups/${pemeriksaanId}/` : '/pulosarok/posyandu/api/pregnancy-checkups/';
+    const method = pemeriksaanId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closePemeriksaanModal();
+            loadIbuHamilOptions(); // Refresh the list
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving pemeriksaan data:', error);
+        showNotification('Error saving data', 'error');
+    });
+}
+
+// Confirm delete
+function confirmDelete() {
+    if (!deleteId) return;
+    
+    fetch(`/pulosarok/posyandu/api/ibu-hamil/${deleteId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            loadIbuHamilData(); // Reload data without page refresh
+        } else {
+            showNotification(data.message, 'error');
+        }
+        closeDeleteModal();
+    })
+    .catch(error => {
+        console.error('Error deleting ibu hamil data:', error);
+        showNotification('Error deleting data', 'error');
+        closeDeleteModal();
+    });
+}
+
+// Close modals
+function closeIbuHamilModal() {
+    document.getElementById('ibu-hamil-modal').classList.add('hidden');
+}
+
+function closePemeriksaanModal() {
+    document.getElementById('pemeriksaan-modal').classList.add('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    deleteId = null;
+}
+
+// Show notification
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize page when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Load initial data
+    loadIbuHamilData();
+    loadPosyanduOptions();
+    
+    // Add event listeners for search and filters
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(handleSearch, 300); // Debounce search
+        });
+    }
+    
+    const filterPosyandu = document.getElementById('filter-posyandu');
+    if (filterPosyandu) {
+        filterPosyandu.addEventListener('change', handleFilter);
+    }
+    
+    const filterTrimester = document.getElementById('filter-trimester');
+    if (filterTrimester) {
+        filterTrimester.addEventListener('change', handleFilter);
+    }
+    
+    const filterRisk = document.getElementById('filter-risk');
+    if (filterRisk) {
+        filterRisk.addEventListener('change', handleFilter);
+    }
+});
+</script>
+{% endblock %}

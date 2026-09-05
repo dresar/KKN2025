@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ event.title }} - Detail Kegiatan{% endblock %}
+
+{% block content %}
+<!-- Event Detail Header -->
+<section class="py-12 bg-gradient-to-r from-primary-600 to-primary-800 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div class="mb-6 md:mb-0">
+                <h1 class="text-3xl font-bold mb-2">{{ event.title }}</h1>
+                <div class="flex flex-wrap items-center gap-4 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        <span>{{ event.start_date|date:"d M Y" }}{% if event.end_date %} - {{ event.end_date|date:"d M Y" }}{% endif %}</span>
+                    </div>
+                    {% if event.tourism_location %}
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        <a href="{% url 'tourism:location_detail' event.tourism_location.slug %}" class="hover:underline">{{ event.tourism_location.title }}</a>
+                    </div>
+                    {% else %}
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        <span>{{ event.venue }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="flex items-center">
+                        <i class="fas fa-user mr-2"></i>
+                        <span>{{ event.organizer }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-white text-primary-800">
+                    {{ event.get_event_type_display }}
+                </span>
+                {% if event.is_featured %}
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-star mr-1"></i> Unggulan
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Event Detail Content -->
+<section class="py-12 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Event Image -->
+                {% if event.image %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <img src="{{ event.image.url }}" alt="{{ event.title }}" class="w-full h-auto object-cover">
+                </div>
+                {% endif %}
+                
+                <!-- Event Description -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Deskripsi Kegiatan</h2>
+                    <div class="prose max-w-none text-gray-700">
+                        {{ event.description|linebreaks }}
+                    </div>
+                </div>
+                
+                <!-- Registration Info -->
+                {% if event.registration_required %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Informasi Pendaftaran</h2>
+                    <div class="prose max-w-none text-gray-700 mb-6">
+                        <p>Kegiatan ini memerlukan pendaftaran terlebih dahulu.</p>
+                        {% if event.registration_url %}
+                        <div class="mt-4">
+                            <a href="{{ event.registration_url }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Daftar Sekarang
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="space-y-8">
+                <!-- Event Details -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Detail Kegiatan</h2>
+                    <div class="space-y-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0 w-10 text-primary-600">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Tanggal</h3>
+                                <p class="text-gray-900">{{ event.start_date|date:"d M Y" }}{% if event.end_date %} - {{ event.end_date|date:"d M Y" }}{% endif %}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex">
+                            <div class="flex-shrink-0 w-10 text-primary-600">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Lokasi</h3>
+                                {% if event.tourism_location %}
+                                <p class="text-gray-900">{{ event.tourism_location.title }}</p>
+                                <p class="text-sm text-gray-500">{{ event.tourism_location.address }}</p>
+                                {% else %}
+                                <p class="text-gray-900">{{ event.venue }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="flex">
+                            <div class="flex-shrink-0 w-10 text-primary-600">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Penyelenggara</h3>
+                                <p class="text-gray-900">{{ event.organizer }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if event.contact_info %}
+                        <div class="flex">
+                            <div class="flex-shrink-0 w-10 text-primary-600">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Kontak</h3>
+                                <p class="text-gray-900">{{ event.contact_info }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex">
+                            <div class="flex-shrink-0 w-10 text-primary-600">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Tipe Kegiatan</h3>
+                                <p class="text-gray-900">{{ event.get_event_type_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Share -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4">Bagikan</h2>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="text-blue-600 hover:text-blue-800">
+                            <i class="fab fa-facebook-square text-2xl"></i>
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text={{ event.title }}" target="_blank" class="text-blue-400 hover:text-blue-600">
+                            <i class="fab fa-twitter-square text-2xl"></i>
+                        </a>
+                        <a href="https://wa.me/?text={{ event.title }} {{ request.build_absolute_uri }}" target="_blank" class="text-green-600 hover:text-green-800">
+                            <i class="fab fa-whatsapp-square text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Events -->
+        {% if related_events %}
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Kegiatan Terkait</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for related in related_events %}
+                <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                    {% if related.image %}
+                    <div class="aspect-video bg-gray-200">
+                        <img src="{{ related.image.url }}" alt="{{ related.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                {{ related.get_event_type_display }}
+                            </span>
+                            <span class="text-xs text-gray-500">{{ related.start_date|date:"d M Y" }}</span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                            <a href="{% url 'tourism:event_detail' related.id %}" class="hover:text-primary-600">{{ related.title }}</a>
+                        </h3>
+                        <div class="flex items-center text-sm text-gray-500">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            {% if related.tourism_location %}
+                            <span>{{ related.tourism_location.title|truncatechars:25 }}</span>
+                            {% else %}
+                            <span>{{ related.venue|truncatechars:25 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

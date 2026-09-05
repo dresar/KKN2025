@@ -1,0 +1,373 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Tambah Data Bantuan{% endblock %}
+{% block page_title %}Tambah Data Bantuan{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+    }
+    .form-header {
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #ef4444;
+    }
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Tambah Data Bantuan</h1>
+                <p class="text-gray-600 mt-1">Isi formulir berikut untuk menambahkan data bantuan baru</p>
+            </div>
+            <div>
+                <a href="/admin/beneficiaries/data-bantuan/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <form id="bantuanForm" method="POST" action="/api/beneficiaries/data-bantuan/create/">
+        {% csrf_token %}
+        
+        <!-- Informasi Dasar -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Informasi Dasar</h3>
+                <p class="text-sm text-gray-600">Informasi dasar tentang penerima bantuan</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nama Penerima</label>
+                    <input type="text" name="nama_penerima" id="nama_penerima" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">NIK Penerima</label>
+                    <input type="text" name="nik_penerima" id="nik_penerima" required maxlength="16" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">Nomor Induk Kependudukan 16 digit</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detail Bantuan -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Detail Bantuan</h3>
+                <p class="text-sm text-gray-600">Informasi detail tentang bantuan yang diberikan</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Jenis Bantuan</label>
+                    <select name="jenis_bantuan" id="jenis_bantuan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">Pilih Jenis Bantuan</option>
+                        <option value="blt">BLT (Bantuan Langsung Tunai)</option>
+                        <option value="pkh">PKH (Program Keluarga Harapan)</option>
+                        <option value="bpnt">BPNT (Bantuan Pangan Non Tunai)</option>
+                        <option value="pip">PIP (Program Indonesia Pintar)</option>
+                        <option value="kis">KIS (Kartu Indonesia Sehat)</option>
+                        <option value="bansos">Bantuan Sosial</option>
+                        <option value="banpres">Bantuan Presiden</option>
+                        <option value="banprov">Bantuan Provinsi</option>
+                        <option value="bankab">Bantuan Kabupaten</option>
+                        <option value="bangam">Bantuan Gampong</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nama Program</label>
+                    <input type="text" name="nama_program" id="nama_program" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Kartu</label>
+                    <input type="text" name="nomor_kartu" id="nomor_kartu" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">Nomor kartu bantuan (jika ada)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nilai Bantuan</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500">Rp</span>
+                        </div>
+                        <input type="number" name="nilai_bantuan" id="nilai_bantuan" required min="0" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Periode Bantuan</label>
+                    <input type="text" name="periode_bantuan" id="periode_bantuan" placeholder="Contoh: Januari-Desember 2023" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sumber Dana</label>
+                    <input type="text" name="sumber_dana" id="sumber_dana" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instansi Pemberi</label>
+                    <input type="text" name="instansi_pemberi" id="instansi_pemberi" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Tanggal Mulai</label>
+                    <input type="date" name="tanggal_mulai" id="tanggal_mulai" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Berakhir</label>
+                    <input type="date" name="tanggal_berakhir" id="tanggal_berakhir" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informasi Tambahan -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Informasi Tambahan</h3>
+                <p class="text-sm text-gray-600">Informasi tambahan tentang bantuan</p>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Syarat Penerima</label>
+                    <textarea name="syarat_penerima" id="syarat_penerima" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dokumen Pendukung</label>
+                    <textarea name="dokumen_pendukung" id="dokumen_pendukung" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Daftar dokumen yang diperlukan untuk mendapatkan bantuan</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
+                    <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Bantuan -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Status Bantuan</h3>
+                <p class="text-sm text-gray-600">Status bantuan saat ini</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Status</label>
+                <select name="status" id="status" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="aktif">Aktif</option>
+                    <option value="nonaktif">Non Aktif</option>
+                    <option value="pending">Menunggu</option>
+                    <option value="ditolak">Ditolak</option>
+                    <option value="selesai">Selesai</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-4 mt-6">
+            <a href="/admin/beneficiaries/data-bantuan/" class="btn-action bg-gray-500 hover:bg-gray-600 text-white">
+                Batal
+            </a>
+            <button type="button" id="saveDraftBtn" class="btn-action bg-yellow-500 hover:bg-yellow-600 text-white">
+                <i class="fas fa-save mr-2"></i>Simpan Draft
+            </button>
+            <button type="submit" class="btn-action bg-primary-600 hover:bg-primary-700 text-white">
+                <i class="fas fa-check mr-2"></i>Simpan
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('tanggal_mulai').value = today;
+    });
+    
+    // Form validation
+    document.getElementById('bantuanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Basic validation
+        const requiredFields = [
+            'nama_penerima',
+            'nik_penerima',
+            'jenis_bantuan',
+            'nama_program',
+            'nilai_bantuan',
+            'tanggal_mulai',
+            'status'
+        ];
+        
+        let isValid = true;
+        let firstInvalidField = null;
+        
+        requiredFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (!input.value.trim()) {
+                input.classList.add('border-red-500');
+                isValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = input;
+                }
+            } else {
+                input.classList.remove('border-red-500');
+            }
+        });
+        
+        // NIK validation (16 digits)
+        const nikInput = document.getElementById('nik_penerima');
+        if (nikInput.value.trim() && nikInput.value.trim().length !== 16) {
+            nikInput.classList.add('border-red-500');
+            showNotification('NIK harus terdiri dari 16 digit', 'error');
+            isValid = false;
+            if (!firstInvalidField) {
+                firstInvalidField = nikInput;
+            }
+        }
+        
+        if (!isValid) {
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+            }
+            showNotification('Mohon lengkapi semua field yang wajib diisi', 'error');
+            return false;
+        }
+        
+        // Submit form via API
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Cari penduduk berdasarkan NIK terlebih dahulu
+        fetch(`/api/references/penduduk/by-nik/?nik=${data.nik_penerima}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                // Jika penduduk ditemukan, kirim data bantuan dengan person_id
+                data.person_id = result.data.id;
+                
+                return fetch('/api/beneficiaries/data-bantuan/create/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                throw new Error('Penduduk dengan NIK tersebut tidak ditemukan');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Data bantuan berhasil disimpan', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/beneficiaries/data-bantuan/';
+                }, 1500);
+            } else {
+                showNotification('Gagal menyimpan data: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat menyimpan data', 'error');
+        });
+    });
+    
+    // Save as draft
+    document.getElementById('saveDraftBtn').addEventListener('click', function() {
+        const form = document.getElementById('bantuanForm');
+        const formData = new FormData(form);
+        
+        // Set status to draft
+        formData.set('status', 'pending');
+        
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Minimal required fields for draft
+        if (!data.nama_penerima || !data.jenis_bantuan) {
+            showNotification('Minimal isi Nama Penerima dan Jenis Bantuan untuk menyimpan draft', 'error');
+            return;
+        }
+        
+        fetch('/api/beneficiaries/data-bantuan/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Draft berhasil disimpan', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/beneficiaries/data-bantuan/';
+                }, 1500);
+            } else {
+                showNotification('Gagal menyimpan draft: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat menyimpan draft', 'error');
+        });
+    });
+    
+    // Show notification function
+    function showNotification(message, type) {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+        notificationDiv.innerHTML = message;
+        document.body.appendChild(notificationDiv);
+        
+        setTimeout(() => {
+            notificationDiv.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,506 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Organisasi Kepemudaan{% endblock %}
+
+{% block page_title %}Organisasi Kepemudaan{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Organisasi Kepemudaan</h1>
+                <p class="mt-1 text-sm text-gray-600">Kelola data organisasi kepemudaan desa Pulosarok</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'organization:kepemudaan_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <i class="fas fa-plus mr-2"></i>Tambah Anggota Kepemudaan
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700">Pencarian</label>
+                    <input type="text" id="search" name="search" placeholder="Cari nama organisasi atau ketua..." class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                </div>
+                <div>
+                    <label for="jenis-filter" class="block text-sm font-medium text-gray-700">Jenis Organisasi</label>
+                    <select id="jenis-filter" name="jenis" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        <option value="">Semua Jenis</option>
+                        <option value="karang_taruna">Karang Taruna</option>
+                        <option value="remaja_masjid">Remaja Masjid</option>
+                        <option value="pramuka">Pramuka</option>
+                        <option value="olahraga">Organisasi Olahraga</option>
+                        <option value="seni_budaya">Seni dan Budaya</option>
+                        <option value="kewirausahaan">Kewirausahaan Muda</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select id="status-filter" name="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="non_aktif">Non Aktif</option>
+                        <option value="alumni">Alumni</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="button" id="reset-filter" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <i class="fas fa-undo mr-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-sitemap text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Organisasi</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="total-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Organisasi Aktif</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="active-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-times-circle text-2xl text-red-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Organisasi Non Aktif</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="inactive-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Anggota</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="alumni-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="kepemudaan-table">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Nama Organisasi
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Ketua
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Tanggal Terbentuk
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Kontak
+                            </th>
+                            <th scope="col" class="relative px-6 py-3">
+                                <span class="sr-only">Aksi</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="kepemudaan-tbody">
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6" id="pagination">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prev-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </button>
+                    <button id="next-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700" id="pagination-info">
+                            Menampilkan <span class="font-medium">0</span> sampai <span class="font-medium">0</span> dari <span class="font-medium">0</span> hasil
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" id="pagination-nav">
+                            <!-- Pagination buttons will be inserted here -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- No modals needed as we're redirecting to separate pages -->
+
+<!-- Delete Confirmation Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="delete-modal">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Hapus Anggota Kepemudaan</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Apakah Anda yakin ingin menghapus anggota kepemudaan ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    Hapus
+                </button>
+                <button id="cancel-delete" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let deleteId = null;
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${
+                type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
+            } mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Get jabatan display name
+function getJabatanDisplay(jabatan) {
+    const jabatanMap = {
+        'ketua': 'Ketua',
+        'wakil_ketua': 'Wakil Ketua',
+        'sekretaris': 'Sekretaris',
+        'bendahara': 'Bendahara',
+        'koordinator_bidang': 'Koordinator Bidang',
+        'anggota': 'Anggota',
+        'penasehat': 'Penasehat'
+    };
+    return jabatanMap[jabatan] || jabatan;
+}
+
+// Get status badge
+function getStatusBadge(status) {
+    const statusMap = {
+        'aktif': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Aktif</span>',
+        'tidak_aktif': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Tidak Aktif</span>',
+        'alumni': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Alumni</span>'
+    };
+    return statusMap[status] || status;
+}
+
+// Load kepemudaan data
+function loadKepemudaan(page = 1) {
+    const search = document.getElementById('search').value;
+    const jenis = document.getElementById('jenis-filter').value;
+    const status = document.getElementById('status-filter').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        search: search,
+        jenis: jenis,
+        status: status
+    });
+    
+    fetch(`/pulosarok/organization/api/kepemudaan/?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            renderKepemudaanTable(data.results);
+            updatePagination(data);
+            updateStatistics(data.statistics);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Gagal memuat data kepemudaan', 'error');
+        });
+}
+
+// Render kepemudaan table
+function renderKepemudaanTable(kepemudaan) {
+    const tbody = document.getElementById('kepemudaan-tbody');
+    
+    if (kepemudaan.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                    <i class="fas fa-inbox mr-2"></i>Tidak ada data kepemudaan
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = kepemudaan.map(item => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                            <i class="fas fa-users text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">${item.nama_organisasi || 'undefined'}</div>
+                        <div class="text-sm text-gray-500">${item.jenis_organisasi || 'undefined'}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${item.ketua_nama || 'undefined'}</div>
+                <div class="text-sm text-gray-500">Ketua</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${item.tanggal_terbentuk || 'undefined'}</div>
+                <div class="text-sm text-gray-500">${item.status || 'Aktif'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${getStatusBadge(item.status_code || 'aktif')}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${item.kontak_phone ? `<div class="text-sm text-gray-900">${item.kontak_phone}</div>` : ''}
+                ${item.email ? `<div class="text-sm text-gray-500">${item.email}</div>` : ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex space-x-2">
+                    <button onclick="showDetail(${item.id})" class="text-green-600 hover:text-green-900" title="Lihat Detail">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button onclick="showEdit(${item.id})" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button onclick="confirmDelete(${item.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+// Update statistics
+function updateStatistics(stats) {
+    document.getElementById('total-count').textContent = stats.total || 0;
+    document.getElementById('active-count').textContent = stats.aktif || 0;
+    document.getElementById('inactive-count').textContent = stats.non_aktif || 0;
+    document.getElementById('alumni-count').textContent = stats.total_anggota || 0;
+}
+
+// Update pagination
+function updatePagination(data) {
+    currentPage = data.current_page;
+    totalPages = data.total_pages;
+    
+    // Update pagination info
+    const start = ((currentPage - 1) * 10) + 1;
+    const end = Math.min(currentPage * 10, data.total_count);
+    document.getElementById('pagination-info').innerHTML = `
+        Menampilkan <span class="font-medium">${start}</span> sampai <span class="font-medium">${end}</span> dari <span class="font-medium">${data.total_count}</span> hasil
+    `;
+    
+    // Update pagination buttons
+    const nav = document.getElementById('pagination-nav');
+    nav.innerHTML = '';
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''}`;
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => currentPage > 1 && loadKepemudaan(currentPage - 1);
+    nav.appendChild(prevBtn);
+    
+    // Page numbers
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            i === currentPage 
+                ? 'z-10 bg-green-50 border-green-500 text-green-600'
+                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+        }`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => loadKepemudaan(i);
+        nav.appendChild(pageBtn);
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''}`;
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => currentPage < totalPages && loadKepemudaan(currentPage + 1);
+    nav.appendChild(nextBtn);
+}
+
+// Redirect to edit page
+function showEdit(id) {
+    window.location.href = `/pulosarok/organization/kepemudaan/${id}/edit/`;
+}
+
+// Redirect to detail page
+function showDetail(id) {
+    window.location.href = `/pulosarok/organization/kepemudaan/${id}/`;
+}
+
+// No longer needed as we're redirecting to a separate form page
+
+// Confirm delete
+function confirmDelete(id) {
+    deleteId = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+// Delete kepemudaan
+function deleteKepemudaan() {
+    if (!deleteId) return;
+    
+    fetch(`/pulosarok/organization/api/kepemudaan/${deleteId}/delete/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            showNotification('Anggota kepemudaan berhasil dihapus');
+            loadKepemudaan(currentPage);
+        } else {
+            showNotification('Gagal menghapus anggota kepemudaan', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Gagal menghapus anggota kepemudaan', 'error');
+    })
+    .finally(() => {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteId = null;
+    });
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    loadKepemudaan();
+    
+    // Search and filter events
+    document.getElementById('search').addEventListener('input', () => loadKepemudaan(1));
+    document.getElementById('jenis-filter').addEventListener('change', () => loadKepemudaan(1));
+    document.getElementById('status-filter').addEventListener('change', () => loadKepemudaan(1));
+    
+    // Reset filter
+    document.getElementById('reset-filter').addEventListener('click', function() {
+        document.getElementById('search').value = '';
+        document.getElementById('jenis-filter').value = '';
+        document.getElementById('status-filter').value = '';
+        loadKepemudaan(1);
+    });
+    
+    // Modal events
+    document.getElementById('confirm-delete').addEventListener('click', deleteKepemudaan);
+    document.getElementById('cancel-delete').addEventListener('click', function() {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteId = null;
+    });
+    
+    // Close modals when clicking outside
+    document.getElementById('delete-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+            deleteId = null;
+        }
+    });
+});
+</script>
+{% endblock %}

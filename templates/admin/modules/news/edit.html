@@ -1,0 +1,787 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Edit Berita - {{ news.title }}{% endblock %}
+
+{% block extra_css %}
+<!-- Summernote CSS -->
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+    .additional-image-item {
+        position: relative;
+        display: inline-block;
+        margin: 10px;
+    }
+    .remove-image-btn {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .drag-drop-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+    }
+    .drag-drop-area.dragover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    .existing-image {
+        position: relative;
+        display: inline-block;
+        margin: 10px;
+    }
+    .existing-image img {
+        max-width: 150px;
+        max-height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 2px solid #e5e7eb;
+    }
+    .image-actions {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: flex;
+        gap: 5px;
+    }
+    .action-btn {
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .action-btn:hover {
+        background: rgba(0, 0, 0, 0.9);
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Edit Berita</h1>
+            <p class="text-gray-600 mt-1">{{ news.title }}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'news:admin_view' news.pk %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-eye mr-2"></i>Lihat
+            </a>
+            <a href="{% url "news:news_admin" %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>Kembali
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Card -->
+    <div class="stats-card">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ news.views|default:0 }}</div>
+                <div class="text-sm opacity-80">Total Views</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ news.likes.count|default:0 }}</div>
+                <div class="text-sm opacity-80">Total Likes</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ news.comments.count|default:0 }}</div>
+                <div class="text-sm opacity-80">Komentar</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold">{{ news.created_at|date:"d M Y" }}</div>
+                <div class="text-sm opacity-80">Dibuat</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" id="newsForm">
+        {% csrf_token %}
+        
+        <!-- Informasi Dasar -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                Informasi Dasar
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.title.label }}
+                        <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.title.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.slug.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.slug.label }}
+                        <span class="text-gray-400 text-xs">(Otomatis diisi)</span>
+                    </label>
+                    {{ form.slug }}
+                    {% if form.slug.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.slug.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label for="{{ form.excerpt.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.excerpt.label }}
+                </label>
+                {{ form.excerpt }}
+                {% if form.excerpt.errors %}
+                    <div class="text-red-500 text-sm mt-1">
+                        {{ form.excerpt.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Konten Berita -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-edit mr-2 text-green-500"></i>
+                Konten Berita
+            </h2>
+            
+            <div>
+                <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.content.label }}
+                    <span class="text-red-500">*</span>
+                </label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                    <div class="text-red-500 text-sm mt-1">
+                        {{ form.content.errors.0 }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Kategori dan Tag -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-tags mr-2 text-purple-500"></i>
+                Kategori dan Tag
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.category.label }}
+                        <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.category.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.tags.label }}
+                        <span class="text-gray-400 text-xs">(Pisahkan dengan koma)</span>
+                    </label>
+                    {{ form.tags }}
+                    {% if form.tags.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.tags.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Gambar Utama -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-image mr-2 text-indigo-500"></i>
+                Gambar Utama
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.featured_image.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.featured_image.label }}
+                    </label>
+                    
+                    {% if news.featured_image %}
+                        <div id="currentFeaturedImage" class="existing-image mb-4">
+                            <img src="{{ news.featured_image.url }}" alt="{{ news.featured_image_alt }}">
+                            <div class="image-actions">
+                                <button type="button" class="action-btn" onclick="removeFeaturedImage()" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="drag-drop-area" id="featuredImageDropArea" {% if news.featured_image %}style="display: none;"{% endif %}>
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600 mb-2">Drag & drop gambar atau klik untuk pilih</p>
+                        {{ form.featured_image }}
+                    </div>
+                    {% if form.featured_image.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.featured_image.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.featured_image_alt.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.featured_image_alt.label }}
+                    </label>
+                    {{ form.featured_image_alt }}
+                    
+                    <!-- Preview Gambar Utama Baru -->
+                    <div id="featuredImagePreview" class="mt-4" style="display: none;">
+                        <img id="featuredImageImg" class="image-preview" src="" alt="Preview">
+                        <button type="button" id="removeFeaturedImagePreview" class="remove-image-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gambar Tambahan -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-images mr-2 text-yellow-500"></i>
+                Gambar Tambahan
+            </h2>
+            
+            <!-- Gambar yang sudah ada -->
+            {% if news.additional_images.all %}
+                <div class="mb-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Gambar yang sudah ada:</h3>
+                    <div id="existingImages">
+                        {% for image in news.additional_images.all %}
+                            <div class="existing-image" data-image-id="{{ image.id }}">
+                                <img src="{{ image.image.url }}" alt="{{ image.caption }}">
+                                <div class="image-actions">
+                                    <button type="button" class="action-btn" onclick="editImageCaption({{ image.id }}, '{{ image.caption|default:'' }}')" title="Edit Caption">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="action-btn" onclick="removeExistingImage({{ image.id }})" title="Hapus">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                {% if image.caption %}
+                                    <div class="text-xs text-gray-600 mt-1 px-2">{{ image.caption }}</div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Tambah Gambar Baru
+                    <span class="text-gray-400 text-xs">(Maksimal 5 gambar total)</span>
+                </label>
+                <div class="drag-drop-area" id="additionalImagesDropArea">
+                    <i class="fas fa-images text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 mb-2">Drag & drop gambar atau klik untuk pilih</p>
+                    <input type="file" id="additionalImages" name="additional_images" multiple accept="image/*" class="hidden">
+                    <button type="button" onclick="document.getElementById('additionalImages').click()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                        Pilih Gambar
+                    </button>
+                </div>
+                
+                <!-- Preview Gambar Tambahan Baru -->
+                <div id="additionalImagesPreview" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Pengaturan Publikasi -->
+        <div class="form-section">
+            <h2 class="section-title">
+                <i class="fas fa-calendar-alt mr-2 text-red-500"></i>
+                Pengaturan Publikasi
+            </h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.status.label }}
+                        <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.status.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.is_featured.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.is_featured.label }}
+                    </label>
+                    <div class="flex items-center">
+                        {{ form.is_featured }}
+                        <span class="ml-2 text-sm text-gray-600">Tampilkan di halaman utama</span>
+                    </div>
+                </div>
+                
+                <div id="scheduledDateField" {% if news.status != 'scheduled' %}style="display: none;"{% endif %}>
+                    <label for="{{ form.scheduled_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.scheduled_date.label }}
+                    </label>
+                    {{ form.scheduled_date }}
+                    {% if form.scheduled_date.errors %}
+                        <div class="text-red-500 text-sm mt-1">
+                            {{ form.scheduled_date.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="flex justify-between">
+            <div class="flex space-x-3">
+                <button type="button" id="duplicateBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg transition duration-200">
+                    <i class="fas fa-copy mr-2"></i>Duplikasi
+                </button>
+                <button type="button" id="deleteBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg transition duration-200">
+                    <i class="fas fa-trash mr-2"></i>Hapus
+                </button>
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="{% url "news:admin_index" %}" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition duration-200">
+                    <i class="fas fa-times mr-2"></i>Batal
+                </a>
+                <button type="button" id="saveDraftBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg transition duration-200">
+                    <i class="fas fa-save mr-2"></i>Simpan Draft
+                </button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition duration-200">
+                    <i class="fas fa-save mr-2"></i>Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal Edit Caption -->
+<div id="editCaptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">Edit Caption Gambar</h3>
+            <input type="text" id="captionInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg mb-4" placeholder="Masukkan caption...">
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeEditCaptionModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                    Batal
+                </button>
+                <button type="button" onclick="saveCaption()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden inputs for deleted images -->
+<div id="deletedImages"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Summernote JS -->
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<!-- Summernote Indonesian -->
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/lang/summernote-id-ID.min.js"></script>
+
+<script>
+let deletedImageIds = [];
+let currentEditingImageId = null;
+
+$(document).ready(function() {
+    // Initialize Summernote
+    $('#id_content').summernote({
+        height: 400,
+        lang: 'id-ID',
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'underline', 'clear']],
+            ['fontname', ['fontname']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['table', ['table']],
+            ['insert', ['link', 'picture', 'video']],
+            ['view', ['fullscreen', 'codeview', 'help']]
+        ],
+        callbacks: {
+            onImageUpload: function(files) {
+                for (let i = 0; i < files.length; i++) {
+                    uploadImage(files[i]);
+                }
+            }
+        }
+    });
+    
+    // Auto-generate slug from title
+    $('#id_title').on('input', function() {
+        const title = $(this).val();
+        const slug = title.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim('-');
+        $('#id_slug').val(slug);
+    });
+    
+    // Show/hide scheduled date field
+    $('#id_status').on('change', function() {
+        if ($(this).val() === 'scheduled') {
+            $('#scheduledDateField').show();
+        } else {
+            $('#scheduledDateField').hide();
+        }
+    });
+    
+    // Featured image upload
+    setupFeaturedImageUpload();
+    
+    // Additional images upload
+    setupAdditionalImagesUpload();
+    
+    // Save as draft
+    $('#saveDraftBtn').on('click', function() {
+        $('#id_status').val('draft');
+        $('#newsForm').submit();
+    });
+    
+    // Duplicate news
+    $('#duplicateBtn').on('click', function() {
+        if (confirm('Apakah Anda yakin ingin menduplikasi berita ini?')) {
+            window.location.href = '{% url "news:admin_duplicate" news.pk %}';
+        }
+    });
+    
+    // Delete news
+    $('#deleteBtn').on('click', function() {
+        if (confirm('Apakah Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.')) {
+            window.location.href = '{% url "news:admin_delete" news.pk %}';
+        }
+    });
+    
+    // Form validation and submission
+    $('#newsForm').on('submit', function(e) {
+        // Add deleted image IDs to form
+        deletedImageIds.forEach(function(id) {
+            $('#deletedImages').append(`<input type="hidden" name="deleted_images" value="${id}">`);
+        });
+        
+        if (!validateForm()) {
+            e.preventDefault();
+        }
+    });
+});
+
+function setupFeaturedImageUpload() {
+    const dropArea = $('#featuredImageDropArea');
+    const fileInput = $('#id_featured_image');
+    const preview = $('#featuredImagePreview');
+    const previewImg = $('#featuredImageImg');
+    const removeBtn = $('#removeFeaturedImagePreview');
+    
+    // Click to upload
+    dropArea.on('click', function() {
+        fileInput.click();
+    });
+    
+    // Drag and drop
+    dropArea.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    dropArea.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    dropArea.on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput[0].files = files;
+            previewFeaturedImage(files[0]);
+        }
+    });
+    
+    // File input change
+    fileInput.on('change', function() {
+        if (this.files && this.files[0]) {
+            previewFeaturedImage(this.files[0]);
+        }
+    });
+    
+    // Remove preview
+    removeBtn.on('click', function() {
+        fileInput.val('');
+        preview.hide();
+        dropArea.show();
+    });
+}
+
+function previewFeaturedImage(file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        $('#featuredImageImg').attr('src', e.target.result);
+        $('#featuredImagePreview').show();
+        $('#featuredImageDropArea').hide();
+        $('#currentFeaturedImage').hide();
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeFeaturedImage() {
+    $('#currentFeaturedImage').hide();
+    $('#featuredImageDropArea').show();
+    // Add hidden input to mark for deletion
+    $('#deletedImages').append('<input type="hidden" name="remove_featured_image" value="true">');
+}
+
+function setupAdditionalImagesUpload() {
+    const dropArea = $('#additionalImagesDropArea');
+    const fileInput = $('#additionalImages');
+    const preview = $('#additionalImagesPreview');
+    let additionalImages = [];
+    
+    // Drag and drop
+    dropArea.on('dragover', function(e) {
+        e.preventDefault();
+        $(this).addClass('dragover');
+    });
+    
+    dropArea.on('dragleave', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+    });
+    
+    dropArea.on('drop', function(e) {
+        e.preventDefault();
+        $(this).removeClass('dragover');
+        
+        const files = e.originalEvent.dataTransfer.files;
+        handleAdditionalImages(files);
+    });
+    
+    // File input change
+    fileInput.on('change', function() {
+        handleAdditionalImages(this.files);
+    });
+    
+    function handleAdditionalImages(files) {
+        const currentCount = $('.existing-image').length + additionalImages.length;
+        
+        for (let i = 0; i < files.length && currentCount + i < 5; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                additionalImages.push(file);
+                previewAdditionalImage(file, additionalImages.length - 1);
+            }
+        }
+        
+        if (currentCount + files.length > 5) {
+            showNotification('Maksimal 5 gambar total diperbolehkan', 'error');
+        }
+    }
+    
+    function previewAdditionalImage(file, index) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageItem = $(`
+                <div class="additional-image-item" data-index="${index}">
+                    <img src="${e.target.result}" class="image-preview" alt="Preview">
+                    <button type="button" class="remove-image-btn" onclick="removeAdditionalImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <input type="text" placeholder="Caption (opsional)" class="mt-2 w-full px-3 py-1 border border-gray-300 rounded text-sm" name="image_caption_${index}">
+                </div>
+            `);
+            preview.append(imageItem);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    window.removeAdditionalImage = function(index) {
+        additionalImages.splice(index, 1);
+        $(`.additional-image-item[data-index="${index}"]`).remove();
+        
+        // Re-index remaining images
+        $('.additional-image-item').each(function(i) {
+            $(this).attr('data-index', i);
+            $(this).find('.remove-image-btn').attr('onclick', `removeAdditionalImage(${i})`);
+            $(this).find('input').attr('name', `image_caption_${i}`);
+        });
+    };
+}
+
+function removeExistingImage(imageId) {
+    if (confirm('Apakah Anda yakin ingin menghapus gambar ini?')) {
+        $(`.existing-image[data-image-id="${imageId}"]`).fadeOut(function() {
+            $(this).remove();
+        });
+        deletedImageIds.push(imageId);
+    }
+}
+
+function editImageCaption(imageId, currentCaption) {
+    currentEditingImageId = imageId;
+    $('#captionInput').val(currentCaption);
+    $('#editCaptionModal').removeClass('hidden');
+}
+
+function closeEditCaptionModal() {
+    $('#editCaptionModal').addClass('hidden');
+    currentEditingImageId = null;
+}
+
+function saveCaption() {
+    const newCaption = $('#captionInput').val();
+    
+    // Update caption in the UI
+    const imageElement = $(`.existing-image[data-image-id="${currentEditingImageId}"]`);
+    let captionElement = imageElement.find('.text-xs');
+    
+    if (captionElement.length === 0) {
+        captionElement = $('<div class="text-xs text-gray-600 mt-1 px-2"></div>');
+        imageElement.append(captionElement);
+    }
+    
+    captionElement.text(newCaption);
+    
+    // Add hidden input for caption update
+    $('#deletedImages').append(`<input type="hidden" name="caption_${currentEditingImageId}" value="${newCaption}">`);
+    
+    closeEditCaptionModal();
+    showNotification('Caption berhasil diperbarui', 'success');
+}
+
+function uploadImage(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    // This would be an AJAX call to upload the image
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        $('#id_content').summernote('insertImage', e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function validateForm() {
+    let isValid = true;
+    const requiredFields = ['#id_title', '#id_content', '#id_category'];
+    
+    requiredFields.forEach(function(field) {
+        const $field = $(field);
+        if (!$field.val().trim()) {
+            $field.addClass('border-red-500');
+            isValid = false;
+        } else {
+            $field.removeClass('border-red-500');
+        }
+    });
+    
+    if (!isValid) {
+        showNotification('Mohon lengkapi semua field yang wajib diisi.', 'error');
+    }
+    
+    return isValid;
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const notification = $(`
+        <div class="fixed top-4 right-4 z-50 p-4 rounded-lg text-white ${
+            type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } shadow-lg">
+            ${message}
+        </div>
+    `);
+    
+    $('body').append(notification);
+    
+    setTimeout(function() {
+        notification.fadeOut(function() {
+            $(this).remove();
+        });
+    }, 3000);
+}
+</script>
+{% endblock %}

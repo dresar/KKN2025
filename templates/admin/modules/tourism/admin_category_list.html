@@ -1,0 +1,676 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Daftar Kategori Wisata{% endblock %}
+
+
+{% block extra_css %}
+<style>
+    .category-card {
+        transition: all 0.3s ease;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .media-preview {
+        position: relative;
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
+    .media-preview img, .media-preview video {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    .media-preview:hover img, .media-preview:hover video {
+        transform: scale(1.05);
+    }
+    .media-badge {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Daftar Kategori Wisata</h1>
+            <p class="text-gray-600 mt-1">Kelola kategori wisata di desa Pulo Sarok</p>
+            <div class="breadcrumbs text-sm text-gray-500 mt-1">
+                <a href="{% url 'admin:index' %}" class="hover:text-primary-600">Dashboard</a> 
+                <span class="mx-2">/</span> 
+                <a href="{% url 'tourism:admin_dashboard' %}" class="hover:text-primary-600">Wisata</a> 
+                <span class="mx-2">/</span> 
+                <span class="text-gray-700">Kategori</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'tourism:admin_location_list' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md flex items-center">
+                <i class="fas fa-map-marker-alt mr-2"></i> Lokasi Wisata
+            </a>
+            <button type="button" onclick="openCategoryModal('create')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                <i class="fas fa-plus mr-2"></i>
+                Tambah Kategori
+            </button>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">{{ message }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Filter dan Pencarian -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-200">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari</label>
+                <input type="text" name="search" id="search" value="{{ request.GET.search|default:'' }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Nama atau deskripsi...">
+            </div>
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" id="status" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    <option value="">Semua</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Aktif</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Tidak Aktif</option>
+                </select>
+            </div>
+            <div>
+                <label for="featured" class="block text-sm font-medium text-gray-700 mb-1">Unggulan</label>
+                <select name="featured" id="featured" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                    <option value="">Semua</option>
+                    <option value="yes" {% if request.GET.featured == 'yes' %}selected{% endif %}>Ya</option>
+                    <option value="no" {% if request.GET.featured == 'no' %}selected{% endif %}>Tidak</option>
+                </select>
+            </div>
+            <div class="md:col-span-3 flex justify-end">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-search mr-2"></i>
+                    Filter
+                </button>
+                <a href="{% url 'tourism:admin_category_list' %}" class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-times mr-2"></i>
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tampilan Kategori -->
+    <div class="mb-4 flex justify-between items-center">
+        <div class="flex space-x-2">
+            <button id="btnGridView" class="px-3 py-2 bg-primary-600 text-white rounded-md flex items-center">
+                <i class="fas fa-th-large mr-1"></i> Grid
+            </button>
+            <button id="btnTableView" class="px-3 py-2 bg-gray-200 text-gray-700 rounded-md flex items-center">
+                <i class="fas fa-list mr-1"></i> Tabel
+            </button>
+        </div>
+        <div>
+            <span class="text-sm text-gray-600">Total: <span class="font-semibold">{{ categories.paginator.count }}</span> kategori</span>
+        </div>
+    </div>
+
+    <!-- Grid View (Card) -->
+<div id="gridView" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
+    {% for category in categories %}
+    <div class="category-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Media Preview -->
+        <div class="media-preview">
+            {% if category.image %}
+            <img data-src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-40 object-cover lazy-load" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" loading="lazy">
+            <noscript>
+                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-40 object-cover">
+            </noscript>
+            {% elif category.video %}
+            <video data-src="{{ category.video.url }}" class="w-full h-40 object-cover" preload="none" poster="{{ category.image.url }}">
+                Your browser does not support the video tag.
+            </video>
+            <div class="media-badge">
+                <span class="px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded-md">
+                    <i class="fas fa-video"></i>
+                </span>
+            </div>
+            <div class="play-button absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 bg-black bg-opacity-30 cursor-pointer">
+                <i class="fas fa-play text-white text-3xl"></i>
+            </div>
+            {% else %}
+            <div class="w-full h-40 flex items-center justify-center" style="background-color: {{ category.color|default:'#4F46E5' }}">
+                <i class="{{ category.icon|default:'fas fa-tag' }} text-white text-5xl"></i>
+            </div>
+            {% endif %}
+                
+                <!-- Status Badges -->
+                <div class="absolute top-2 left-2 flex space-x-1">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-md {% if category.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if category.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                    </span>
+                    {% if category.featured %}
+                    <span class="px-2 py-1 text-xs font-semibold rounded-md bg-purple-100 text-purple-800">
+                        Unggulan
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900 truncate">{{ category.name }}</h3>
+                    <div class="flex space-x-1">
+                        <button type="button" onclick="openCategoryModal('view', {{ category.id }})" class="text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" onclick="openCategoryModal('edit', {{ category.id }})" class="text-indigo-600 hover:text-indigo-900">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" onclick="openCategoryModal('delete', {{ category.id }})" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ category.description|default:"Tidak ada deskripsi" }}</p>
+                
+                <div class="flex justify-between items-center text-xs text-gray-500">
+                    <div>
+                        <i class="fas fa-map-marker-alt mr-1"></i> {{ category.locations.count }} Lokasi
+                    </div>
+                    <div>
+                        <i class="fas fa-clock mr-1"></i> {{ category.updated_at|date:"d M Y" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="tableView" class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200 hidden">
+        {% if categories %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unggulan</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Lokasi</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Terakhir Diperbarui</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for category in categories %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                {% if category.icon %}
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center" style="background-color: {{ category.color|default:'#4F46E5' }}">
+                                    <i class="{{ category.icon }} text-white text-xl"></i>
+                                </div>
+                                {% else %}
+                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                                    <i class="fas fa-tag text-primary-600"></i>
+                                </div>
+                                {% endif %}
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ category.name }}</div>
+                                    <div class="text-sm text-gray-500 truncate max-w-xs">{{ category.description|truncatechars:50 }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ category.slug }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if category.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if category.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if category.featured %}bg-purple-100 text-purple-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if category.featured %}Ya{% else %}Tidak{% endif %}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ category.locations.count }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ category.updated_at|date:"d M Y" }}</div>
+                            <div class="text-sm text-gray-500">{{ category.updated_at|time:"H:i" }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button type="button" onclick="openCategoryModal('view', {{ category.id }})" class="text-blue-600 hover:text-blue-900 mr-2">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button type="button" onclick="openCategoryModal('edit', {{ category.id }})" class="text-indigo-600 hover:text-indigo-900 mr-2">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" onclick="openCategoryModal('delete', {{ category.id }})" class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if categories.has_other_pages %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Menampilkan
+                        <span class="font-medium">{{ categories.start_index }}</span>
+                        sampai
+                        <span class="font-medium">{{ categories.end_index }}</span>
+                        dari
+                        <span class="font-medium">{{ categories.paginator.count }}</span>
+                        kategori
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if categories.has_previous %}
+                        <a href="?page={{ categories.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-500 cursor-not-allowed">
+                            <span class="sr-only">Previous</span>
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                        {% endif %}
+                        
+                        {% if categories.paginator.num_pages <= 7 %}
+                            {% for i in categories.paginator.page_range %}
+                                {% if categories.number == i %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-primary-500 bg-primary-50 text-sm font-medium text-primary-600">
+                                    {{ i }}
+                                </span>
+                                {% else %}
+                                <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ i }}
+                                </a>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {% if categories.number > 3 %}
+                                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    1
+                                </a>
+                                {% if categories.number > 4 %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                    ...
+                                </span>
+                                {% endif %}
+                            {% endif %}
+                            
+                            {% for i in categories.paginator.page_range %}
+                                {% if i >= categories.number|add:'-2' and i <= categories.number|add:'2' %}
+                                    {% if categories.number == i %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-primary-500 bg-primary-50 text-sm font-medium text-primary-600">
+                                        {{ i }}
+                                    </span>
+                                    {% else %}
+                                    <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        {{ i }}
+                                    </a>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if categories.number < categories.paginator.num_pages|add:'-2' %}
+                                {% if categories.number < categories.paginator.num_pages|add:'-3' %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                    ...
+                                </span>
+                                {% endif %}
+                                <a href="?page={{ categories.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ categories.paginator.num_pages }}
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% if categories.has_next %}
+                        <a href="?page={{ categories.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        {% else %}
+                        <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-gray-100 text-sm font-medium text-gray-500 cursor-not-allowed">
+                            <span class="sr-only">Next</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <div class="flex justify-center mb-4">
+                <i class="fas fa-tags text-gray-400 text-5xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900">Belum ada kategori wisata</h3>
+            <p class="mt-1 text-sm text-gray-500">Mulai dengan menambahkan kategori wisata baru.</p>
+            <div class="mt-6">
+                <button type="button" onclick="openCategoryModal('create')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Kategori
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal untuk Kategori -->
+<div id="categoryModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div class="p-6" id="categoryModalContent">
+            <!-- Konten modal akan diisi melalui AJAX -->
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fungsi untuk membuka modal kategori
+    function openCategoryModal(action, id = null) {
+        const modal = document.getElementById('categoryModal');
+        const modalContent = document.getElementById('categoryModalContent');
+        
+        // Tampilkan modal
+        modal.classList.remove('hidden');
+        
+        // URL untuk AJAX request
+        let url = '';
+        
+        if (action === 'create') {
+            url = '{% url "tourism:admin_category_create" %}';
+        } else if (action === 'view' && id) {
+            url = `/tourism/admin/category/${id}/detail/`;
+        } else if (action === 'edit' && id) {
+            url = `/tourism/admin/category/${id}/edit/`;
+        } else if (action === 'delete' && id) {
+            url = `/tourism/admin/category/${id}/delete/`;
+        }
+        
+        // Lakukan AJAX request
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            modalContent.innerHTML = html;
+            
+            // Inisialisasi form jika ada
+            if (modalContent.querySelector('form')) {
+                initFormSubmit(modalContent.querySelector('form'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = `<div class="text-center py-8"><p class="text-red-600">Terjadi kesalahan saat memuat data. Silakan coba lagi.</p></div>`;
+        });
+    }
+    
+    // Fungsi untuk menutup modal
+    function closeModal() {
+        const modal = document.getElementById('categoryModal');
+        modal.classList.add('hidden');
+    }
+    
+    // Fungsi untuk menginisialisasi form submit
+    function initFormSubmit(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // Tutup modal
+                    closeModal();
+                    
+                    // Refresh halaman
+                    window.location.reload();
+                } else {
+                    // Tampilkan pesan error
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'p-4 mb-4 rounded-md bg-red-50 text-red-800';
+                    errorDiv.innerHTML = `<p>${data.message}</p>`;
+                    
+                    form.prepend(errorDiv);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Tampilkan pesan error
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'p-4 mb-4 rounded-md bg-red-50 text-red-800';
+                errorDiv.innerHTML = `<p>Terjadi kesalahan saat mengirim data. Silakan coba lagi.</p>`;
+                
+                form.prepend(errorDiv);
+            });
+        });
+    }
+    
+    // Event listener untuk tombol close di modal
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-close-modal]')) {
+            closeModal();
+        }
+    });
+    
+    // Event listener untuk menutup modal saat klik di luar modal
+    document.addEventListener('click', function(e) {
+        const modal = document.getElementById('categoryModal');
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Fungsi untuk implementasi lazy loading gambar
+    function initLazyLoadImages() {
+        if ('IntersectionObserver' in window) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.classList.remove('lazy-load');
+                            observer.unobserve(img);
+                        }
+                    }
+                });
+            });
+            
+            const lazyImages = document.querySelectorAll('img.lazy-load');
+            lazyImages.forEach(img => {
+                imageObserver.observe(img);
+            });
+        } else {
+            // Fallback untuk browser yang tidak mendukung IntersectionObserver
+            const lazyImages = document.querySelectorAll('img.lazy-load');
+            lazyImages.forEach(img => {
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.classList.remove('lazy-load');
+                }
+            });
+        }
+    }
+    
+    // Fungsi untuk implementasi lazy loading video
+    function initLazyLoadVideos() {
+        if ('IntersectionObserver' in window) {
+            const videoObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const video = entry.target;
+                        if (video.dataset.src) {
+                            video.src = video.dataset.src;
+                            video.load();
+                            observer.unobserve(video);
+                        }
+                    }
+                });
+            });
+            
+            const lazyVideos = document.querySelectorAll('video[data-src]');
+            lazyVideos.forEach(video => {
+                videoObserver.observe(video);
+            });
+        } else {
+            // Fallback untuk browser yang tidak mendukung IntersectionObserver
+            const lazyVideos = document.querySelectorAll('video[data-src]');
+            lazyVideos.forEach(video => {
+                if (video.dataset.src) {
+                    video.src = video.dataset.src;
+                    video.load();
+                }
+            });
+        }
+    }
+    
+    // Toggle antara tampilan grid dan tabel
+    document.addEventListener('DOMContentLoaded', function() {
+        const gridView = document.getElementById('gridView');
+        const tableView = document.getElementById('tableView');
+        const btnGridView = document.getElementById('btnGridView');
+        const btnTableView = document.getElementById('btnTableView');
+        
+        if (gridView && tableView && btnGridView && btnTableView) {
+            // Default tampilan grid
+            gridView.classList.remove('hidden');
+            tableView.classList.add('hidden');
+            btnGridView.classList.add('bg-primary-600', 'text-white');
+            btnGridView.classList.remove('bg-gray-200', 'text-gray-700');
+            btnTableView.classList.add('bg-gray-200', 'text-gray-700');
+            btnTableView.classList.remove('bg-primary-600', 'text-white');
+            
+            // Event listener untuk tombol grid view
+            btnGridView.addEventListener('click', function() {
+                gridView.classList.remove('hidden');
+                tableView.classList.add('hidden');
+                btnGridView.classList.add('bg-primary-600', 'text-white');
+                btnGridView.classList.remove('bg-gray-200', 'text-gray-700');
+                btnTableView.classList.add('bg-gray-200', 'text-gray-700');
+                btnTableView.classList.remove('bg-primary-600', 'text-white');
+                
+                // Simpan preferensi tampilan di localStorage
+                localStorage.setItem('categoryViewPreference', 'grid');
+            });
+            
+            // Event listener untuk tombol table view
+            btnTableView.addEventListener('click', function() {
+                gridView.classList.add('hidden');
+                tableView.classList.remove('hidden');
+                btnTableView.classList.add('bg-primary-600', 'text-white');
+                btnTableView.classList.remove('bg-gray-200', 'text-gray-700');
+                btnGridView.classList.add('bg-gray-200', 'text-gray-700');
+                btnGridView.classList.remove('bg-primary-600', 'text-white');
+                
+                // Simpan preferensi tampilan di localStorage
+                localStorage.setItem('categoryViewPreference', 'table');
+            });
+            
+            // Cek preferensi tampilan dari localStorage
+            const viewPreference = localStorage.getItem('categoryViewPreference');
+            if (viewPreference === 'table') {
+                btnTableView.click();
+            }
+        }
+        
+        // Inisialisasi lazy loading
+        initLazyLoadImages();
+        initLazyLoadVideos();
+        
+        // Inisialisasi video preview
+        const videos = document.querySelectorAll('video');
+        videos.forEach(video => {
+            // Tambahkan event listener untuk play/pause saat hover
+            const mediaPreview = video.closest('.media-preview');
+            if (mediaPreview) {
+                const playButton = mediaPreview.querySelector('.play-button');
+                
+                if (playButton) {
+                    playButton.addEventListener('click', function() {
+                        if (video.paused) {
+                            video.play().catch(e => console.log('Video play error:', e));
+                            playButton.innerHTML = '<i class="fas fa-pause text-white text-3xl"></i>';
+                        } else {
+                            video.pause();
+                            playButton.innerHTML = '<i class="fas fa-play text-white text-3xl"></i>';
+                        }
+                    });
+                    
+                    video.addEventListener('ended', function() {
+                        playButton.innerHTML = '<i class="fas fa-play text-white text-3xl"></i>';
+                    });
+                }
+                
+                mediaPreview.addEventListener('mouseenter', function() {
+                    if (!playButton || !playButton.contains(document.activeElement)) {
+                        video.play().catch(e => console.log('Video play error:', e));
+                    }
+                });
+                
+                mediaPreview.addEventListener('mouseleave', function() {
+                    video.pause();
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

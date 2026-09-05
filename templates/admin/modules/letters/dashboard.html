@@ -1,0 +1,872 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard Surat{% endblock %}
+
+{% block page_title %}Dashboard Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        border-color: #3b82f6;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .stat-card-green {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    .stat-card-orange {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    .stat-card-purple {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: #374151;
+    }
+    .quick-action-btn {
+        transition: all 0.2s ease;
+    }
+    .quick-action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .activity-item {
+        transition: all 0.2s ease;
+    }
+    .activity-item:hover {
+        background-color: #f9fafb;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    .progress-ring-circle {
+        transition: stroke-dasharray 0.35s;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+    }
+    .notification-badge {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+    .weather-widget {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        color: white;
+    }
+    .calendar-widget {
+        background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-tachometer-alt mr-3 text-blue-600"></i>
+                    Selamat Datang, Admin Desa
+                </h1>
+                <p class="text-gray-600">Dashboard sistem manajemen surat Desa Pulosarok</p>
+            </div>
+            <div class="flex items-center space-x-4 mt-4 lg:mt-0">
+                <div class="weather-widget rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-sun text-2xl"></i>
+                        <div>
+                            <p class="text-sm opacity-90">Cuaca Hari Ini</p>
+                            <p class="text-lg font-bold">28°C</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="calendar-widget rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-calendar text-2xl"></i>
+                        <div>
+                            <p class="text-sm opacity-90" id="current-date"></p>
+                            <p class="text-lg font-bold" id="current-time"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stat-card rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Total Surat</p>
+                    <p class="text-3xl font-bold text-white" id="total-letters">1,247</p>
+                    <p class="text-white/70 text-xs mt-1">Bulan ini</p>
+                </div>
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-file-alt text-white text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span>+12.5% dari bulan lalu</span>
+            </div>
+        </div>
+        
+        <div class="stat-card-green rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Surat Disetujui</p>
+                    <p class="text-3xl font-bold text-white" id="approved-letters">1,174</p>
+                    <p class="text-white/70 text-xs mt-1">94.2% approval rate</p>
+                </div>
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-white text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-arrow-up mr-1"></i>
+                <span>+8.3% dari target</span>
+            </div>
+        </div>
+        
+        <div class="stat-card-orange rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-white/80 text-sm font-medium">Pending Review</p>
+                    <p class="text-3xl font-bold text-white" id="pending-letters">45</p>
+                    <p class="text-white/70 text-xs mt-1">Perlu perhatian</p>
+                </div>
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-clock text-white text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-white/80 text-sm">
+                <i class="fas fa-arrow-down mr-1"></i>
+                <span>-15.2% dari minggu lalu</span>
+            </div>
+        </div>
+        
+        <div class="stat-card-purple rounded-lg p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-700 text-sm font-medium">Rata-rata Proses</p>
+                    <p class="text-3xl font-bold text-gray-800" id="avg-processing">2.4h</p>
+                    <p class="text-gray-600 text-xs mt-1">Waktu penyelesaian</p>
+                </div>
+                <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                    <i class="fas fa-stopwatch text-gray-600 text-2xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-gray-600 text-sm">
+                <i class="fas fa-arrow-down mr-1 text-green-600"></i>
+                <span>-23% lebih cepat</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="dashboard-card bg-white rounded-lg shadow p-6 mb-8">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+            <i class="fas fa-bolt mr-2 text-yellow-500"></i>
+            Quick Actions
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <button onclick="createNewLetter()" class="quick-action-btn bg-blue-600 text-white p-4 rounded-lg text-center hover:bg-blue-700">
+                <i class="fas fa-plus text-2xl mb-2"></i>
+                <p class="text-sm font-medium">Buat Surat</p>
+            </button>
+            <button onclick="viewTemplates()" class="quick-action-btn bg-green-600 text-white p-4 rounded-lg text-center hover:bg-green-700">
+                <i class="fas fa-file-contract text-2xl mb-2"></i>
+                <p class="text-sm font-medium">Template</p>
+            </button>
+            <button onclick="viewPendingLetters()" class="quick-action-btn bg-orange-600 text-white p-4 rounded-lg text-center hover:bg-orange-700">
+                <i class="fas fa-clock text-2xl mb-2"></i>
+                <p class="text-sm font-medium">Pending</p>
+                <span class="notification-badge bg-red-500 text-white text-xs rounded-full px-2 py-1 ml-1">45</span>
+            </button>
+            <button onclick="viewReports()" class="quick-action-btn bg-purple-600 text-white p-4 rounded-lg text-center hover:bg-purple-700">
+                <i class="fas fa-chart-bar text-2xl mb-2"></i>
+                <p class="text-sm font-medium">Laporan</p>
+            </button>
+            <button onclick="viewSettings()" class="quick-action-btn bg-gray-600 text-white p-4 rounded-lg text-center hover:bg-gray-700">
+                <i class="fas fa-cog text-2xl mb-2"></i>
+                <p class="text-sm font-medium">Pengaturan</p>
+            </button>
+            <button onclick="viewArchive()" class="quick-action-btn bg-indigo-600 text-white p-4 rounded-lg text-center hover:bg-indigo-700">
+                <i class="fas fa-archive text-2xl mb-2"></i>
+                <p class="text-sm font-medium">Arsip</p>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        <!-- Recent Letters -->
+        <div class="lg:col-span-2 dashboard-card bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-file-alt mr-2 text-blue-600"></i>
+                    Surat Terbaru
+                </h2>
+                <a href="/admin/letters/list/" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+            <div id="recent-letters" class="space-y-4">
+                <!-- Recent letters will be populated dynamically -->
+            </div>
+        </div>
+        
+        <!-- Activity Feed -->
+        <div class="dashboard-card bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-bell mr-2 text-green-600"></i>
+                Aktivitas Terkini
+            </h2>
+            <div id="activity-feed" class="space-y-4">
+                <!-- Activity feed will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts and Analytics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Letter Trends Chart -->
+        <div class="dashboard-card bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-chart-line mr-2 text-purple-600"></i>
+                Tren Surat (7 Hari Terakhir)
+            </h2>
+            <div class="chart-container">
+                <canvas id="trends-chart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Letter Types Distribution -->
+        <div class="dashboard-card bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-chart-pie mr-2 text-pink-600"></i>
+                Distribusi Jenis Surat
+            </h2>
+            <div class="chart-container">
+                <canvas id="distribution-chart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <!-- Processing Time -->
+        <div class="dashboard-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-tachometer-alt mr-2 text-blue-600"></i>
+                Kecepatan Proses
+            </h3>
+            <div class="flex items-center justify-center">
+                <div class="relative w-32 h-32">
+                    <svg class="progress-ring w-32 h-32" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="50" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                        <circle id="processing-progress" cx="60" cy="60" r="50" stroke="#3b82f6" stroke-width="8" fill="none" stroke-dasharray="314" stroke-dashoffset="78.5"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900">75%</p>
+                            <p class="text-xs text-gray-600">Target</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-sm text-gray-600 mt-4">Rata-rata 2.4 jam per surat</p>
+        </div>
+        
+        <!-- User Satisfaction -->
+        <div class="dashboard-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-smile mr-2 text-green-600"></i>
+                Kepuasan Pengguna
+            </h3>
+            <div class="flex items-center justify-center">
+                <div class="relative w-32 h-32">
+                    <svg class="progress-ring w-32 h-32" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="50" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                        <circle id="satisfaction-progress" cx="60" cy="60" r="50" stroke="#10b981" stroke-width="8" fill="none" stroke-dasharray="314" stroke-dashoffset="31.4"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900">90%</p>
+                            <p class="text-xs text-gray-600">Rating</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="text-center text-sm text-gray-600 mt-4">Berdasarkan 1,247 feedback</p>
+        </div>
+        
+        <!-- System Health -->
+        <div class="dashboard-card bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                <i class="fas fa-heartbeat mr-2 text-red-600"></i>
+                Status Sistem
+            </h3>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Server</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-green-600">Online</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Database</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-green-600">Normal</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">AI Service</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-green-600">Active</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Storage</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span class="text-sm font-medium text-yellow-600">78% Used</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notifications and Alerts -->
+    <div class="dashboard-card bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-600"></i>
+            Notifikasi & Peringatan
+        </h2>
+        <div id="notifications" class="space-y-4">
+            <!-- Notifications will be populated dynamically -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let charts = {};
+    
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        
+        loadRecentLetters();
+        loadActivityFeed();
+        loadNotifications();
+        initializeCharts();
+        
+        // Refresh data every 5 minutes
+        setInterval(refreshDashboardData, 300000);
+    });
+    
+    // Update date and time
+    function updateDateTime() {
+        const now = new Date();
+        const dateOptions = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        const timeOptions = { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        
+        document.getElementById('current-date').textContent = now.toLocaleDateString('id-ID', dateOptions);
+        document.getElementById('current-time').textContent = now.toLocaleTimeString('id-ID', timeOptions);
+    }
+    
+    // Load recent letters
+    function loadRecentLetters() {
+        const container = document.getElementById('recent-letters');
+        const recentLetters = [
+            {
+                id: 'SKD-2024-001',
+                type: 'Surat Keterangan Domisili',
+                applicant: 'Budi Santoso',
+                status: 'approved',
+                date: '2024-01-15',
+                time: '10:30'
+            },
+            {
+                id: 'SKU-2024-002',
+                type: 'Surat Keterangan Usaha',
+                applicant: 'Siti Aminah',
+                status: 'pending',
+                date: '2024-01-15',
+                time: '09:15'
+            },
+            {
+                id: 'SKTM-2024-003',
+                type: 'Surat Keterangan Tidak Mampu',
+                applicant: 'Ahmad Wijaya',
+                status: 'approved',
+                date: '2024-01-14',
+                time: '16:45'
+            },
+            {
+                id: 'SP-2024-004',
+                type: 'Surat Pengantar',
+                applicant: 'Dewi Lestari',
+                status: 'rejected',
+                date: '2024-01-14',
+                time: '14:20'
+            },
+            {
+                id: 'SKK-2024-005',
+                type: 'Surat Keterangan Kelahiran',
+                applicant: 'Eko Prasetyo',
+                status: 'pending',
+                date: '2024-01-14',
+                time: '11:30'
+            }
+        ];
+        
+        let lettersHTML = '';
+        recentLetters.forEach(letter => {
+            const statusClass = getStatusClass(letter.status);
+            const statusText = getStatusText(letter.status);
+            
+            lettersHTML += `
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer" onclick="viewLetterDetail('${letter.id}')">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-blue-600"></i>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">${letter.id}</p>
+                            <p class="text-sm text-gray-600">${letter.type}</p>
+                            <p class="text-xs text-gray-500">Pemohon: ${letter.applicant}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                            ${statusText}
+                        </span>
+                        <p class="text-xs text-gray-500 mt-1">${letter.date} ${letter.time}</p>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = lettersHTML;
+    }
+    
+    // Load activity feed
+    function loadActivityFeed() {
+        const container = document.getElementById('activity-feed');
+        const activities = [
+            {
+                user: 'Admin Desa',
+                action: 'menyetujui surat',
+                target: 'SKD-2024-001',
+                time: '2 menit yang lalu',
+                icon: 'fa-check',
+                color: 'text-green-600'
+            },
+            {
+                user: 'Sekretaris',
+                action: 'membuat surat baru',
+                target: 'SKU-2024-002',
+                time: '15 menit yang lalu',
+                icon: 'fa-plus',
+                color: 'text-blue-600'
+            },
+            {
+                user: 'Staff RT',
+                action: 'mengajukan surat',
+                target: 'SKTM-2024-003',
+                time: '1 jam yang lalu',
+                icon: 'fa-paper-plane',
+                color: 'text-purple-600'
+            },
+            {
+                user: 'Admin Desa',
+                action: 'menolak surat',
+                target: 'SP-2024-004',
+                time: '2 jam yang lalu',
+                icon: 'fa-times',
+                color: 'text-red-600'
+            },
+            {
+                user: 'Sekretaris',
+                action: 'memperbarui template',
+                target: 'Template Domisili',
+                time: '3 jam yang lalu',
+                icon: 'fa-edit',
+                color: 'text-orange-600'
+            }
+        ];
+        
+        let activitiesHTML = '';
+        activities.forEach((activity, index) => {
+            activitiesHTML += `
+                <div class="activity-item flex items-start space-x-3 p-3 rounded-lg ${index !== activities.length - 1 ? 'border-b border-gray-100' : ''}">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas ${activity.icon} ${activity.color} text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-900">
+                            <span class="font-medium">${activity.user}</span>
+                            <span class="text-gray-600">${activity.action}</span>
+                            <span class="font-medium">${activity.target}</span>
+                        </p>
+                        <p class="text-xs text-gray-500 mt-1">${activity.time}</p>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = activitiesHTML;
+    }
+    
+    // Load notifications
+    function loadNotifications() {
+        const container = document.getElementById('notifications');
+        const notifications = [
+            {
+                type: 'warning',
+                title: 'Surat Pending Menumpuk',
+                message: '45 surat menunggu persetujuan. Segera tindak lanjuti.',
+                time: '10 menit yang lalu',
+                action: 'Lihat Pending'
+            },
+            {
+                type: 'info',
+                title: 'Update Template',
+                message: 'Template "Surat Keterangan Domisili" telah diperbarui.',
+                time: '1 jam yang lalu',
+                action: 'Lihat Template'
+            },
+            {
+                type: 'success',
+                title: 'Backup Berhasil',
+                message: 'Backup otomatis sistem telah selesai dilakukan.',
+                time: '2 jam yang lalu',
+                action: 'Lihat Backup'
+            }
+        ];
+        
+        let notificationsHTML = '';
+        notifications.forEach(notification => {
+            const iconClass = notification.type === 'warning' ? 'fa-exclamation-triangle text-yellow-600' :
+                            notification.type === 'info' ? 'fa-info-circle text-blue-600' :
+                            'fa-check-circle text-green-600';
+            
+            const bgClass = notification.type === 'warning' ? 'bg-yellow-50 border-yellow-200' :
+                          notification.type === 'info' ? 'bg-blue-50 border-blue-200' :
+                          'bg-green-50 border-green-200';
+            
+            notificationsHTML += `
+                <div class="${bgClass} border rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 flex items-center justify-center">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-sm font-semibold text-gray-900">${notification.title}</h4>
+                            <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+                            <div class="flex items-center justify-between mt-3">
+                                <span class="text-xs text-gray-500">${notification.time}</span>
+                                <button class="text-xs font-medium text-blue-600 hover:text-blue-800">
+                                    ${notification.action}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = notificationsHTML;
+    }
+    
+    // Initialize charts
+    function initializeCharts() {
+        initTrendsChart();
+        initDistributionChart();
+    }
+    
+    // Trends Chart
+    function initTrendsChart() {
+        const ctx = document.getElementById('trends-chart').getContext('2d');
+        
+        const last7Days = [];
+        const lettersData = [];
+        
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            last7Days.push(date.toLocaleDateString('id-ID', { month: 'short', day: 'numeric' }));
+            lettersData.push(Math.floor(Math.random() * 50) + 20);
+        }
+        
+        charts.trends = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: last7Days,
+                datasets: [{
+                    label: 'Surat Dibuat',
+                    data: lettersData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#f3f4f6'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Distribution Chart
+    function initDistributionChart() {
+        const ctx = document.getElementById('distribution-chart').getContext('2d');
+        
+        const letterTypes = [
+            { name: 'Keterangan Domisili', count: 342 },
+            { name: 'Keterangan Usaha', count: 298 },
+            { name: 'Keterangan Tidak Mampu', count: 187 },
+            { name: 'Pengantar', count: 156 },
+            { name: 'Lainnya', count: 264 }
+        ];
+        
+        charts.distribution = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: letterTypes.map(t => t.name),
+                datasets: [{
+                    data: letterTypes.map(t => t.count),
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#8b5cf6'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Quick Action Functions
+    function createNewLetter() {
+        window.location.href = '/admin/letters/create/';
+    }
+    
+    function viewTemplates() {
+        window.location.href = '/admin/letters/settings/';
+    }
+    
+    function viewPendingLetters() {
+        window.location.href = '/admin/letters/list/?status=pending';
+    }
+    
+    function viewReports() {
+        window.location.href = '/admin/letters/reports/';
+    }
+    
+    function viewSettings() {
+        window.location.href = '/admin/letters/settings/';
+    }
+    
+    function viewArchive() {
+        window.location.href = '/admin/letters/archive/';
+    }
+    
+    function viewLetterDetail(letterId) {
+        window.location.href = `/admin/letters/detail/${letterId}/`;
+    }
+    
+    // Refresh dashboard data
+    function refreshDashboardData() {
+        loadRecentLetters();
+        loadActivityFeed();
+        loadNotifications();
+        
+        // Update statistics (simulate API call)
+        updateStatistics();
+    }
+    
+    // Update statistics
+    function updateStatistics() {
+        // Simulate real-time data updates
+        const totalLetters = Math.floor(Math.random() * 100) + 1200;
+        const approvedLetters = Math.floor(totalLetters * 0.94);
+        const pendingLetters = Math.floor(Math.random() * 20) + 35;
+        
+        document.getElementById('total-letters').textContent = totalLetters.toLocaleString();
+        document.getElementById('approved-letters').textContent = approvedLetters.toLocaleString();
+        document.getElementById('pending-letters').textContent = pendingLetters;
+        
+        // Update pending notification badge
+        const badge = document.querySelector('.notification-badge');
+        if (badge) {
+            badge.textContent = pendingLetters;
+        }
+    }
+    
+    // Utility functions
+    function getStatusClass(status) {
+        switch (status) {
+            case 'approved':
+                return 'bg-green-100 text-green-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            case 'rejected':
+                return 'bg-red-100 text-red-800';
+            case 'draft':
+                return 'bg-gray-100 text-gray-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    function getStatusText(status) {
+        switch (status) {
+            case 'approved':
+                return 'Disetujui';
+            case 'pending':
+                return 'Pending';
+            case 'rejected':
+                return 'Ditolak';
+            case 'draft':
+                return 'Draft';
+            default:
+                return 'Unknown';
+        }
+    }
+    
+    // Show notification
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
+        
+        const colors = {
+            success: 'bg-green-500 text-white',
+            error: 'bg-red-500 text-white',
+            warning: 'bg-yellow-500 text-white',
+            info: 'bg-blue-500 text-white'
+        };
+        
+        notification.className += ` ${colors[type] || colors.info}`;
+        notification.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas ${
+                    type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                    type === 'warning' ? 'fa-exclamation-triangle' :
+                    'fa-info-circle'
+                }"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto remove
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + N: Create new letter
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+            e.preventDefault();
+            createNewLetter();
+        }
+        
+        // Ctrl/Cmd + P: View pending letters
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+            e.preventDefault();
+            viewPendingLetters();
+        }
+        
+        // Ctrl/Cmd + R: Refresh dashboard
+        if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+            e.preventDefault();
+            refreshDashboardData();
+            showNotification('Dashboard berhasil diperbarui', 'success');
+        }
+    });
+</script>
+{% endblock %}

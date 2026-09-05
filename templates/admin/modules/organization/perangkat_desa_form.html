@@ -1,0 +1,457 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+{% load form_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<style>
+  /* Responsif CSS untuk form perangkat desa */
+  * {
+    box-sizing: border-box;
+  }
+  
+  .form-container {
+    width: 100%;
+    padding: 0;
+  }
+  
+  .form-field {
+    margin-bottom: 1rem;
+  }
+  
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  
+  .form-input {
+    width: 100% !important;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem !important;
+    border: 1px solid #e2e8f0 !important;
+    outline: none !important;
+    transition: border-color 0.2s ease-in-out !important;
+  }
+  
+  .form-input:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  .form-error {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+  
+  .form-button {
+    width: 100%;
+    padding: 0.75rem !important;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .form-button-primary {
+    background-color: #3b82f6;
+    color: white;
+  }
+  
+  .form-button-secondary {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+  }
+  
+  .form-button-primary:hover {
+    background-color: #2563eb;
+  }
+  
+  .form-button-secondary:hover {
+    background-color: #f9fafb;
+  }
+  
+  /* Media queries untuk responsif mobile */
+  @media (max-width: 640px) {
+    .container-fluid {
+      padding: 1rem !important;
+    }
+    
+    .p-6 {
+      padding: 1rem !important;
+    }
+    
+    .space-y-6 > * + * {
+      margin-top: 1rem !important;
+    }
+    
+    .gap-6 {
+      gap: 0.75rem !important;
+    }
+    
+    h1 {
+      font-size: 1.5rem !important;
+    }
+    
+    .form-button {
+      margin-bottom: 0.5rem;
+    }
+  }
+</style>
+<div class="container-fluid px-4 py-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ title }}</h1>
+            <nav class="text-sm text-gray-500">
+                <a href="{% url 'custom_admin:dashboard' %}" class="hover:text-blue-600">Dashboard</a>
+                <span class="mx-2">/</span>
+                <a href="{% url 'organization:perangkat_list' %}" class="hover:text-blue-600">Perangkat Desa</a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-700">{{ title }}</span>
+            </nav>
+        </div>
+        <a href="{% url 'organization:perangkat_list' %}" class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Kembali
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 form-container">
+        <div class="p-6">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Display form errors -->
+                {% if form.non_field_errors %}
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex">
+                            <i class="fas fa-exclamation-circle text-red-400 mt-0.5 mr-3"></i>
+                            <div>
+                                <h3 class="text-sm font-medium text-red-800">Terjadi kesalahan:</h3>
+                                <div class="mt-2 text-sm text-red-700">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="width: 100%;">
+                    <!-- Penduduk -->
+                    <div class="md:col-span-2 form-field">
+                        <label for="{{ form.penduduk.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Penduduk <span class="text-red-500">*</span>
+                        </label>
+                        <div class="form-input-container">{{ form.penduduk|add_class:"form-input" }}</div>
+                        {% if form.penduduk.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.penduduk.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Jabatan -->
+                    <div class="form-field">
+                        <label for="{{ form.jabatan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Jabatan <span class="text-red-500">*</span>
+                        </label>
+                        <div class="form-input-container">{{ form.jabatan|add_class:"form-input" }}</div>
+                        {% if form.jabatan.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.jabatan.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- NIP -->
+                    <div class="form-field">
+                        <label for="{{ form.nip.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            NIP
+                        </label>
+                        <div class="form-input-container">{{ form.nip|add_class:"form-input" }}</div>
+                        {% if form.nip.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.nip.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- SK Pengangkatan -->
+                    <div class="form-field">
+                        <label for="{{ form.sk_pengangkatan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            SK Pengangkatan
+                        </label>
+                        <div class="form-input-container">{{ form.sk_pengangkatan|add_class:"form-input" }}</div>
+                        {% if form.sk_pengangkatan.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.sk_pengangkatan.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-field">
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Status <span class="text-red-500">*</span>
+                        </label>
+                        <div class="form-input-container">{{ form.status|add_class:"form-input" }}</div>
+                        {% if form.status.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tanggal Mulai Tugas -->
+                    <div class="form-field">
+                        <label for="{{ form.tanggal_mulai_tugas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Tanggal Mulai Tugas <span class="text-red-500">*</span>
+                        </label>
+                        <div class="form-input-container">{{ form.tanggal_mulai_tugas|add_class:"form-input" }}</div>
+                        {% if form.tanggal_mulai_tugas.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.tanggal_mulai_tugas.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tanggal Selesai Tugas -->
+                    <div class="form-field">
+                        <label for="{{ form.tanggal_selesai_tugas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Tanggal Selesai Tugas
+                        </label>
+                        <div class="form-input-container">{{ form.tanggal_selesai_tugas|add_class:"form-input" }}</div>
+                        {% if form.tanggal_selesai_tugas.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.tanggal_selesai_tugas.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Gaji Pokok -->
+                    <div class="form-field">
+                        <label for="{{ form.gaji_pokok.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Gaji Pokok (Rp)
+                        </label>
+                        <div class="form-input-container">{{ form.gaji_pokok|add_class:"form-input" }}</div>
+                        {% if form.gaji_pokok.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.gaji_pokok.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tunjangan -->
+                    <div class="form-field">
+                        <label for="{{ form.tunjangan.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Tunjangan (Rp)
+                        </label>
+                        <div class="form-input-container">{{ form.tunjangan|add_class:"form-input" }}</div>
+                        {% if form.tunjangan.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.tunjangan.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Kontak WhatsApp -->
+                    <div class="form-field">
+                        <label for="{{ form.kontak_whatsapp.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Kontak WhatsApp
+                        </label>
+                        <div class="form-input-container">{{ form.kontak_whatsapp|add_class:"form-input" }}</div>
+                        {% if form.kontak_whatsapp.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.kontak_whatsapp.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email Dinas -->
+                    <div class="form-field">
+                        <label for="{{ form.email_dinas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Email Dinas
+                        </label>
+                        <div class="form-input-container">{{ form.email_dinas|add_class:"form-input" }}</div>
+                        {% if form.email_dinas.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.email_dinas.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Foto Profil -->
+                    <div class="md:col-span-2 form-field">
+                        <label for="{{ form.foto_profil.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Foto Profil
+                        </label>
+                        
+                        <!-- Current photo preview -->
+                        {% if form.instance.foto_profil %}
+                            <div class="mb-3">
+                                <p class="text-sm text-gray-600 mb-2">Foto saat ini:</p>
+                                <img src="{{ form.instance.foto_profil.url }}" alt="Foto Profil" class="w-24 h-24 object-cover rounded-lg border border-gray-300">
+                            </div>
+                        {% endif %}
+                        
+                        <div class="form-input-container">{{ form.foto_profil|add_class:"form-input" }}</div>
+                        {% if form.foto_profil.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.foto_profil.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Format yang didukung: JPG, PNG, GIF. Maksimal 2MB.</p>
+                        
+                        <!-- Preview for new upload -->
+                        <div id="foto-preview" class="mt-3 hidden">
+                            <p class="text-sm text-gray-600 mb-2">Preview foto baru:</p>
+                            <img id="foto-preview-img" src="" alt="Preview" class="w-24 h-24 object-cover rounded-lg border border-gray-300">
+                        </div>
+                    </div>
+
+                    <!-- Deskripsi Tugas -->
+                    <div class="md:col-span-2 form-field">
+                        <label for="{{ form.deskripsi_tugas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2 form-label">
+                            Deskripsi Tugas
+                        </label>
+                        <div class="form-input-container">{{ form.deskripsi_tugas|add_class:"form-input" }}</div>
+                        {% if form.deskripsi_tugas.errors %}
+                            <p class="mt-1 text-sm text-red-600 form-error">{{ form.deskripsi_tugas.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{% url 'organization:perangkat_list' %}" class="form-button form-button-secondary inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
+                        Batal
+                    </a>
+                    <button type="submit" class="form-button form-button-primary inline-flex justify-center items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        {{ submit_text }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation and enhancement
+document.addEventListener('DOMContentLoaded', function() {
+    // Adjust form elements for mobile
+    const adjustForMobile = () => {
+        const isMobile = window.innerWidth < 640;
+        const formInputs = document.querySelectorAll('.form-input');
+        
+        formInputs.forEach(input => {
+            if (isMobile) {
+                input.style.fontSize = '16px'; // Prevent zoom on focus in iOS
+                input.style.padding = '0.75rem';
+            } else {
+                input.style.fontSize = '';
+                input.style.padding = '';
+            }
+        });
+    };
+    
+    // Run on load and resize
+    adjustForMobile();
+    window.addEventListener('resize', adjustForMobile);
+    
+    // File input preview with better mobile handling
+    const fotoInput = document.getElementById('{{ form.foto_profil.id_for_label }}');
+    const fotoPreview = document.getElementById('foto-preview');
+    const fotoPreviewImg = document.getElementById('foto-preview-img');
+    
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file size (2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                    e.target.value = '';
+                    fotoPreview.classList.add('hidden');
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Format file tidak didukung. Gunakan JPG, PNG, atau GIF.');
+                    e.target.value = '';
+                    fotoPreview.classList.add('hidden');
+                    return;
+                }
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoPreviewImg.src = e.target.result;
+                    fotoPreview.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                fotoPreview.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Form submission validation with better error handling
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            let firstInvalidField = null;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('border-red-500');
+                    field.parentNode.classList.add('shake-animation');
+                    
+                    // Store first invalid field for scrolling
+                    if (!firstInvalidField) {
+                        firstInvalidField = field;
+                    }
+                    
+                    // Add animation class
+                    setTimeout(() => {
+                        field.parentNode.classList.remove('shake-animation');
+                    }, 500);
+                } else {
+                    field.classList.remove('border-red-500');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Scroll to first invalid field with smooth behavior
+                if (firstInvalidField) {
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                // Show error message
+                alert('Mohon lengkapi semua field yang wajib diisi.');
+            }
+        });
+    }
+    
+    // Add touch-friendly styles for mobile
+    const addTouchStyles = () => {
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+            
+            .shake-animation {
+                animation: shake 0.4s ease-in-out;
+            }
+            
+            /* Increase touch targets for mobile */
+            @media (max-width: 640px) {
+                .form-input, .form-button {
+                    min-height: 44px;
+                }
+                
+                select.form-input {
+                    background-position: right 0.75rem center;
+                    padding-right: 2.5rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    };
+    
+    addTouchStyles();
+});
+</script>
+{% endblock %}

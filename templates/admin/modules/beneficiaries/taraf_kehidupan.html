@@ -1,0 +1,596 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Input Data Taraf Kehidupan{% endblock %}
+{% block page_title %}Input Data Taraf Kehidupan{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .btn-action {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 0.375rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Data Taraf Kehidupan</h1>
+                <p class="text-gray-600 mt-1">Kelola data taraf kehidupan masyarakat</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="openModal('addModal')" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>Tambah Data
+                </button>
+                <button onclick="exportData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i>Export Excel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="form-section p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filter Data</h3>
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Dusun</label>
+                <select name="dusun" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Dusun</option>
+                    {% for dusun in dusun_list %}
+                    <option value="{{ dusun.id }}" {% if request.GET.dusun == dusun.id|stringformat:'s' %}selected{% endif %}>
+                        {{ dusun.nama }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Taraf</label>
+                <select name="kategori" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="miskin" {% if request.GET.kategori == 'miskin' %}selected{% endif %}>Miskin</option>
+                    <option value="sedang" {% if request.GET.kategori == 'sedang' %}selected{% endif %}>Sedang</option>
+                    <option value="mampu" {% if request.GET.kategori == 'mampu' %}selected{% endif %}>Mampu</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nama kepala keluarga..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Data Table -->
+    <div class="form-section p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Daftar Data Taraf Kehidupan</h3>
+            <div class="text-sm text-gray-600">
+                Total: {{ page_obj.paginator.count }} data
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kepala Keluarga</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NIK</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dusun</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah Anggota</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori Taraf</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penghasilan</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ forloop.counter|add:page_obj.start_index|add:"-1" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">{{ item.nama_kepala_keluarga }}</div>
+                            <div class="text-sm text-gray-500">{{ item.alamat|truncatechars:30 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.nik }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.dusun.nama }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.jumlah_anggota }} orang</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if item.kategori_taraf == 'miskin' %}bg-red-100 text-red-800
+                                {% elif item.kategori_taraf == 'sedang' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-green-100 text-green-800{% endif %}">
+                                {{ item.get_kategori_taraf_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            Rp {{ item.penghasilan_bulanan|floatformat:0|default:"-" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                {% if item.status == 'aktif' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ item.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <button onclick="viewDetail({{ item.id }})" class="btn-action bg-blue-600 hover:bg-blue-700 text-white">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="editData({{ item.id }})" class="btn-action bg-yellow-600 hover:bg-yellow-700 text-white">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteData({{ item.id }})" class="btn-action bg-red-600 hover:bg-red-700 text-white">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="px-6 py-4 text-center text-gray-500">
+                            Tidak ada data yang ditemukan
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="mt-6 flex justify-between items-center">
+            <div class="text-sm text-gray-700">
+                Menampilkan {{ page_obj.start_index }} - {{ page_obj.end_index }} dari {{ page_obj.paginator.count }} data
+            </div>
+            <div class="flex space-x-2">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.dusun %}&dusun={{ request.GET.dusun }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <span class="px-3 py-2 text-sm bg-primary-600 text-white border border-primary-600 rounded-md">{{ num }}</span>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.dusun %}&dusun={{ request.GET.dusun }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}" 
+                           class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.dusun %}&dusun={{ request.GET.dusun }}{% endif %}{% if request.GET.kategori %}&kategori={{ request.GET.kategori }}{% endif %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="addModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="modalTitle">Tambah Data Taraf Kehidupan</h3>
+                    <button onclick="closeModal('addModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="tarafForm" onsubmit="submitForm(event)">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" id="taraf_id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Kepala Keluarga *</label>
+                            <input type="text" name="nama_kepala_keluarga" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">NIK *</label>
+                            <input type="text" name="nik" required maxlength="16" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Dusun *</label>
+                            <select name="dusun" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Pilih Dusun</option>
+                                {% for dusun in dusun_list %}
+                                <option value="{{ dusun.id }}">{{ dusun.nama }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Lengkap</label>
+                            <textarea name="alamat" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Anggota Keluarga *</label>
+                            <input type="number" name="jumlah_anggota" required min="1" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Taraf *</label>
+                            <select name="kategori_taraf" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="">Pilih Kategori</option>
+                                <option value="miskin">Miskin</option>
+                                <option value="sedang">Sedang</option>
+                                <option value="mampu">Mampu</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Penghasilan Bulanan</label>
+                            <input type="number" name="penghasilan_bulanan" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                            <select name="status" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <option value="aktif">Aktif</option>
+                                <option value="tidak_aktif">Tidak Aktif</option>
+                            </select>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
+                            <textarea name="keterangan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal('addModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Load data from API when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadTarafKehidupanData();
+    });
+    
+    function loadTarafKehidupanData() {
+        // Get filter parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const search = urlParams.get('search') || '';
+        const dusun = urlParams.get('dusun') || '';
+        const kategori = urlParams.get('kategori') || '';
+        const page = urlParams.get('page') || 1;
+        
+        // Fetch data from API
+        fetch(`/api/beneficiaries/taraf-kehidupan/?search=${search}&dusun=${dusun}&kategori_taraf=${kategori}&page=${page}&per_page=10`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results) {
+                    // Update table with data
+                    updateTable(data.results, data.pagination);
+                }
+            })
+            .catch(error => console.error('Error loading data:', error));
+    }
+    
+    function updateTable(data, pagination) {
+        const tableBody = document.querySelector('tbody');
+        tableBody.innerHTML = '';
+        
+        if (data.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = `<td colspan="9" class="px-6 py-4 text-center text-gray-500">Tidak ada data</td>`;
+            tableBody.appendChild(emptyRow);
+            return;
+        }
+        
+        data.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(pagination.current_page - 1) * 10 + index + 1}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.person_name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.person_nik}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.dusun_name}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.jumlah_anggota}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(item.kategori_taraf)}">
+                        ${getStatusLabel(item.kategori_taraf)}
+                    </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Rp ${item.penghasilan_bulanan.toLocaleString()}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.tanggal_survei}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div class="flex space-x-2">
+                        <button onclick="editData(${item.id})" class="btn-action bg-blue-100 text-blue-600 hover:bg-blue-200">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteData(${item.id})" class="btn-action bg-red-100 text-red-600 hover:bg-red-200">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+        
+        // Update pagination
+        updatePagination(pagination);
+    }
+    
+    function updatePagination(pagination) {
+        const paginationContainer = document.querySelector('.pagination');
+        if (!paginationContainer) return;
+        
+        let paginationHTML = '';
+        
+        // Previous button
+        paginationHTML += `
+            <a href="${pagination.has_previous ? '?page=' + (pagination.current_page - 1) : '#'}" 
+               class="${pagination.has_previous ? 'text-primary-600 hover:text-primary-900' : 'text-gray-400 cursor-not-allowed'} px-3 py-1 rounded-md">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        `;
+        
+        // Page numbers
+        for (let i = 1; i <= pagination.total_pages; i++) {
+            if (i === pagination.current_page) {
+                paginationHTML += `<span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-md">${i}</span>`;
+            } else {
+                paginationHTML += `<a href="?page=${i}" class="text-primary-600 hover:text-primary-900 px-3 py-1 rounded-md">${i}</a>`;
+            }
+        }
+        
+        // Next button
+        paginationHTML += `
+            <a href="${pagination.has_next ? '?page=' + (pagination.current_page + 1) : '#'}" 
+               class="${pagination.has_next ? 'text-primary-600 hover:text-primary-900' : 'text-gray-400 cursor-not-allowed'} px-3 py-1 rounded-md">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        `;
+        
+        paginationContainer.innerHTML = paginationHTML;
+    }
+    
+    function getStatusClass(status) {
+        switch(status) {
+            case 'miskin': return 'bg-red-100 text-red-800';
+            case 'sedang': return 'bg-yellow-100 text-yellow-800';
+            case 'mampu': return 'bg-green-100 text-green-800';
+            default: return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    function getStatusLabel(status) {
+        switch(status) {
+            case 'miskin': return 'Miskin';
+            case 'sedang': return 'Sedang';
+            case 'mampu': return 'Mampu';
+            default: return status;
+        }
+    }
+    
+    function submitForm(event) {
+        event.preventDefault();
+        
+        const form = event.target;
+        const formData = new FormData(form);
+        const tarafId = formData.get('id');
+        
+        // Convert FormData to JSON
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Determine if this is a create or update request
+        const url = tarafId ? 
+            `/api/beneficiaries/taraf-kehidupan/${tarafId}/update/` : 
+            '/api/beneficiaries/taraf-kehidupan/create/';
+        
+        const method = tarafId ? 'PUT' : 'POST';
+        
+        // Send request to API
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload data
+                closeModal('addModal');
+                loadTarafKehidupanData();
+                alert(data.message || 'Data berhasil disimpan');
+            } else {
+                alert('Gagal menyimpan data: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan data');
+        });
+    }
+    
+    function editData(id) {
+        // Fetch data from API
+        fetch(`/api/beneficiaries/taraf-kehidupan/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data) {
+                    // Set form title
+                    document.getElementById('modalTitle').textContent = 'Edit Data Taraf Kehidupan';
+                    
+                    // Set hidden ID field
+                    document.getElementById('taraf_id').value = data.id;
+                    
+                    // Fill form fields
+                    const form = document.getElementById('tarafForm');
+                    form.querySelector('[name="nama_kepala_keluarga"]').value = data.person_name;
+                    form.querySelector('[name="nik"]').value = data.person_nik;
+                    form.querySelector('[name="dusun"]').value = data.dusun_id;
+                    form.querySelector('[name="alamat"]').value = data.alamat;
+                    form.querySelector('[name="jumlah_anggota"]').value = data.jumlah_anggota;
+                    form.querySelector('[name="kategori_taraf"]').value = data.kategori_taraf;
+                    form.querySelector('[name="penghasilan_bulanan"]').value = data.penghasilan_bulanan;
+                    form.querySelector('[name="status"]').value = data.status;
+                    form.querySelector('[name="keterangan"]').value = data.keterangan || '';
+                    
+                    // Open modal
+                    openModal('addModal');
+                } else {
+                    alert('Gagal memuat data: Data tidak ditemukan');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat memuat data');
+            });
+    }
+    
+    function deleteData(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+            fetch(`/api/beneficiaries/taraf-kehidupan/${id}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadTarafKehidupanData();
+                    alert(data.message || 'Data berhasil dihapus');
+                } else {
+                    alert('Gagal menghapus data: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menghapus data');
+            });
+        }
+    }
+    
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+        if (modalId === 'addModal') {
+            document.getElementById('tarafForm').reset();
+            document.getElementById('taraf_id').value = '';
+            document.getElementById('modalTitle').textContent = 'Tambah Data Taraf Kehidupan';
+        }
+    }
+    
+    function editData(id) {
+        // Fetch data from API
+        fetch(`/api/beneficiaries/taraf-kehidupan/${id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate form with data
+                    const form = document.getElementById('tarafForm');
+                    form.elements['nama_kepala_keluarga'].value = data.data.person_name;
+                    form.elements['nik'].value = data.data.person_nik;
+                    form.elements['dusun'].value = data.data.dusun_id;
+                    form.elements['alamat'].value = data.data.alamat || '';
+                    form.elements['jumlah_anggota'].value = data.data.jumlah_anggota;
+                    form.elements['kategori_taraf'].value = data.data.kategori_taraf;
+                    form.elements['penghasilan_bulanan'].value = data.data.penghasilan_bulanan || 0;
+                    form.elements['status'].value = data.data.status;
+                    form.elements['keterangan'].value = data.data.keterangan || '';
+                    
+                    // Update form action and modal title
+                    form.action = `/api/beneficiaries/taraf-kehidupan/${id}/update/`;
+                    document.getElementById('modalTitle').textContent = 'Edit Data Taraf Kehidupan';
+                    
+                    // Open modal
+                    openModal('addModal');
+                } else {
+                    alert('Gagal mengambil data: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat mengambil data');
+            });
+    }
+    
+    function viewDetail(id) {
+        window.open(`/admin/beneficiaries/taraf-kehidupan/${id}/detail/`, '_blank');
+    }
+    
+    function deleteData(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+            // Create a form for DELETE request using Django standard approach
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/admin/beneficiaries/taraf-kehidupan/${id}/delete/`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = 'csrfmiddlewaretoken';
+            csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            form.appendChild(csrfToken);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+    
+    function exportData() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('export', 'excel');
+        window.open(`/admin/beneficiaries/taraf-kehidupan/export/?${params.toString()}`, '_blank');
+    }
+    
+    // Form submission using Django standard approach
+    document.getElementById('tarafForm').addEventListener('submit', function(e) {
+        // Let the form submit normally to Django view
+        // No need to prevent default or use fetch API
+        return true;
+    });
+</script>
+{% endblock %}

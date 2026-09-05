@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Desa Pulosarok{% endblock %}</title>
+    {% load static %}
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+        }
+        .navbar-fixed {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 50;
+            transition: all 0.3s ease;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'home' %}" class="flex items-center">
+                <img src="{% static 'images/logo.png' %}" alt="Logo Desa Pulosarok" class="h-10 mr-3" onerror="this.src='https://via.placeholder.com/40x40?text=Logo'; this.onerror=null;">
+                <span class="text-xl font-bold text-primary-600">Desa Pulosarok</span>
+            </a>
+            <div class="hidden md:flex space-x-6">
+                <a href="{% url 'home' %}" class="text-gray-700 hover:text-primary-600 font-medium">Beranda</a>
+                <a href="#" class="text-gray-700 hover:text-primary-600 font-medium">Profil Desa</a>
+                <a href="#" class="text-gray-700 hover:text-primary-600 font-medium">Berita</a>
+                <a href="{% url 'tourism:package_list' %}" class="text-gray-700 hover:text-primary-600 font-medium">Wisata</a>
+                <a href="#" class="text-gray-700 hover:text-primary-600 font-medium">Kontak</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-gray-700">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md">
+            <div class="container mx-auto px-4 py-3 space-y-2">
+                <a href="{% url 'home' %}" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Beranda</a>
+                <a href="#" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Profil Desa</a>
+                <a href="#" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Berita</a>
+                <a href="{% url 'tourism:package_list' %}" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Wisata</a>
+                <a href="#" class="block text-gray-700 hover:text-primary-600 font-medium py-2">Kontak</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="min-h-screen">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-10">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Desa Pulosarok</h3>
+                    <p class="mb-4">Desa wisata dengan keindahan alam dan budaya yang mempesona.</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white hover:text-primary-400"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-white hover:text-primary-400"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-white hover:text-primary-400"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="text-white hover:text-primary-400"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Tautan</h3>
+                    <ul class="space-y-2">
+                        <li><a href="{% url 'home' %}" class="text-gray-300 hover:text-white">Beranda</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Profil Desa</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Berita</a></li>
+                        <li><a href="{% url 'tourism:package_list' %}" class="text-gray-300 hover:text-white">Wisata</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kontak</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Kontak</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-3 text-primary-400"></i>
+                            <span>Desa Pulosarok, Kecamatan X, Kabupaten Y, Provinsi Z</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone-alt mr-3 text-primary-400"></i>
+                            <span>+62 123 4567 890</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-3 text-primary-400"></i>
+                            <span>info@desapulosarok.desa.id</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center">
+                <p>&copy; {% now "Y" %} Desa Pulosarok. Hak Cipta Dilindungi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+
+        // Fixed navbar on scroll
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('navbar-fixed');
+            } else {
+                header.classList.remove('navbar-fixed');
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,559 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}BUMG - Badan Usaha Milik Gampong{% endblock %}
+
+{% block page_title %}BUMG - Badan Usaha Milik Gampong{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+            <h1 class="text-2xl font-bold mb-2">BUMG - Badan Usaha Milik Gampong</h1>
+            <p class="text-blue-100">Manajemen data Badan Usaha Milik Gampong</p>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-6 flex flex-wrap gap-4">
+        <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Tambah BUMG
+        </button>
+        <button onclick="exportData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-download mr-2"></i>
+            Export Data
+        </button>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cari BUMG</label>
+                <input type="text" id="searchInput" placeholder="Nama BUMG..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Usaha</label>
+                <select id="jenisUsahaFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Semua Jenis</option>
+                    <option value="perdagangan">Perdagangan</option>
+                    <option value="jasa">Jasa</option>
+                    <option value="produksi">Produksi</option>
+                    <option value="pertanian">Pertanian</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Semua Status</option>
+                    <option value="aktif">Aktif</option>
+                    <option value="tidak_aktif">Tidak Aktif</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="filterData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Daftar BUMG</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200" id="bumgTable">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama BUMG</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Direktur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis Usaha</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modal Awal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="bumgTableBody">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Menampilkan <span id="showingStart">1</span> sampai <span id="showingEnd">10</span> dari <span id="totalRecords">0</span> data
+        </div>
+        <div class="flex space-x-2" id="pagination">
+            <!-- Pagination buttons will be generated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="bumgModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="modalTitle">Tambah BUMG</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="bumgForm" class="space-y-4">
+                <input type="hidden" name="id" id="bumgId">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama BUMG *</label>
+                        <input type="text" name="nama" id="namaBumg" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Direktur *</label>
+                        <input type="text" name="direktur" id="namaDirektur" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Alamat *</label>
+                    <textarea name="alamat" id="alamat" required rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Usaha *</label>
+                        <select name="bidang_usaha" id="jenisUsaha" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">Pilih Jenis Usaha</option>
+                            <option value="perdagangan">Perdagangan</option>
+                            <option value="jasa">Jasa</option>
+                            <option value="produksi">Produksi</option>
+                            <option value="pertanian">Pertanian</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Modal Awal (Rp) *</label>
+                        <input type="number" name="modal_dasar" id="modalAwal" required min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
+                        <input type="tel" name="telepon" id="noTelepon" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" name="email" id="email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Berdiri</label>
+                        <input type="date" name="tanggal_sk" id="tanggalBerdiri" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jumlah Karyawan</label>
+                        <input type="number" name="jumlah_karyawan" id="jumlahKaryawan" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status *</label>
+                        <select name="status" id="status" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="aktif">Aktif</option>
+                            <option value="tidak_aktif">Tidak Aktif</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi Usaha</label>
+                    <textarea name="keterangan" id="deskripsi" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let totalRecords = 0;
+let bumgData = [];
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadBumgData();
+});
+
+// Get CSRF token
+async function getCSRFToken() {
+    try {
+        const response = await fetch('/pulosarok/business/csrf-token/');
+        const data = await response.json();
+        return data.csrf_token;
+    } catch (error) {
+        console.error('Error getting CSRF token:', error);
+        return getCookie('csrftoken') || '';
+    }
+}
+
+// Load BUMG data
+async function loadBumgData(page = 1) {
+    try {
+        const searchTerm = document.getElementById('searchInput')?.value || '';
+        const statusFilter = document.getElementById('statusFilter')?.value || '';
+        const jenisFilter = document.getElementById('jenisUsahaFilter')?.value || '';
+        
+        let url = `/pulosarok/business/api/bumg/?page=${page}`;
+        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+        if (statusFilter) url += `&status=${statusFilter}`;
+        if (jenisFilter) url += `&jenis_usaha=${jenisFilter}`;
+        
+        const token = await getCSRFToken();
+        const response = await fetch(url, {
+            headers: {
+                'X-CSRFToken': token
+            }
+        });
+        const data = await response.json();
+        
+        if (response.ok && data.results) {
+            bumgData = data.results || [];
+            currentPage = page;
+            totalPages = data.num_pages || 1;
+            totalRecords = data.count || 0;
+            displayBumgData();
+            updatePagination(totalPages, currentPage);
+        } else {
+            console.error('Error loading BUMG data:', data.message || 'Unknown error');
+            showToast('Gagal memuat data BUMG', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading BUMG data:', error);
+        showToast('Gagal memuat data BUMG', 'error');
+    }
+}
+
+// Format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+// Display BUMG data
+function displayBumgData() {
+    const tbody = document.getElementById('bumgTableBody');
+    const mobileContainer = document.getElementById('mobileCards');
+    
+    if (tbody) {
+        tbody.innerHTML = '';
+        
+        bumgData.forEach((item, index) => {
+            const rowNumber = (currentPage - 1) * 10 + index + 1;
+            const row = `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rowNumber}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.nama || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.direktur || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            ${(item.bidang_usaha || 'Lainnya').charAt(0).toUpperCase() + (item.bidang_usaha || 'Lainnya').slice(1)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(item.modal_dasar || 0)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }">
+                            ${item.status === 'aktif' ? 'Aktif' : 'Tidak Aktif'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editBumg(${item.id})" class="text-blue-600 hover:text-blue-900 mr-3" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteBumg(${item.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+    
+    // Mobile view
+    if (mobileContainer) {
+        mobileContainer.innerHTML = '';
+        
+        bumgData.forEach((item, index) => {
+            const rowNumber = (currentPage - 1) * 10 + index + 1;
+            const card = `
+                <div class="bg-white p-4 rounded-lg shadow border">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-gray-900">${item.nama || '-'}</h3>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${
+                            item.status === 'aktif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }">
+                            ${item.status === 'aktif' ? 'Aktif' : 'Tidak Aktif'}
+                        </span>
+                    </div>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p><span class="font-medium">No:</span> ${rowNumber}</p>
+                        <p><span class="font-medium">Direktur:</span> ${item.direktur || '-'}</p>
+                        <p><span class="font-medium">Jenis:</span> ${(item.bidang_usaha || 'Lainnya').charAt(0).toUpperCase() + (item.bidang_usaha || 'Lainnya').slice(1)}</p>
+                        <p><span class="font-medium">Modal Awal:</span> ${formatCurrency(item.modal_dasar || 0)}</p>
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-3">
+                        <button onclick="editBumg(${item.id})" class="text-blue-600 hover:text-blue-900" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteBumg(${item.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            mobileContainer.innerHTML += card;
+        });
+    }
+}
+
+// Open add modal
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Tambah BUMG';
+    document.getElementById('bumgForm').reset();
+    document.getElementById('bumgId').value = '';
+    document.getElementById('bumgModal').classList.remove('hidden');
+}
+
+// Edit BUMG
+function editBumg(id) {
+    const bumg = bumgData.find(item => item.id === id);
+    if (bumg) {
+        document.getElementById('modalTitle').textContent = 'Edit BUMG';
+        document.getElementById('bumgId').value = bumg.id;
+        document.getElementById('namaBumg').value = bumg.nama;
+        document.getElementById('namaDirektur').value = bumg.direktur;
+        document.getElementById('alamat').value = bumg.alamat;
+        document.getElementById('jenisUsaha').value = bumg.bidang_usaha;
+        document.getElementById('modalAwal').value = bumg.modal_dasar;
+        document.getElementById('noTelepon').value = bumg.telepon || '';
+        document.getElementById('email').value = bumg.email || '';
+        document.getElementById('tanggalBerdiri').value = bumg.tanggal_sk || '';
+        document.getElementById('jumlahKaryawan').value = bumg.jumlah_karyawan || '';
+        document.getElementById('status').value = bumg.status;
+        document.getElementById('deskripsi').value = bumg.keterangan || '';
+        document.getElementById('bumgModal').classList.remove('hidden');
+    }
+}
+
+// Delete BUMG
+async function deleteBumg(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus data BUMG ini?')) {
+        try {
+            const token = await getCSRFToken();
+            const response = await fetch(`/pulosarok/business/api/bumg/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': token
+                }
+            });
+            
+            if (response.ok && response.status === 204) {
+                showToast('Data BUMG berhasil dihapus!', 'success');
+                loadBumgData(currentPage);
+            } else {
+                const data = await response.json();
+                showToast('Gagal menghapus data: ' + (data.error || 'Unknown error'), 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting BUMG:', error);
+            showToast('Gagal menghapus data BUMG', 'error');
+        }
+    }
+}
+
+// Close modal
+function closeModal() {
+    document.getElementById('bumgModal').classList.add('hidden');
+}
+
+// Handle form submission
+document.getElementById('bumgForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    try {
+        const formData = {
+            nama: document.getElementById('namaBumg').value,
+            direktur: document.getElementById('namaDirektur').value,
+            alamat: document.getElementById('alamat').value,
+            bidang_usaha: document.getElementById('jenisUsaha').value,
+            modal_dasar: parseInt(document.getElementById('modalAwal').value),
+            modal_disetor: parseInt(document.getElementById('modalAwal').value),
+            telepon: document.getElementById('noTelepon').value,
+            email: document.getElementById('email').value,
+            tanggal_sk: document.getElementById('tanggalBerdiri').value,
+            nomor_sk: 'SK-' + Date.now(),
+            komisaris: 'Komisaris',
+            website: '',
+            status: document.getElementById('status').value,
+            keterangan: document.getElementById('deskripsi').value
+        };
+        
+        const bumgId = document.getElementById('bumgId').value;
+        const method = bumgId ? 'PUT' : 'POST';
+        const url = bumgId ? `/pulosarok/business/api/bumg/${bumgId}/` : '/pulosarok/business/api/bumg/';
+        
+        if (bumgId) {
+            formData.id = bumgId;
+        }
+        
+        const token = await getCSRFToken();
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && (data.success || data.id)) {
+            showToast(bumgId ? 'Data BUMG berhasil diperbarui!' : 'Data BUMG berhasil ditambahkan!', 'success');
+            loadBumgData(currentPage);
+            closeModal();
+        } else {
+            showToast('Gagal menyimpan data: ' + (data.error || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error saving BUMG:', error);
+        showToast('Gagal menyimpan data BUMG', 'error');
+    }
+});
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-md shadow-lg ${
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' : 
+        'bg-blue-500 text-white'
+    }`;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Filter data
+function filterData() {
+    loadBumgData(1); // Reload data with current filters
+}
+
+// Export data
+function exportData() {
+    window.location.href = '/pulosarok/business/export/bumg/';
+}
+
+// Update pagination
+function updatePagination(totalPages, current) {
+    const paginationContainer = document.getElementById('pagination');
+    if (!paginationContainer) return;
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    paginationHTML += `
+        <button onclick="loadBumgData(${current - 1})" 
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 ${
+                    current === 1 ? 'cursor-not-allowed opacity-50' : ''
+                }" 
+                ${current === 1 ? 'disabled' : ''}>
+            Previous
+        </button>
+    `;
+    
+    // Page numbers
+    const startPage = Math.max(1, current - 2);
+    const endPage = Math.min(totalPages, current + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHTML += `
+            <button onclick="loadBumgData(${i})" 
+                    class="px-3 py-2 text-sm font-medium border border-gray-300 ${
+                        i === current 
+                            ? 'bg-blue-50 text-blue-600 border-blue-500' 
+                            : 'text-gray-500 bg-white hover:bg-gray-50'
+                    }">
+                ${i}
+            </button>
+        `;
+    }
+    
+    // Next button
+    paginationHTML += `
+        <button onclick="loadBumgData(${current + 1})" 
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 ${
+                    current === totalPages ? 'cursor-not-allowed opacity-50' : ''
+                }" 
+                ${current === totalPages ? 'disabled' : ''}>
+            Next
+        </button>
+    `;
+    
+    paginationContainer.innerHTML = paginationHTML;
+    
+    // Update showing text
+    const start = (current - 1) * 10 + 1;
+    const end = Math.min(current * 10, totalRecords);
+    const showingStart = document.getElementById('showingStart');
+    const showingEnd = document.getElementById('showingEnd');
+    const totalRecordsElement = document.getElementById('totalRecords');
+    
+    if (showingStart) showingStart.textContent = start;
+    if (showingEnd) showingEnd.textContent = end;
+    if (totalRecordsElement) totalRecordsElement.textContent = totalRecords;
+}
+</script>
+{% endblock %}

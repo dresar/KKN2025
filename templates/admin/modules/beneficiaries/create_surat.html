@@ -1,0 +1,494 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Buat Surat Baru{% endblock %}
+{% block page_title %}Buat Surat Baru{% endblock %}
+
+{% block extra_css %}
+<style>
+    .letter-preview {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 2rem;
+        font-family: 'Times New Roman', serif;
+        line-height: 1.6;
+        min-height: 600px;
+    }
+    .letter-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    .letter-content {
+        margin: 2rem 0;
+    }
+    .signature-area {
+        margin-top: 3rem;
+        text-align: right;
+    }
+    .form-section {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .template-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .template-card:hover {
+        border-color: #3b82f6;
+        background-color: #f8fafc;
+    }
+    .template-card.selected {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    .variable-tag {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        display: inline-block;
+        margin: 0.125rem;
+    }
+    .variable-tag:hover {
+        background: #bfdbfe;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Buat Surat Baru</h1>
+                <p class="text-gray-600 mt-1">Buat surat resmi gampong</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="/admin/beneficiaries/surat/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Form Section -->
+        <div>
+            <form id="letterForm" method="POST">
+                {% csrf_token %}
+                
+                <!-- Template Selection -->
+                <div class="form-section">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Template Surat</h4>
+                    <div class="grid grid-cols-1 gap-3" id="templateSelection">
+                        {% for template in letter_templates %}
+                        <div class="template-card" data-template-id="{{ template.id }}" onclick="selectTemplate({{ template.id }})">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h5 class="font-medium text-gray-900">{{ template.nama }}</h5>
+                                    <p class="text-sm text-gray-500">{{ template.deskripsi }}</p>
+                                </div>
+                                <i class="fas fa-file-alt text-gray-400"></i>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="template_id" id="selectedTemplate">
+                </div>
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Informasi Dasar</h4>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat *</label>
+                                <input type="text" name="nomor_surat" id="nomor_surat" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Surat *</label>
+                                <input type="date" name="tanggal_surat" id="tanggal_surat" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Perihal *</label>
+                            <input type="text" name="perihal" id="perihal" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat *</label>
+                                <select name="jenis" id="jenis" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="">Pilih Jenis</option>
+                                    <option value="keterangan">Surat Keterangan</option>
+                                    <option value="pengantar">Surat Pengantar</option>
+                                    <option value="rekomendasi">Surat Rekomendasi</option>
+                                    <option value="undangan">Surat Undangan</option>
+                                    <option value="pemberitahuan">Surat Pemberitahuan</option>
+                                    <option value="permohonan">Surat Permohonan</option>
+                                    <option value="keputusan">Surat Keputusan</option>
+                                    <option value="lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <option value="draft">Draft</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Disetujui</option>
+                                    <option value="completed">Selesai</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recipient Information -->
+                <div class="form-section">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Informasi Penerima</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Penerima *</label>
+                            <input type="text" name="penerima" id="penerima" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Penerima</label>
+                            <textarea name="alamat_penerima" id="alamat_penerima" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Template Variables -->
+                <div class="form-section" id="variablesSection" style="display: none;">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Variabel Template</h4>
+                    <div id="templateVariables" class="space-y-4">
+                        <!-- Template variables will be dynamically added here -->
+                    </div>
+                </div>
+                
+                <!-- Additional Notes -->
+                <div class="form-section">
+                    <h4 class="text-md font-semibold text-gray-900 mb-3">Catatan Tambahan</h4>
+                    <div>
+                        <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Catatan internal (tidak akan muncul di surat)"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3 mt-6">
+                    <a href="/admin/beneficiaries/surat/" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+                        Batal
+                    </a>
+                    <button type="button" onclick="saveDraft()" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+                        Simpan Draft
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                        Buat Surat
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Preview Section -->
+        <div>
+            <h4 class="text-md font-semibold text-gray-900 mb-3">Preview Surat</h4>
+            <div class="letter-preview" id="letterPreview">
+                <div class="letter-header">
+                    <h2>PEMERINTAH GAMPONG PULOSAROK</h2>
+                    <h3>KECAMATAN PEUKAN BADA</h3>
+                    <h3>KABUPATEN ACEH BESAR</h3>
+                    <p>Alamat: Jl. Raya Pulosarok, Kec. Peukan Bada, Kab. Aceh Besar</p>
+                </div>
+                
+                <div class="letter-content">
+                    <p class="text-center font-bold text-lg mb-4">SURAT [JENIS_SURAT]</p>
+                    <p class="mb-2">Nomor: [NOMOR_SURAT]</p>
+                    <p class="mb-4">Perihal: [PERIHAL]</p>
+                    
+                    <p class="mb-4">Kepada Yth.<br>[PENERIMA]<br>[ALAMAT_PENERIMA]</p>
+                    
+                    <p class="mb-4">Dengan hormat,</p>
+                    
+                    <div class="mb-4">
+                        [KONTEN_SURAT]
+                    </div>
+                    
+                    <p class="mb-4">Demikian surat ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+                </div>
+                
+                <div class="signature-area">
+                    <p>Pulosarok, [TANGGAL_SURAT]</p>
+                    <p class="mb-16">Keuchik Gampong Pulosarok</p>
+                    <p class="font-bold">[NAMA_KEUCHIK]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedTemplateId = null;
+    let templateData = {};
+    
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        document.getElementById('tanggal_surat').value = formattedDate;
+        
+        // Set default status to draft
+        document.getElementById('status').value = 'draft';
+        
+        // Update preview
+        updateLetterPreview();
+    });
+    
+    function selectTemplate(templateId) {
+        // Remove previous selection
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Select new template
+        document.querySelector(`[data-template-id="${templateId}"]`).classList.add('selected');
+        selectedTemplateId = templateId;
+        document.getElementById('selectedTemplate').value = templateId;
+        
+        // Load template data and update preview
+        loadTemplateData(templateId);
+    }
+    
+    function loadTemplateData(templateId) {
+        fetch(`/admin/beneficiaries/surat/template/${templateId}/`)
+            .then(response => response.json())
+            .then(data => {
+                templateData = data;
+                updateTemplateVariables(data.variables);
+                updateLetterPreview();
+            })
+            .catch(error => {
+                console.error('Error loading template:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Gagal memuat data template'
+                });
+            });
+    }
+    
+    function updateTemplateVariables(variables) {
+        const container = document.getElementById('templateVariables');
+        container.innerHTML = '';
+        
+        if (variables && variables.length > 0) {
+            document.getElementById('variablesSection').style.display = 'block';
+            
+            variables.forEach(variable => {
+                const fieldDiv = document.createElement('div');
+                fieldDiv.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 mb-2">${variable}</label>
+                    <input type="text" name="var_${variable}" id="var_${variable}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500" onchange="updateLetterPreview()">
+                `;
+                container.appendChild(fieldDiv);
+            });
+        } else {
+            document.getElementById('variablesSection').style.display = 'none';
+        }
+    }
+    
+    function updateLetterPreview() {
+        // Get form values
+        const nomorSurat = document.getElementById('nomor_surat').value || '[NOMOR_SURAT]';
+        const perihal = document.getElementById('perihal').value || '[PERIHAL]';
+        const jenisSurat = document.getElementById('jenis');
+        const jenisText = jenisSurat.options[jenisSurat.selectedIndex]?.text || '[JENIS_SURAT]';
+        const penerima = document.getElementById('penerima').value || '[PENERIMA]';
+        const alamatPenerima = document.getElementById('alamat_penerima').value || '[ALAMAT_PENERIMA]';
+        
+        // Format date
+        let tanggalSurat = '[TANGGAL_SURAT]';
+        const tanggalInput = document.getElementById('tanggal_surat').value;
+        if (tanggalInput) {
+            const date = new Date(tanggalInput);
+            tanggalSurat = date.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+        
+        // Get template content or use default
+        let content = templateData.content || '[KONTEN_SURAT]';
+        
+        // Replace variables in content
+        if (templateData.variables) {
+            templateData.variables.forEach(variable => {
+                const value = document.getElementById(`var_${variable}`)?.value || `[${variable}]`;
+                content = content.replace(new RegExp(`\[${variable}\]`, 'g'), value);
+            });
+        }
+        
+        // Update preview
+        const preview = document.getElementById('letterPreview');
+        preview.querySelector('.letter-content p:first-child').textContent = `SURAT ${jenisText.toUpperCase()}`;
+        preview.querySelector('.letter-content p:nth-child(2)').textContent = `Nomor: ${nomorSurat}`;
+        preview.querySelector('.letter-content p:nth-child(3)').textContent = `Perihal: ${perihal}`;
+        
+        const penerimaText = `Kepada Yth.\n${penerima}\n${alamatPenerima}`;
+        preview.querySelector('.letter-content p:nth-child(4)').innerHTML = penerimaText.replace(/\n/g, '<br>');
+        
+        preview.querySelector('.letter-content div').innerHTML = content;
+        preview.querySelector('.signature-area p:first-child').textContent = `Pulosarok, ${tanggalSurat}`;
+    }
+    
+    function saveDraft() {
+        // Set status to draft
+        document.getElementById('status').value = 'draft';
+        
+        // Submit form
+        document.getElementById('letterForm').submit();
+    }
+    
+    // Update preview when form fields change
+    document.querySelectorAll('#letterForm input, #letterForm textarea, #letterForm select').forEach(element => {
+        element.addEventListener('input', updateLetterPreview);
+    });
+    
+    // Form submission
+    document.getElementById('letterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate required fields
+        const nomorSurat = document.getElementById('nomor_surat').value.trim();
+        const tanggalSurat = document.getElementById('tanggal_surat').value;
+        const perihal = document.getElementById('perihal').value.trim();
+        const jenis = document.getElementById('jenis').value;
+        const penerima = document.getElementById('penerima').value.trim();
+        
+        if (!nomorSurat) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Nomor surat harus diisi!'
+            });
+            return false;
+        }
+        
+        if (!tanggalSurat) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Tanggal surat harus diisi!'
+            });
+            return false;
+        }
+        
+        if (!perihal) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Perihal surat harus diisi!'
+            });
+            return false;
+        }
+        
+        if (!jenis) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Jenis surat harus dipilih!'
+            });
+            return false;
+        }
+        
+        if (!penerima) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Nama penerima harus diisi!'
+            });
+            return false;
+        }
+        
+        // Show loading indicator
+        Swal.fire({
+            title: 'Menyimpan...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+        
+        // Get form data
+        const formData = new FormData(this);
+        
+        // Add template content if available
+        if (templateData.content) {
+            let content = templateData.content;
+            
+            // Replace variables in content
+            if (templateData.variables) {
+                templateData.variables.forEach(variable => {
+                    const value = document.getElementById(`var_${variable}`)?.value || '';
+                    content = content.replace(new RegExp(`\[${variable}\]`, 'g'), value);
+                });
+            }
+            
+            formData.append('content', content);
+        }
+        
+        // Send request to API
+        fetch('/pulosarok/api/beneficiaries/surat/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            
+            if (data.success) {
+                // Show success message and redirect
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: data.message || 'Surat berhasil dibuat',
+                    confirmButtonText: 'OK'
+                }).then(() => {
+                    window.location.href = '/admin/beneficiaries/surat/';
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Gagal membuat surat'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Terjadi kesalahan saat membuat surat'
+            });
+        });
+    });
+</script>
+{% endblock %}

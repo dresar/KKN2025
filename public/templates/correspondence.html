@@ -1,0 +1,780 @@
+{% extends 'base.html' %}
+
+{% block title %}Layanan Surat Menyurat - Website Desa Pulosarok{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-in">Layanan Surat Menyurat</h1>
+            <p class="text-xl opacity-90 fade-in">Pelayanan Administrasi Desa Pulosarok</p>
+        </div>
+    </div>
+</section>
+
+<!-- Service Overview -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Jenis Layanan Surat</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Berbagai layanan surat yang tersedia di Desa Pulosarok</p>
+        </div>
+        
+        <div id="service-types" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Service types will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Statistik Layanan</h2>
+            <p class="text-gray-600">Data pelayanan surat menyurat</p>
+        </div>
+        
+        <div id="service-stats" class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <!-- Stats will be loaded here -->
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Surat per Jenis</h3>
+                <canvas id="typeChart" width="400" height="300"></canvas>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Status Pengajuan</h3>
+                <canvas id="statusChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Service Actions -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <!-- Request Letter -->
+            <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-lg p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-file-plus text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Ajukan Surat</h3>
+                    <p class="text-gray-600">Buat pengajuan surat baru dengan mudah</p>
+                </div>
+                <button onclick="showRequestForm()" class="w-full bg-primary-600 text-white py-3 px-6 rounded-lg hover:bg-primary-700 transition-colors font-medium">
+                    <i class="fas fa-plus mr-2"></i>Ajukan Surat Baru
+                </button>
+            </div>
+            
+            <!-- Track Letter -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Lacak Status</h3>
+                    <p class="text-gray-600">Cek status pengajuan surat Anda</p>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="tracking-code" placeholder="Masukkan kode tracking..." 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <button onclick="trackLetter()" class="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        <i class="fas fa-search mr-2"></i>Lacak Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Requirements Section -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Syarat dan Ketentuan</h2>
+            <p class="text-gray-600">Persyaratan umum untuk pengajuan surat</p>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Dokumen yang Diperlukan</h3>
+                <ul class="space-y-3 text-gray-700">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                        <span>Fotocopy KTP yang masih berlaku</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                        <span>Fotocopy Kartu Keluarga</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                        <span>Surat Pengantar RT/RW</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                        <span>Dokumen pendukung sesuai jenis surat</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Waktu Pelayanan</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Surat Keterangan Domisili</span>
+                        <span class="font-medium text-primary-600">1-2 hari</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Surat Keterangan Usaha</span>
+                        <span class="font-medium text-primary-600">2-3 hari</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Surat Keterangan Tidak Mampu</span>
+                        <span class="font-medium text-primary-600">1-2 hari</span>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Surat Pengantar Nikah</span>
+                        <span class="font-medium text-primary-600">3-5 hari</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Request Form Modal -->
+<div id="request-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Formulir Pengajuan Surat</h2>
+                    <button onclick="closeModal('request-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="letter-request-form" class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat *</label>
+                            <select id="letter-type" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">Pilih Jenis Surat</option>
+                                <option value="domisili">Surat Keterangan Domisili</option>
+                                <option value="usaha">Surat Keterangan Usaha</option>
+                                <option value="tidak_mampu">Surat Keterangan Tidak Mampu</option>
+                                <option value="pengantar_nikah">Surat Pengantar Nikah</option>
+                                <option value="kematian">Surat Keterangan Kematian</option>
+                                <option value="kelahiran">Surat Keterangan Kelahiran</option>
+                                <option value="pindah">Surat Keterangan Pindah</option>
+                                <option value="lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap *</label>
+                            <input type="text" id="full-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">NIK *</label>
+                            <input type="text" id="nik" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">No. Telepon *</label>
+                            <input type="tel" id="phone" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tempat Lahir</label>
+                            <input type="text" id="birth-place" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Lahir</label>
+                            <input type="date" id="birth-date" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Kelamin</label>
+                            <select id="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                <option value="">Pilih Jenis Kelamin</option>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Lengkap *</label>
+                        <textarea id="address" required rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Keperluan/Tujuan Surat *</label>
+                        <textarea id="purpose" required rows="3" placeholder="Jelaskan keperluan atau tujuan pembuatan surat..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+                    </div>
+                    
+                    <div id="other-type-field" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat Lainnya *</label>
+                        <input type="text" id="other-type" placeholder="Sebutkan jenis surat yang dibutuhkan..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Upload Dokumen Pendukung</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            <input type="file" id="documents" multiple accept=".pdf,.jpg,.jpeg,.png" class="hidden">
+                            <div id="upload-area" onclick="document.getElementById('documents').click()" class="cursor-pointer">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Klik untuk upload dokumen</p>
+                                <p class="text-sm text-gray-500">PDF, JPG, PNG (Max 5MB per file)</p>
+                            </div>
+                            <div id="file-list" class="mt-4 space-y-2 hidden">
+                                <!-- Uploaded files will be shown here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="agreement" required class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                        <label for="agreement" class="ml-2 block text-sm text-gray-700">
+                            Saya menyatakan bahwa data yang saya berikan adalah benar dan dapat dipertanggungjawabkan.
+                        </label>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" onclick="closeModal('request-modal')" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                            <i class="fas fa-paper-plane mr-2"></i>Kirim Pengajuan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tracking Result Modal -->
+<div id="tracking-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Status Pengajuan Surat</h2>
+                    <button onclick="closeModal('tracking-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="tracking-result">
+                    <!-- Tracking result will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-md w-full">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-check text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Pengajuan Berhasil!</h3>
+                <p class="text-gray-600 mb-4">Pengajuan surat Anda telah berhasil dikirim.</p>
+                <div id="tracking-info" class="bg-gray-50 rounded-lg p-4 mb-4">
+                    <!-- Tracking info will be shown here -->
+                </div>
+                <button onclick="closeModal('success-modal')" class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class CorrespondencePage {
+        constructor() {
+            this.init();
+        }
+        
+        async init() {
+            await this.loadServiceTypes();
+            await this.loadServiceStats();
+            this.setupFormHandlers();
+        }
+        
+        async loadServiceTypes() {
+            try {
+                const data = await apiCall('/pulosarok/letters/api/letter-types/');
+                this.renderServiceTypes(data.results || []);
+            } catch (error) {
+                console.error('Error loading service types:', error);
+                this.renderDefaultServiceTypes();
+            }
+        }
+        
+        renderServiceTypes(types) {
+            const container = document.getElementById('service-types');
+            
+            if (types.length === 0) {
+                this.renderDefaultServiceTypes();
+                return;
+            }
+            
+            container.innerHTML = types.map(type => `
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="${this.getServiceIcon(type.kode)} text-primary-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${type.nama}</h3>
+                        <p class="text-gray-600 text-sm mb-4">${type.deskripsi || 'Layanan surat resmi dari desa'}</p>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div class="flex items-center justify-between">
+                            <span>Waktu Proses:</span>
+                            <span class="font-medium">${type.waktu_proses || '1-3 hari'}</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Biaya:</span>
+                            <span class="font-medium text-green-600">${type.biaya ? `Rp ${formatNumber(type.biaya)}` : 'Gratis'}</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="requestLetter('${type.kode}')" class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Ajukan Surat
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        renderDefaultServiceTypes() {
+            const container = document.getElementById('service-types');
+            const defaultTypes = [
+                { kode: 'domisili', nama: 'Surat Keterangan Domisili', icon: 'fas fa-home' },
+                { kode: 'usaha', nama: 'Surat Keterangan Usaha', icon: 'fas fa-store' },
+                { kode: 'tidak_mampu', nama: 'Surat Keterangan Tidak Mampu', icon: 'fas fa-hand-holding-heart' },
+                { kode: 'pengantar_nikah', nama: 'Surat Pengantar Nikah', icon: 'fas fa-ring' },
+                { kode: 'kematian', nama: 'Surat Keterangan Kematian', icon: 'fas fa-cross' },
+                { kode: 'kelahiran', nama: 'Surat Keterangan Kelahiran', icon: 'fas fa-baby' }
+            ];
+            
+            container.innerHTML = defaultTypes.map(type => `
+                <div class="bg-white rounded-lg shadow-lg p-6 card-hover">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="${type.icon} text-primary-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${type.nama}</h3>
+                        <p class="text-gray-600 text-sm mb-4">Layanan surat resmi dari desa</p>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-600 mb-4">
+                        <div class="flex items-center justify-between">
+                            <span>Waktu Proses:</span>
+                            <span class="font-medium">1-3 hari</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Biaya:</span>
+                            <span class="font-medium text-green-600">Gratis</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="requestLetter('${type.kode}')" class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Ajukan Surat
+                    </button>
+                </div>
+            `).join('');
+        }
+        
+        async loadServiceStats() {
+            try {
+                const data = await apiCall('/pulosarok/letters/api/letters/stats/');
+                this.renderServiceStats(data);
+                this.renderTypeChart(data);
+                this.renderStatusChart(data);
+            } catch (error) {
+                console.error('Error loading service stats:', error);
+                this.renderDefaultStats();
+            }
+        }
+        
+        renderServiceStats(data) {
+            const stats = data.stats || {};
+            const container = document.getElementById('service-stats');
+            
+            const statsData = [
+                { icon: 'fas fa-file-alt', label: 'Total Pengajuan', value: stats.total || 0, color: 'blue' },
+                { icon: 'fas fa-clock', label: 'Dalam Proses', value: stats.processing || 0, color: 'yellow' },
+                { icon: 'fas fa-check-circle', label: 'Selesai', value: stats.completed || 0, color: 'green' },
+                { icon: 'fas fa-calendar-day', label: 'Hari Ini', value: stats.today || 0, color: 'purple' }
+            ];
+            
+            container.innerHTML = statsData.map(stat => `
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-${stat.color}-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">${formatNumber(stat.value)}</h3>
+                    <p class="text-gray-600">${stat.label}</p>
+                </div>
+            `).join('');
+        }
+        
+        renderDefaultStats() {
+            const container = document.getElementById('service-stats');
+            const statsData = [
+                { icon: 'fas fa-file-alt', label: 'Total Pengajuan', value: 0, color: 'blue' },
+                { icon: 'fas fa-clock', label: 'Dalam Proses', value: 0, color: 'yellow' },
+                { icon: 'fas fa-check-circle', label: 'Selesai', value: 0, color: 'green' },
+                { icon: 'fas fa-calendar-day', label: 'Hari Ini', value: 0, color: 'purple' }
+            ];
+            
+            container.innerHTML = statsData.map(stat => `
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-${stat.color}-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">${stat.value}</h3>
+                    <p class="text-gray-600">${stat.label}</p>
+                </div>
+            `).join('');
+        }
+        
+        renderTypeChart(data) {
+            const ctx = document.getElementById('typeChart').getContext('2d');
+            const types = data.types || {};
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(types).map(key => this.getServiceLabel(key)),
+                    datasets: [{
+                        data: Object.values(types),
+                        backgroundColor: [
+                            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        renderStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            const statuses = data.statuses || {};
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Diajukan', 'Diproses', 'Selesai', 'Ditolak'],
+                    datasets: [{
+                        label: 'Jumlah Surat',
+                        data: [
+                            statuses.diajukan || 0,
+                            statuses.diproses || 0,
+                            statuses.selesai || 0,
+                            statuses.ditolak || 0
+                        ],
+                        backgroundColor: ['#F59E0B', '#3B82F6', '#10B981', '#EF4444'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        setupFormHandlers() {
+            // Letter type change handler
+            document.getElementById('letter-type').addEventListener('change', (e) => {
+                const otherField = document.getElementById('other-type-field');
+                if (e.target.value === 'lainnya') {
+                    otherField.classList.remove('hidden');
+                    document.getElementById('other-type').required = true;
+                } else {
+                    otherField.classList.add('hidden');
+                    document.getElementById('other-type').required = false;
+                }
+            });
+            
+            // File upload handler
+            document.getElementById('documents').addEventListener('change', (e) => {
+                this.handleFileUpload(e.target.files);
+            });
+            
+            // Form submit handler
+            document.getElementById('letter-request-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitRequest();
+            });
+        }
+        
+        handleFileUpload(files) {
+            const fileList = document.getElementById('file-list');
+            const uploadArea = document.getElementById('upload-area');
+            
+            if (files.length > 0) {
+                fileList.classList.remove('hidden');
+                uploadArea.classList.add('hidden');
+                
+                fileList.innerHTML = Array.from(files).map((file, index) => `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-file text-gray-400 mr-2"></i>
+                            <span class="text-sm text-gray-700">${file.name}</span>
+                            <span class="text-xs text-gray-500 ml-2">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        </div>
+                        <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                fileList.classList.add('hidden');
+                uploadArea.classList.remove('hidden');
+            }
+        }
+        
+        async submitRequest() {
+            try {
+                const formData = new FormData();
+                
+                // Get form data
+                const letterType = document.getElementById('letter-type').value;
+                const otherType = document.getElementById('other-type').value;
+                
+                formData.append('jenis_surat', letterType === 'lainnya' ? otherType : letterType);
+                formData.append('nama_lengkap', document.getElementById('full-name').value);
+                formData.append('nik', document.getElementById('nik').value);
+                formData.append('telepon', document.getElementById('phone').value);
+                formData.append('email', document.getElementById('email').value);
+                formData.append('tempat_lahir', document.getElementById('birth-place').value);
+                formData.append('tanggal_lahir', document.getElementById('birth-date').value);
+                formData.append('jenis_kelamin', document.getElementById('gender').value);
+                formData.append('alamat', document.getElementById('address').value);
+                formData.append('keperluan', document.getElementById('purpose').value);
+                
+                // Add files
+                const files = document.getElementById('documents').files;
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('dokumen_pendukung', files[i]);
+                }
+                
+                const response = await fetch('/pulosarok/letters/api/letters/', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    this.showSuccess(result);
+                    document.getElementById('letter-request-form').reset();
+                    closeModal('request-modal');
+                } else {
+                    throw new Error('Gagal mengirim pengajuan');
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                alert('Gagal mengirim pengajuan. Silakan coba lagi.');
+            }
+        }
+        
+        showSuccess(data) {
+            document.getElementById('tracking-info').innerHTML = `
+                <div class="text-center">
+                    <p class="text-sm text-gray-600 mb-2">Kode Tracking:</p>
+                    <p class="text-lg font-bold text-primary-600">${data.kode_tracking || 'TRK' + Date.now()}</p>
+                    <p class="text-xs text-gray-500 mt-2">Simpan kode ini untuk melacak status pengajuan</p>
+                </div>
+            `;
+            openModal('success-modal');
+        }
+        
+        getServiceIcon(code) {
+            const icons = {
+                'domisili': 'fas fa-home',
+                'usaha': 'fas fa-store',
+                'tidak_mampu': 'fas fa-hand-holding-heart',
+                'pengantar_nikah': 'fas fa-ring',
+                'kematian': 'fas fa-cross',
+                'kelahiran': 'fas fa-baby',
+                'pindah': 'fas fa-truck-moving'
+            };
+            return icons[code] || 'fas fa-file-alt';
+        }
+        
+        getServiceLabel(code) {
+            const labels = {
+                'domisili': 'Keterangan Domisili',
+                'usaha': 'Keterangan Usaha',
+                'tidak_mampu': 'Keterangan Tidak Mampu',
+                'pengantar_nikah': 'Pengantar Nikah',
+                'kematian': 'Keterangan Kematian',
+                'kelahiran': 'Keterangan Kelahiran',
+                'pindah': 'Keterangan Pindah'
+            };
+            return labels[code] || 'Lainnya';
+        }
+    }
+    
+    function showRequestForm() {
+        openModal('request-modal');
+    }
+    
+    function requestLetter(type) {
+        document.getElementById('letter-type').value = type;
+        showRequestForm();
+    }
+    
+    async function trackLetter() {
+        const trackingCode = document.getElementById('tracking-code').value.trim();
+        
+        if (!trackingCode) {
+            alert('Masukkan kode tracking terlebih dahulu');
+            return;
+        }
+        
+        try {
+            const data = await apiCall(`/pulosarok/letters/api/letters/track/${trackingCode}/`);
+            showTrackingResult(data);
+        } catch (error) {
+            console.error('Error tracking letter:', error);
+            showTrackingResult(null, 'Kode tracking tidak ditemukan atau tidak valid');
+        }
+    }
+    
+    function showTrackingResult(data, error = null) {
+        const container = document.getElementById('tracking-result');
+        
+        if (error) {
+            container.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Tidak Ditemukan</h3>
+                    <p class="text-gray-600">${error}</p>
+                </div>
+            `;
+        } else {
+            const statusColors = {
+                'diajukan': 'bg-yellow-100 text-yellow-800',
+                'diproses': 'bg-blue-100 text-blue-800',
+                'selesai': 'bg-green-100 text-green-800',
+                'ditolak': 'bg-red-100 text-red-800'
+            };
+            
+            container.innerHTML = `
+                <div class="space-y-6">
+                    <div class="text-center">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">${data.jenis_surat}</h3>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColors[data.status] || 'bg-gray-100 text-gray-800'}">
+                            ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-600">Nama Pemohon:</span>
+                            <p class="font-medium">${data.nama_lengkap}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Tanggal Pengajuan:</span>
+                            <p class="font-medium">${formatDate(data.tanggal_pengajuan)}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Kode Tracking:</span>
+                            <p class="font-medium">${data.kode_tracking}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600">Estimasi Selesai:</span>
+                            <p class="font-medium">${data.estimasi_selesai ? formatDate(data.estimasi_selesai) : 'Belum ditentukan'}</p>
+                        </div>
+                    </div>
+                    
+                    ${data.catatan ? `
+                        <div>
+                            <span class="text-gray-600 text-sm">Catatan:</span>
+                            <p class="text-gray-700 bg-gray-50 rounded-lg p-3 mt-1">${data.catatan}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.status === 'selesai' && data.file_surat ? `
+                        <div class="text-center">
+                            <a href="${data.file_surat}" target="_blank" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-download mr-2"></i>Download Surat
+                            </a>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        openModal('tracking-modal');
+    }
+    
+    function removeFile(index) {
+        const fileInput = document.getElementById('documents');
+        const dt = new DataTransfer();
+        const files = fileInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+            if (i !== index) {
+                dt.items.add(files[i]);
+            }
+        }
+        
+        fileInput.files = dt.files;
+        correspondencePage.handleFileUpload(dt.files);
+    }
+    
+    // Initialize correspondence page
+    let correspondencePage;
+    document.addEventListener('DOMContentLoaded', function() {
+        correspondencePage = new CorrespondencePage();
+    });
+</script>
+{% endblock %}

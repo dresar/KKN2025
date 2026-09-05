@@ -1,0 +1,328 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Kelola Pengumuman{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'admin/css/summernote-bs4.min.css' %}" rel="stylesheet">
+<style>
+.announcement-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #007bff;
+}
+.announcement-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.priority-high {
+    border-left-color: #dc3545;
+}
+.priority-medium {
+    border-left-color: #ffc107;
+}
+.priority-low {
+    border-left-color: #28a745;
+}
+.status-published {
+    background-color: #d4edda;
+    color: #155724;
+}
+.status-draft {
+    background-color: #fff3cd;
+    color: #856404;
+}
+.status-scheduled {
+    background-color: #cce5ff;
+    color: #004085;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bullhorn"></i> Kelola Pengumuman
+                    </h4>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#announcementModal" onclick="openCreateModal()">
+                        <i class="fas fa-plus"></i> Tambah Pengumuman
+                    </button>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Search Form -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <form method="get" class="form-inline">
+                                <div class="form-group mr-2">
+                                    {{ search_form.search }}
+                                </div>
+                                <div class="form-group mr-2">
+                                    {{ search_form.type }}
+                                </div>
+                                <div class="form-group mr-2">
+                                    {{ search_form.status }}
+                                </div>
+                                <div class="form-group mr-2">
+                                    {{ search_form.priority }}
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary mr-2">
+                                    <i class="fas fa-search"></i> Cari
+                                </button>
+                                <a href="{% url 'news:announcement_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Reset
+                                </a>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <h4>{{ total_announcements }}</h4>
+                                            <p class="mb-0">Total Pengumuman</p>
+                                        </div>
+                                        <div class="align-self-center">
+                                            <i class="fas fa-bullhorn fa-2x"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Announcements List -->
+                    {% if announcements %}
+                        <div class="row">
+                            {% for announcement in announcements %}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card announcement-card priority-{{ announcement.priority }}">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0">{{ announcement.title|truncatechars:50 }}</h6>
+                                            <span class="badge status-{{ announcement.status }}">{{ announcement.get_status_display }}</span>
+                                        </div>
+                                        
+                                        <p class="card-text text-muted small mb-2">
+                                            {{ announcement.excerpt|truncatechars:100 }}
+                                        </p>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-tag"></i> {{ announcement.get_type_display }}
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-flag"></i> {{ announcement.get_priority_display }}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar"></i> {{ announcement.created_at|date:"d M Y" }}
+                                            </small>
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-info" onclick="viewAnnouncement({{ announcement.id }})" title="Lihat">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="editAnnouncement({{ announcement.id }})" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteAnnouncement({{ announcement.id }}, '{{ announcement.title|escapejs }}')" title="Hapus">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if announcements.has_other_pages %}
+                        <nav aria-label="Pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if announcements.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ announcements.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">
+                                            <i class="fas fa-chevron-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in announcements.paginator.page_range %}
+                                    {% if announcements.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > announcements.number|add:'-3' and num < announcements.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if announcements.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ announcements.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Belum ada pengumuman</h5>
+                            <p class="text-muted">Klik tombol "Tambah Pengumuman" untuk membuat pengumuman pertama.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Create/Edit Announcement -->
+<div class="modal fade" id="announcementModal" tabindex="-1" role="dialog" aria-labelledby="announcementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="announcementModalLabel">Tambah Pengumuman</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="announcementModalBody">
+                <!-- Form will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for View Announcement -->
+<div class="modal fade" id="viewAnnouncementModal" tabindex="-1" role="dialog" aria-labelledby="viewAnnouncementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewAnnouncementModalLabel">Detail Pengumuman</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="viewAnnouncementModalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/summernote-bs4.min.js' %}"></script>
+<script>
+function openCreateModal() {
+    $('#announcementModalLabel').text('Tambah Pengumuman');
+    $.get('{% url "news:announcement_create" %}', function(data) {
+        $('#announcementModalBody').html(data);
+        initializeSummernote();
+    });
+}
+
+function editAnnouncement(id) {
+    $('#announcementModalLabel').text('Edit Pengumuman');
+    $.get('/admin/news/announcement/' + id + '/edit/', function(data) {
+        $('#announcementModalBody').html(data);
+        $('#announcementModal').modal('show');
+        initializeSummernote();
+    });
+}
+
+function viewAnnouncement(id) {
+    $.get('/admin/news/announcement/' + id + '/', function(data) {
+        $('#viewAnnouncementModalBody').html(data);
+        $('#viewAnnouncementModal').modal('show');
+    });
+}
+
+function deleteAnnouncement(id, title) {
+    if (confirm('Apakah Anda yakin ingin menghapus pengumuman "' + title + '"?')) {
+        $.ajax({
+            url: '/admin/news/announcement/' + id + '/delete/',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Terjadi kesalahan saat menghapus pengumuman.');
+                }
+            },
+            error: function() {
+                alert('Terjadi kesalahan saat menghapus pengumuman.');
+            }
+        });
+    }
+}
+
+function initializeSummernote() {
+    $('#id_content').summernote({
+        height: 200,
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'underline', 'clear']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['table', ['table']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview', 'help']]
+        ]
+    });
+}
+
+// Handle form submission
+$(document).on('submit', '#announcementForm', function(e) {
+    e.preventDefault();
+    
+    var formData = new FormData(this);
+    
+    $.ajax({
+        url: $(this).attr('action'),
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                $('#announcementModal').modal('hide');
+                location.reload();
+            } else {
+                // Display form errors
+                $('.invalid-feedback').remove();
+                $('.is-invalid').removeClass('is-invalid');
+                
+                $.each(response.errors, function(field, errors) {
+                    var input = $('#id_' + field);
+                    input.addClass('is-invalid');
+                    input.after('<div class="invalid-feedback">' + errors.join(', ') + '</div>');
+                });
+            }
+        },
+        error: function() {
+            alert('Terjadi kesalahan saat menyimpan pengumuman.');
+        }
+    });
+});
+</script>
+{% endblock %}

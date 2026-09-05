@@ -1,0 +1,495 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dokumen - Admin Panel{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="mb-8">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Dokumen</h1>
+            <p class="text-gray-600 mt-2">Kelola dokumen dan permohonan warga</p>
+        </div>
+        <div class="flex space-x-3">
+            <button class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                <i class="fas fa-plus mr-2"></i>Tambah Dokumen
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                <i class="fas fa-download mr-2"></i>Export
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover transition-all duration-300">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Dokumen</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">1,245</p>
+                <p class="text-sm text-green-600 mt-1">
+                    <i class="fas fa-arrow-up mr-1"></i>25 baru bulan ini
+                </p>
+            </div>
+            <div class="bg-yellow-100 p-3 rounded-full">
+                <i class="fas fa-file-alt text-yellow-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover transition-all duration-300">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Permohonan Aktif</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">18</p>
+                <p class="text-sm text-orange-600 mt-1">
+                    <i class="fas fa-clock mr-1"></i>Menunggu proses
+                </p>
+            </div>
+            <div class="bg-orange-100 p-3 rounded-full">
+                <i class="fas fa-paper-plane text-orange-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover transition-all duration-300">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Disetujui Bulan Ini</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">42</p>
+                <p class="text-sm text-green-600 mt-1">
+                    <i class="fas fa-check-circle mr-1"></i>95% approval rate
+                </p>
+            </div>
+            <div class="bg-green-100 p-3 rounded-full">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 card-hover transition-all duration-300">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Template Aktif</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">15</p>
+                <p class="text-sm text-blue-600 mt-1">
+                    <i class="fas fa-file-contract mr-1"></i>Siap digunakan
+                </p>
+            </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+                <i class="fas fa-file-contract text-blue-600 text-xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button class="flex items-center justify-center p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors duration-200">
+            <i class="fas fa-file-plus text-yellow-600 mr-3"></i>
+            <span class="text-yellow-700 font-medium">Buat Dokumen</span>
+        </button>
+        <button class="flex items-center justify-center p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors duration-200">
+            <i class="fas fa-inbox text-orange-600 mr-3"></i>
+            <span class="text-orange-700 font-medium">Proses Permohonan</span>
+        </button>
+        <button class="flex items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200">
+            <i class="fas fa-stamp text-green-600 mr-3"></i>
+            <span class="text-green-700 font-medium">Persetujuan</span>
+        </button>
+        <button class="flex items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200">
+            <i class="fas fa-chart-bar text-blue-600 mr-3"></i>
+            <span class="text-blue-700 font-medium">Laporan Dokumen</span>
+        </button>
+    </div>
+</div>
+
+<!-- Module Navigation -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Jenis Dokumen -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-list text-yellow-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Jenis Dokumen</h3>
+                    <p class="text-sm text-gray-600">Kelola kategori dokumen</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="block text-sm text-yellow-600 hover:text-yellow-800 transition-colors duration-200">
+                    <i class="fas fa-tags mr-2"></i>Daftar Jenis
+                </a>
+                <a href="#" class="block text-sm text-yellow-600 hover:text-yellow-800 transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Tambah Jenis
+                </a>
+                <a href="#" class="block text-sm text-yellow-600 hover:text-yellow-800 transition-colors duration-200">
+                    <i class="fas fa-cog mr-2"></i>Pengaturan
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dokumen -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-folder text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Dokumen</h3>
+                    <p class="text-sm text-gray-600">Kelola semua dokumen</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="block text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                    <i class="fas fa-file-alt mr-2"></i>Semua Dokumen
+                </a>
+                <a href="#" class="block text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                    <i class="fas fa-upload mr-2"></i>Upload Dokumen
+                </a>
+                <a href="#" class="block text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200">
+                    <i class="fas fa-search mr-2"></i>Cari Dokumen
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Permohonan -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-orange-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-paper-plane text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Permohonan</h3>
+                    <p class="text-sm text-gray-600">Kelola permohonan warga</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="block text-sm text-orange-600 hover:text-orange-800 transition-colors duration-200">
+                    <i class="fas fa-inbox mr-2"></i>Permohonan Masuk
+                </a>
+                <a href="#" class="block text-sm text-orange-600 hover:text-orange-800 transition-colors duration-200">
+                    <i class="fas fa-clock mr-2"></i>Dalam Proses
+                </a>
+                <a href="#" class="block text-sm text-orange-600 hover:text-orange-800 transition-colors duration-200">
+                    <i class="fas fa-history mr-2"></i>Riwayat
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Persetujuan -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-green-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Persetujuan</h3>
+                    <p class="text-sm text-gray-600">Proses persetujuan</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="block text-sm text-green-600 hover:text-green-800 transition-colors duration-200">
+                    <i class="fas fa-clipboard-check mr-2"></i>Menunggu Approval
+                </a>
+                <a href="#" class="block text-sm text-green-600 hover:text-green-800 transition-colors duration-200">
+                    <i class="fas fa-check mr-2"></i>Disetujui
+                </a>
+                <a href="#" class="block text-sm text-green-600 hover:text-green-800 transition-colors duration-200">
+                    <i class="fas fa-times mr-2"></i>Ditolak
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Template -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-purple-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-file-contract text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Template</h3>
+                    <p class="text-sm text-gray-600">Kelola template dokumen</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="block text-sm text-purple-600 hover:text-purple-800 transition-colors duration-200">
+                    <i class="fas fa-file-contract mr-2"></i>Daftar Template
+                </a>
+                <a href="#" class="block text-sm text-purple-600 hover:text-purple-800 transition-colors duration-200">
+                    <i class="fas fa-plus mr-2"></i>Buat Template
+                </a>
+                <a href="#" class="block text-sm text-purple-600 hover:text-purple-800 transition-colors duration-200">
+                    <i class="fas fa-edit mr-2"></i>Edit Template
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Laporan -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
+        <div class="p-6">
+            <div class="flex items-center mb-4">
+                <div class="bg-indigo-100 p-3 rounded-full mr-4">
+                    <i class="fas fa-chart-bar text-indigo-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Laporan</h3>
+                    <p class="text-sm text-gray-600">Laporan dokumen</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <a href="#" class="block text-sm text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                    <i class="fas fa-file-alt mr-2"></i>Laporan Bulanan
+                </a>
+                <a href="#" class="block text-sm text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                    <i class="fas fa-chart-pie mr-2"></i>Statistik
+                </a>
+                <a href="#" class="block text-sm text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Export Data
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Status Overview -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Status Permohonan</h3>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Menunggu Proses</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-32 bg-gray-200 rounded-full h-2">
+                        <div class="bg-orange-500 h-2 rounded-full" style="width: 35%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">18</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Dalam Proses</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-32 bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: 25%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">12</span>
+                </div>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Selesai</span>
+                <div class="flex items-center space-x-2">
+                    <div class="w-32 bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">42</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Dokumen Populer</h3>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Surat Keterangan Domisili</span>
+                <span class="text-sm font-medium text-gray-900">25 permohonan</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Surat Keterangan Usaha</span>
+                <span class="text-sm font-medium text-gray-900">18 permohonan</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Surat Pengantar KTP</span>
+                <span class="text-sm font-medium text-gray-900">15 permohonan</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Surat Keterangan Tidak Mampu</span>
+                <span class="text-sm font-medium text-gray-900">12 permohonan</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Approvals -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-8">
+    <div class="p-6 border-b border-gray-100">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Permohonan Menunggu Persetujuan</h3>
+            <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Lihat Semua</a>
+        </div>
+    </div>
+    <div class="p-6">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-gray-200">
+                        <th class="text-left py-3 px-4 font-medium text-gray-600">Pemohon</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-600">Jenis Dokumen</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-600">Tanggal</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-600">Status</th>
+                        <th class="text-left py-3 px-4 font-medium text-gray-600">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-user text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Ahmad Rizki</p>
+                                    <p class="text-sm text-gray-500">NIK: 1234567890123456</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-900">Surat Keterangan Domisili</td>
+                        <td class="py-3 px-4 text-gray-600">10 Jan 2024</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                                Menunggu
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <button class="text-green-600 hover:text-green-800">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="border-b border-gray-100">
+                        <td class="py-3 px-4">
+                            <div class="flex items-center">
+                                <div class="bg-pink-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-user text-pink-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">Siti Aminah</p>
+                                    <p class="text-sm text-gray-500">NIK: 1234567890123457</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-gray-900">Surat Keterangan Usaha</td>
+                        <td class="py-3 px-4 text-gray-600">09 Jan 2024</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                                Proses
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="flex space-x-2">
+                                <button class="text-green-600 hover:text-green-800">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="p-6 border-b border-gray-100">
+        <h3 class="text-lg font-semibold text-gray-900">Aktivitas Terbaru</h3>
+    </div>
+    <div class="p-6">
+        <div class="space-y-4">
+            <div class="flex items-center space-x-4">
+                <div class="bg-green-100 p-2 rounded-full">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">Permohonan disetujui</p>
+                    <p class="text-xs text-gray-500">Surat Keterangan Domisili - Ahmad Rizki</p>
+                </div>
+                <span class="text-xs text-gray-400">30 menit lalu</span>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="bg-blue-100 p-2 rounded-full">
+                    <i class="fas fa-file-plus text-blue-600"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">Dokumen baru ditambahkan</p>
+                    <p class="text-xs text-gray-500">Template Surat Keterangan Kelahiran</p>
+                </div>
+                <span class="text-xs text-gray-400">2 jam lalu</span>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="bg-orange-100 p-2 rounded-full">
+                    <i class="fas fa-paper-plane text-orange-600"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">Permohonan baru masuk</p>
+                    <p class="text-xs text-gray-500">Surat Pengantar KTP - Budi Santoso</p>
+                </div>
+                <span class="text-xs text-gray-400">4 jam lalu</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript untuk interaktivitas
+document.addEventListener('DOMContentLoaded', function() {
+    // Animasi hover untuk cards
+    const cards = document.querySelectorAll('.card-hover');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Auto-refresh untuk permohonan baru
+    setInterval(() => {
+        // Simulasi check permohonan baru
+        console.log('Checking for new document requests...');
+    }, 60000); // Check setiap menit
+    
+    // Notifikasi permohonan menunggu
+    function checkPendingRequests() {
+        const pendingCount = document.querySelectorAll('[data-status="pending"]').length;
+        if (pendingCount > 0) {
+            console.log(`Ada ${pendingCount} permohonan menunggu persetujuan`);
+        }
+    }
+    
+    checkPendingRequests();
+});
+</script>
+{% endblock %}

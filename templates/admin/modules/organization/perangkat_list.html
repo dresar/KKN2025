@@ -1,0 +1,1363 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Perangkat Desa{% endblock %}
+
+{% block page_title %}Perangkat Desa{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Carousel Styles */
+    #carousel-track {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .slide-content {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 640px) {
+        .slide-content {
+            min-height: 350px !important;
+            padding: 1rem !important;
+        }
+        
+        .person-card {
+            padding: 0.75rem !important;
+        }
+        
+        .person-card img {
+            width: 3rem !important;
+            height: 3rem !important;
+        }
+    }
+    
+    /* Custom scrollbar for mobile */
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,255,255,0.5);
+    }
+    
+    /* Line clamp utility */
+    .line-clamp-1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+    }
+    
+    .line-clamp-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    
+    /* Navigation button animations */
+    #prev-slide, #next-slide {
+        transition: all 0.2s ease;
+    }
+    
+    #prev-slide:hover, #next-slide:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Indicator animations */
+    #slide-indicators button {
+        transition: all 0.2s ease;
+    }
+    
+    #slide-indicators button:hover {
+        transform: scale(1.2);
+    }
+    
+    /* Person card enhancements */
+    .person-card {
+        transition: all 0.3s ease;
+    }
+    
+    .person-card:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Perangkat Desa</h1>
+                <p class="mt-1 text-sm text-gray-600">Kelola data perangkat desa Pulosarok</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'organization:perangkat_add' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-plus mr-2"></i>Tambah Perangkat
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white shadow rounded-lg mb-6">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="space-y-4">
+                <!-- Search Bar - Full Width on Mobile -->
+                <div class="w-full">
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                    <input type="text" id="search" name="search" placeholder="Cari nama atau jabatan..." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors">
+                </div>
+                
+                <!-- Filter Row - Responsive Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div>
+                        <label for="jabatan-filter" class="block text-sm font-medium text-gray-700 mb-2">Jabatan</label>
+                        <select id="jabatan-filter" name="jabatan" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors">
+                            <option value="">Semua Jabatan</option>
+                            <option value="kepala_desa">Kepala Desa</option>
+                            <option value="sekretaris_desa">Sekretaris Desa</option>
+                            <option value="kaur_pemerintahan">Kaur Pemerintahan</option>
+                            <option value="kaur_pembangunan">Kaur Pembangunan</option>
+                            <option value="kaur_kesejahteraan">Kaur Kesejahteraan</option>
+                            <option value="kaur_keuangan">Kaur Keuangan</option>
+                            <option value="kaur_umum">Kaur Umum</option>
+                            <option value="kasi_pemerintahan">Kasi Pemerintahan</option>
+                            <option value="kasi_kesejahteraan">Kasi Kesejahteraan</option>
+                            <option value="kasi_pelayanan">Kasi Pelayanan</option>
+                            <option value="kadus">Kepala Dusun</option>
+                            <option value="rt">RT</option>
+                            <option value="rw">RW</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="status-filter" name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-colors">
+                            <option value="">Semua Status</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="tidak_aktif">Tidak Aktif</option>
+                            <option value="pensiun">Pensiun</option>
+                        </select>
+                    </div>
+                    <div class="sm:col-span-2 lg:col-span-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
+                        <button type="button" id="reset-filter" class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            <i class="fas fa-undo mr-2"></i>Reset Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-2xl text-blue-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Perangkat</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="total-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-check-circle text-2xl text-green-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Aktif</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="active-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-pause-circle text-2xl text-yellow-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Tidak Aktif</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="inactive-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-clock text-2xl text-gray-600"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Pensiun</dt>
+                            <dd class="text-lg font-medium text-gray-900" id="retired-count">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hierarchical Organization Chart -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="mb-4">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Struktur Organisasi Perangkat Desa</h3>
+                <p class="text-sm text-gray-600">Geser untuk melihat jabatan lainnya</p>
+            </div>
+            
+            <!-- Mobile-First Carousel Container -->
+            <div class="relative">
+                <!-- Carousel Wrapper -->
+                <div class="overflow-hidden rounded-lg">
+                    <div id="carousel-track" class="flex transition-transform duration-300 ease-in-out">
+                        <!-- Slides will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Navigation Buttons - Always Visible -->
+                <button id="prev-slide" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 shadow-lg transition-all duration-200 z-10">
+                    <i class="fas fa-chevron-left text-gray-600"></i>
+                </button>
+                <button id="next-slide" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full p-2 shadow-lg transition-all duration-200 z-10">
+                    <i class="fas fa-chevron-right text-gray-600"></i>
+                </button>
+                
+                <!-- Slide Indicators -->
+                <div id="slide-indicators" class="flex justify-center mt-4 space-x-2">
+                    <!-- Indicators will be inserted here -->
+                </div>
+                
+                <!-- Loading State -->
+                <div id="loading-state" class="flex justify-center items-center py-12">
+                    <i class="fas fa-spinner fa-spin mr-2 text-gray-400"></i>
+                    <span class="text-gray-500">Memuat data...</span>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6" id="pagination">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prev-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </button>
+                    <button id="next-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700" id="pagination-info">
+                            Menampilkan <span class="font-medium">0</span> sampai <span class="font-medium">0</span> dari <span class="font-medium">0</span> hasil
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" id="pagination-nav">
+                            <!-- Pagination buttons will be inserted here -->
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" id="edit-modal">
+    <div class="relative top-4 mx-auto p-4 border w-11/12 max-w-2xl shadow-lg rounded-lg bg-white min-h-[calc(100vh-2rem)] sm:min-h-0 sm:top-10">
+        <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Edit Perangkat Desa</h3>
+            <button id="close-edit-modal" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-md transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div id="edit-modal-content" class="max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <div class="flex justify-center items-center py-12">
+                <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                <span class="ml-2 text-gray-500">Memuat form...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" id="detail-modal">
+    <div class="relative top-4 mx-auto p-4 border w-11/12 max-w-2xl shadow-lg rounded-lg bg-white min-h-[calc(100vh-2rem)] sm:min-h-0 sm:top-10">
+        <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Detail Perangkat Desa</h3>
+            <button id="close-detail-modal" class="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-md transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        <div id="detail-modal-content" class="max-h-[calc(100vh-8rem)] overflow-y-auto">
+            <div class="flex justify-center items-center py-12">
+                <i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i>
+                <span class="ml-2 text-gray-500">Memuat detail...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" id="delete-modal">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Hapus Perangkat Desa</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Apakah Anda yakin ingin menghapus perangkat desa ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="items-center px-4 py-3">
+                <button id="confirm-delete" class="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-24 mr-2 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
+                    Hapus
+                </button>
+                <button id="cancel-delete" class="px-4 py-2 bg-gray-500 text-white text-base font-medium rounded-md w-24 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    Batal
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let deleteId = null;
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500' : 'bg-red-500'
+    } text-white`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${
+                type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'
+            } mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+// Get jabatan display name
+function getJabatanDisplay(jabatan) {
+    const jabatanMap = {
+        'kepala_desa': 'Kepala Desa',
+        'sekretaris_desa': 'Sekretaris Desa',
+        'kaur_pemerintahan': 'Kaur Pemerintahan',
+        'kaur_pembangunan': 'Kaur Pembangunan',
+        'kaur_kesejahteraan': 'Kaur Kesejahteraan',
+        'kaur_keuangan': 'Kaur Keuangan',
+        'kaur_umum': 'Kaur Umum',
+        'kasi_pemerintahan': 'Kasi Pemerintahan',
+        'kasi_kesejahteraan': 'Kasi Kesejahteraan',
+        'kasi_pelayanan': 'Kasi Pelayanan',
+        'kadus': 'Kepala Dusun',
+        'rt': 'RT',
+        'rw': 'RW'
+    };
+    return jabatanMap[jabatan] || jabatan;
+}
+
+// Get status badge
+function getStatusBadge(status) {
+    const statusMap = {
+        'aktif': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Aktif</span>',
+        'tidak_aktif': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Tidak Aktif</span>',
+        'pensiun': '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Pensiun</span>'
+    };
+    return statusMap[status] || status;
+}
+
+// Load perangkat data
+function loadPerangkat(page = 1) {
+    const search = document.getElementById('search').value;
+    const jabatan = document.getElementById('jabatan-filter').value;
+    const status = document.getElementById('status-filter').value;
+    
+    const params = new URLSearchParams({
+        page: page,
+        search: search,
+        jabatan: jabatan,
+        status: status
+    });
+    
+    fetch(`/pulosarok/organization/api/perangkat-desa/?${params}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                renderHierarchy(data.results || []);
+                updatePagination(data);
+                updateStatistics(data.statistics || {});
+            } else {
+                throw new Error(data.message || 'Failed to load data');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Gagal memuat data perangkat', 'error');
+            // Show empty state
+            renderHierarchy([]);
+        });
+}
+
+// Render hierarchical organization structure with mobile-first carousel
+function renderHierarchy(perangkat) {
+    const track = document.getElementById('carousel-track');
+    const indicators = document.getElementById('slide-indicators');
+    const loadingState = document.getElementById('loading-state');
+    
+    // Hide loading state
+    loadingState.style.display = 'none';
+    
+    if (perangkat.length === 0) {
+        track.innerHTML = `
+            <div class="w-full flex-shrink-0 flex justify-center items-center py-12 text-gray-500">
+                <div class="text-center">
+                    <i class="fas fa-inbox text-3xl mb-2"></i>
+                    <p>Tidak ada data perangkat</p>
+                </div>
+            </div>
+        `;
+        indicators.innerHTML = '';
+        return;
+    }
+    
+    // Group perangkat by hierarchy level
+    const hierarchy = {
+        'kepala_desa': [],
+        'sekretaris_desa': [],
+        'kaur': [],
+        'kasi': [],
+        'kadus': [],
+        'rt_rw': []
+    };
+    
+    perangkat.forEach(item => {
+        const jabatan = item.jabatan_code || item.jabatan;
+        // Processing jabatan for hierarchy grouping
+        
+        if (jabatan === 'kepala_desa') {
+            hierarchy.kepala_desa.push(item);
+        } else if (jabatan === 'sekretaris_desa') {
+            hierarchy.sekretaris_desa.push(item);
+        } else if (jabatan && (jabatan.startsWith('kaur_') || jabatan.includes('kaur'))) {
+            hierarchy.kaur.push(item);
+        } else if (jabatan && (jabatan.startsWith('kasi_') || jabatan.includes('kasi'))) {
+            hierarchy.kasi.push(item);
+        } else if (jabatan === 'kadus' || jabatan === 'kepala_dusun') {
+            hierarchy.kadus.push(item);
+        } else if (jabatan === 'rt' || jabatan === 'rw') {
+            hierarchy.rt_rw.push(item);
+        } else {
+            // Fallback: put unmatched positions in appropriate category based on keywords
+            const jabatanLower = (jabatan || '').toLowerCase();
+            if (jabatanLower.includes('kepala') && jabatanLower.includes('desa')) {
+                hierarchy.kepala_desa.push(item);
+            } else if (jabatanLower.includes('sekretaris')) {
+                hierarchy.sekretaris_desa.push(item);
+            } else if (jabatanLower.includes('kaur') || jabatanLower.includes('urusan')) {
+                hierarchy.kaur.push(item);
+            } else if (jabatanLower.includes('kasi') || jabatanLower.includes('seksi')) {
+                hierarchy.kasi.push(item);
+            } else if (jabatanLower.includes('dusun')) {
+                hierarchy.kadus.push(item);
+            } else {
+                // Default to kaur for any unmatched positions
+                hierarchy.kaur.push(item);
+            }
+        }
+    });
+    
+    // Create slides for each hierarchy level
+    const slides = [];
+    
+    if (hierarchy.kepala_desa.length > 0) {
+        slides.push(createSlide('Kepala Desa', hierarchy.kepala_desa, 'fas fa-crown', 'from-yellow-400 to-yellow-600'));
+    }
+    if (hierarchy.sekretaris_desa.length > 0) {
+        slides.push(createSlide('Sekretaris Desa', hierarchy.sekretaris_desa, 'fas fa-user-tie', 'from-blue-400 to-blue-600'));
+    }
+    if (hierarchy.kaur.length > 0) {
+        slides.push(createSlide('Kepala Urusan (Kaur)', hierarchy.kaur, 'fas fa-users-cog', 'from-green-400 to-green-600'));
+    }
+    if (hierarchy.kasi.length > 0) {
+        slides.push(createSlide('Kepala Seksi (Kasi)', hierarchy.kasi, 'fas fa-sitemap', 'from-purple-400 to-purple-600'));
+    }
+    if (hierarchy.kadus.length > 0) {
+        slides.push(createSlide('Kepala Dusun', hierarchy.kadus, 'fas fa-map-marker-alt', 'from-red-400 to-red-600'));
+    }
+    if (hierarchy.rt_rw.length > 0) {
+        slides.push(createSlide('RT & RW', hierarchy.rt_rw, 'fas fa-home', 'from-gray-400 to-gray-600'));
+    }
+    
+    if (slides.length === 0) {
+        track.innerHTML = `
+            <div class="w-full flex-shrink-0 flex justify-center items-center py-12 text-gray-500">
+                <div class="text-center">
+                    <i class="fas fa-inbox text-3xl mb-2"></i>
+                    <p>Tidak ada data perangkat</p>
+                </div>
+            </div>
+        `;
+        indicators.innerHTML = '';
+        return;
+    }
+    
+    // Create slides HTML
+    track.innerHTML = slides.map((slide, index) => `
+        <div class="w-full flex-shrink-0 px-2" data-slide="${index}">
+            ${slide.html}
+        </div>
+    `).join('');
+    
+    // Create indicators
+    indicators.innerHTML = slides.map((_, index) => `
+        <button class="w-3 h-3 rounded-full transition-all duration-200 ${
+            index === 0 ? 'bg-blue-500' : 'bg-gray-300'
+        }" data-slide="${index}"></button>
+    `).join('');
+    
+    // Initialize carousel
+    initializeCarousel(slides.length);
+    
+    // Helper function to create slide
+    function createSlide(title, items, icon, gradient) {
+        return {
+            title: title,
+            items: items,
+            icon: icon,
+            gradient: gradient,
+            html: `
+                <div class="slide-content bg-gradient-to-br ${gradient} rounded-xl p-4 sm:p-6 min-h-[400px] sm:min-h-[500px]">
+                    <!-- Header Section -->
+                    <div class="text-center mb-4 sm:mb-6">
+                        <div class="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-full mb-3 sm:mb-4">
+                            <i class="${icon} text-white text-lg sm:text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-bold text-white mb-1">${title}</h3>
+                        <div class="inline-flex items-center bg-white bg-opacity-20 backdrop-blur-sm rounded-full px-3 py-1">
+                            <i class="fas fa-users text-white text-xs mr-1"></i>
+                            <span class="text-white text-sm font-medium">${items.length} orang</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Personnel Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-h-80 sm:max-h-96 overflow-y-auto">
+                        ${items.map(item => createMobilePersonCard(item)).join('')}
+                    </div>
+                </div>
+            `
+        };
+    }
+    }
+     
+     // Helper function to create mobile-optimized person card
+     function createMobilePersonCard(item) {
+         const fotoUrl = item.foto_profil_url || '/static/images/default-avatar.svg';
+         return `
+             <div class="person-card bg-white bg-opacity-95 backdrop-blur-sm border border-white border-opacity-30 rounded-lg p-3 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                 <div class="flex flex-col items-center text-center">
+                     <!-- Avatar -->
+                     <div class="flex-shrink-0 mb-3">
+                         <img src="${fotoUrl}" alt="${item.penduduk_nama || item.nama || 'N/A'}" 
+                              class="h-16 w-16 sm:h-20 sm:w-20 rounded-full object-cover border-3 border-white shadow-lg" 
+                              onerror="this.src='/static/images/default-avatar.svg'">
+                     </div>
+                     
+                     <!-- Info -->
+                     <div class="flex-1 w-full">
+                         <h5 class="text-sm sm:text-base font-bold text-gray-900 mb-1 line-clamp-2">${item.penduduk_nama || item.nama || 'N/A'}</h5>
+                         <p class="text-xs text-gray-600 mb-2">${getJabatanDisplay(item.jabatan_code || item.jabatan)}</p>
+                         ${item.wilayah_kerja ? `<p class="text-xs text-gray-500 mb-2 line-clamp-1">${item.wilayah_kerja}</p>` : ''}
+                         
+                         <!-- Status Badge -->
+                         <div class="mb-3">
+                             ${getStatusBadge(item.status_code || item.status)}
+                         </div>
+                         
+                         <!-- Action Buttons -->
+                         <div class="flex justify-center space-x-1">
+                             <button onclick="showDetail(${item.id})" class="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors" title="Detail">
+                                 <i class="fas fa-eye text-xs"></i>
+                             </button>
+                             <button onclick="showEdit(${item.id})" class="p-2 text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50 rounded-full transition-colors" title="Edit">
+                                 <i class="fas fa-edit text-xs"></i>
+                             </button>
+                             <button onclick="confirmDelete(${item.id})" class="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-full transition-colors" title="Hapus">
+                                 <i class="fas fa-trash text-xs"></i>
+                             </button>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <!-- Contact Info (Collapsible) -->
+                 ${item.kontak_whatsapp || item.no_telepon || item.email_dinas || item.email ? `
+                     <div class="mt-3 pt-3 border-t border-gray-200">
+                         <div class="text-xs space-y-1">
+                             ${item.kontak_whatsapp || item.no_telepon ? `
+                                 <div class="flex items-center justify-center">
+                                     <i class="fas fa-phone text-gray-400 mr-1"></i>
+                                     <span class="text-gray-700 truncate">${item.kontak_whatsapp || item.no_telepon}</span>
+                                 </div>
+                             ` : ''}
+                             ${item.email_dinas || item.email ? `
+                                 <div class="flex items-center justify-center">
+                                     <i class="fas fa-envelope text-gray-400 mr-1"></i>
+                                     <span class="text-gray-700 truncate">${item.email_dinas || item.email}</span>
+                                 </div>
+                             ` : ''}
+                         </div>
+                     </div>
+                 ` : ''}
+             </div>
+         `;
+     }
+     
+     // Helper function to create person card (keep original for compatibility)
+    function createPersonCard(item) {
+        const fotoUrl = item.foto_profil_url || '/static/images/default-avatar.svg';
+        return `
+            <div class="person-card bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0 h-12 w-12">
+                            <img src="${fotoUrl}" alt="${item.penduduk_nama || item.nama || 'N/A'}" class="h-12 w-12 rounded-full object-cover border-2 border-gray-200" onerror="this.src='/static/images/default-avatar.svg'">
+                        </div>
+                        <div class="flex-1">
+                            <h5 class="text-sm font-semibold text-gray-900">${item.penduduk_nama || item.nama || 'N/A'}</h5>
+                            <p class="text-xs text-gray-500">NIK: ${item.penduduk_nik || item.nik || 'N/A'}</p>
+                            <p class="text-sm text-gray-700 mt-1">${getJabatanDisplay(item.jabatan_code || item.jabatan)}</p>
+                            ${item.wilayah_kerja ? `<p class="text-xs text-gray-500">${item.wilayah_kerja}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end space-y-2">
+                        ${getStatusBadge(item.status_code || item.status)}
+                        <div class="flex space-x-1">
+                            <button onclick="showDetail(${item.id})" class="p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-md transition-colors" title="Lihat Detail">
+                                <i class="fas fa-eye text-xs"></i>
+                            </button>
+                            <button onclick="showEdit(${item.id})" class="p-1.5 text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50 rounded-md transition-colors" title="Edit">
+                                <i class="fas fa-edit text-xs"></i>
+                            </button>
+                            <button onclick="confirmDelete(${item.id})" class="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-md transition-colors" title="Hapus">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                ${item.kontak_whatsapp || item.no_telepon || item.email_dinas || item.email ? `
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            ${item.kontak_whatsapp || item.no_telepon ? `
+                                <div>
+                                    <span class="text-gray-500">Telepon:</span>
+                                    <p class="text-gray-900">${item.kontak_whatsapp || item.no_telepon}</p>
+                                </div>
+                            ` : ''}
+                            ${item.email_dinas || item.email ? `
+                                <div>
+                                    <span class="text-gray-500">Email:</span>
+                                    <p class="text-gray-900">${item.email_dinas || item.email}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    // Helper function to create carousel
+    function createCarousel(slides) {
+        return `
+            <div class="hierarchy-carousel relative">
+                <div class="carousel-container overflow-hidden">
+                    <div class="carousel-track flex transition-transform duration-300 ease-in-out" id="carousel-track">
+                        ${slides.map((slide, index) => `
+                            <div class="carousel-slide w-full flex-shrink-0" data-slide="${index}">
+                                ${slide.html}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <div class="flex flex-col sm:flex-row items-center justify-between mt-4 space-y-3 sm:space-y-0">
+                    <!-- Mobile: Full width buttons -->
+                    <div class="flex w-full sm:w-auto space-x-2 sm:hidden">
+                        <button id="prev-slide-mobile" class="flex-1 flex items-center justify-center px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-2"></i>
+                            <span>Sebelumnya</span>
+                        </button>
+                        <button id="next-slide-mobile" class="flex-1 flex items-center justify-center px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span>Selanjutnya</span>
+                            <i class="fas fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Desktop: Compact buttons -->
+                    <button id="prev-slide" class="hidden sm:flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-2"></i>
+                        <span>Sebelumnya</span>
+                    </button>
+                    
+                    <!-- Indicators -->
+                    <div class="flex space-x-2" id="slide-indicators">
+                        ${slides.map((_, index) => `
+                            <button class="w-4 h-4 sm:w-3 sm:h-3 rounded-full transition-colors ${
+                                index === 0 ? 'bg-blue-600' : 'bg-gray-300'
+                            }" data-slide="${index}"></button>
+                        `).join('')}
+                    </div>
+                    
+                    <button id="next-slide" class="hidden sm:flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span>Selanjutnya</span>
+                        <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+                
+                <!-- Slide counter -->
+                <div class="text-center mt-2 text-sm text-gray-500">
+                    <span id="current-slide-number">1</span> dari <span id="total-slides">${slides.length}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Initialize carousel functionality
+    function initializeCarousel(totalSlides) {
+        let currentSlide = 0;
+        const track = document.getElementById('carousel-track');
+        const prevBtn = document.getElementById('prev-slide');
+        const nextBtn = document.getElementById('next-slide');
+        const indicators = document.querySelectorAll('#slide-indicators button');
+        
+        if (!track || !prevBtn || !nextBtn || totalSlides === 0) {
+            return;
+        }
+        
+        function updateCarousel() {
+            track.style.transform = `translateX(-${currentSlide * 100}%)`;
+            
+            // Update indicators
+            indicators.forEach((indicator, index) => {
+                indicator.classList.toggle('bg-blue-500', index === currentSlide);
+                indicator.classList.toggle('bg-gray-300', index !== currentSlide);
+            });
+            
+            // Update navigation buttons
+            prevBtn.style.opacity = currentSlide === 0 ? '0.5' : '1';
+            nextBtn.style.opacity = currentSlide === totalSlides - 1 ? '0.5' : '1';
+            prevBtn.style.pointerEvents = currentSlide === 0 ? 'none' : 'auto';
+            nextBtn.style.pointerEvents = currentSlide === totalSlides - 1 ? 'none' : 'auto';
+        }
+        
+        function goToSlide(slideIndex) {
+            currentSlide = Math.max(0, Math.min(slideIndex, totalSlides - 1));
+            updateCarousel();
+        }
+        
+        // Navigation event listeners
+        prevBtn.addEventListener('click', () => goToSlide(currentSlide - 1));
+        nextBtn.addEventListener('click', () => goToSlide(currentSlide + 1));
+        
+        // Indicator event listeners
+        indicators.forEach((indicator, index) => {
+            indicator.addEventListener('click', () => goToSlide(index));
+        });
+        
+        // Touch/swipe support for mobile
+        let startX = 0;
+        let startY = 0;
+        let isDragging = false;
+        
+        track.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isDragging = true;
+        }, { passive: true });
+        
+        track.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = startX - currentX;
+            const diffY = startY - currentY;
+            
+            // Prevent vertical scrolling if horizontal swipe is detected
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        track.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const diffX = startX - endX;
+            const threshold = 50; // Minimum swipe distance
+            
+            if (Math.abs(diffX) > threshold) {
+                if (diffX > 0) {
+                    // Swipe left - next slide
+                    goToSlide(currentSlide + 1);
+                } else {
+                    // Swipe right - previous slide
+                    goToSlide(currentSlide - 1);
+                }
+            }
+            
+            isDragging = false;
+        }, { passive: true });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                goToSlide(currentSlide - 1);
+            } else if (e.key === 'ArrowRight') {
+                goToSlide(currentSlide + 1);
+            }
+        });
+        
+        // Auto-play (optional - can be enabled/disabled)
+        let autoPlayInterval;
+        const autoPlayDelay = 5000; // 5 seconds
+        
+        function startAutoPlay() {
+            autoPlayInterval = setInterval(() => {
+                if (currentSlide < totalSlides - 1) {
+                    goToSlide(currentSlide + 1);
+                } else {
+                    goToSlide(0); // Loop back to first slide
+                }
+            }, autoPlayDelay);
+        }
+        
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+            }
+        }
+        
+        // Pause auto-play on hover/touch
+        track.addEventListener('mouseenter', stopAutoPlay);
+        track.addEventListener('mouseleave', startAutoPlay);
+        track.addEventListener('touchstart', stopAutoPlay);
+        
+        // Initialize carousel
+        updateCarousel();
+        
+        // Start auto-play if more than one slide (uncomment to enable)
+        // if (totalSlides > 1) {
+        //     startAutoPlay();
+        // }
+    }
+ 
+ // Toggle hierarchy function
+ function toggleHierarchy(levelId) {
+     const content = document.getElementById(`${levelId}-content`);
+     const chevron = document.getElementById(`${levelId}-chevron`);
+     
+     if (content.classList.contains('hidden')) {
+         content.classList.remove('hidden');
+         content.style.maxHeight = content.scrollHeight + 'px';
+         chevron.style.transform = 'rotate(180deg)';
+         
+         // Add slide down animation
+         content.style.opacity = '0';
+         content.style.transform = 'translateY(-10px)';
+         setTimeout(() => {
+             content.style.transition = 'all 0.3s ease-out';
+             content.style.opacity = '1';
+             content.style.transform = 'translateY(0)';
+         }, 10);
+     } else {
+         content.style.transition = 'all 0.3s ease-in';
+         content.style.opacity = '0';
+         content.style.transform = 'translateY(-10px)';
+         chevron.style.transform = 'rotate(0deg)';
+         
+         setTimeout(() => {
+             content.classList.add('hidden');
+             content.style.maxHeight = '0';
+         }, 300);
+     }
+ }
+
+// Update statistics
+function updateStatistics(stats) {
+    document.getElementById('total-count').textContent = stats.total || 0;
+    document.getElementById('active-count').textContent = stats.aktif || 0;
+    document.getElementById('inactive-count').textContent = stats.tidak_aktif || 0;
+    document.getElementById('retired-count').textContent = stats.pensiun || 0;
+}
+
+// Update pagination
+function updatePagination(data) {
+    currentPage = data.current_page;
+    totalPages = data.total_pages;
+    
+    // Update pagination info
+    const start = ((currentPage - 1) * 10) + 1;
+    const end = Math.min(currentPage * 10, data.total_count);
+    document.getElementById('pagination-info').innerHTML = `
+        Menampilkan <span class="font-medium">${start}</span> sampai <span class="font-medium">${end}</span> dari <span class="font-medium">${data.total_count}</span> hasil
+    `;
+    
+    // Update pagination buttons
+    const nav = document.getElementById('pagination-nav');
+    nav.innerHTML = '';
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = `relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''}`;
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.onclick = () => currentPage > 1 && loadPerangkat(currentPage - 1);
+    nav.appendChild(prevBtn);
+    
+    // Page numbers
+    for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            i === currentPage 
+                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+        }`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => loadPerangkat(i);
+        nav.appendChild(pageBtn);
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = `relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''}`;
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.onclick = () => currentPage < totalPages && loadPerangkat(currentPage + 1);
+    nav.appendChild(nextBtn);
+}
+
+// Confirm delete
+function confirmDelete(id) {
+    deleteId = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+// Delete perangkat
+function deletePerangkat() {
+    if (!deleteId) return;
+    
+    fetch(`/pulosarok/organization/perangkat/${deleteId}/delete/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showNotification('Perangkat desa berhasil dihapus');
+            loadPerangkat(currentPage);
+        } else {
+            throw new Error(data.message || 'Gagal menghapus perangkat desa');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification(error.message || 'Gagal menghapus perangkat desa', 'error');
+    })
+    .finally(() => {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteId = null;
+    });
+}
+
+// Show edit modal
+function showEdit(id) {
+    const modal = document.getElementById('edit-modal');
+    const content = document.getElementById('edit-modal-content');
+    
+    if (!content) {
+        console.error('Edit modal content element not found');
+        return;
+    }
+    
+    // Show loading state
+    content.innerHTML = '<div class="flex justify-center items-center py-8"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>';
+    modal.classList.remove('hidden');
+    
+    // Load edit form
+    fetch(`/pulosarok/organization/perangkat/${id}/edit/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Extract form content from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const form = doc.querySelector('form');
+            
+            if (form) {
+                content.innerHTML = form.outerHTML;
+                setupEditFormHandler(id);
+            } else {
+                content.innerHTML = '<div class="text-center py-8 text-red-600">Gagal memuat form edit</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            content.innerHTML = '<div class="text-center py-8 text-red-600">Gagal memuat form edit</div>';
+            showNotification('Gagal memuat form edit', 'error');
+        });
+}
+
+// Show detail modal with enhanced design
+function showDetail(id) {
+    const modal = document.getElementById('detail-modal');
+    const content = document.getElementById('detail-modal-content');
+    
+    if (!content) {
+        console.error('Detail modal content element not found');
+        return;
+    }
+    
+    // Show loading state
+    content.innerHTML = '<div class="flex justify-center items-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>';
+    modal.classList.remove('hidden');
+    
+    // Load detail data
+    fetch(`/pulosarok/organization/api/perangkat-desa/${id}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Handle both direct data and wrapped response
+            const perangkat = data.data || data;
+            
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <!-- Header Section -->
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
+                        <div class="flex items-center space-x-6">
+                            <div class="flex-shrink-0">
+                                ${perangkat.foto_profil ? 
+                                    `<img class="h-20 w-20 rounded-full object-cover border-4 border-white shadow-lg" src="${perangkat.foto_profil}" alt="${perangkat.penduduk_nama || perangkat.nama}">` :
+                                    `<div class="h-20 w-20 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center border-4 border-white shadow-lg">
+                                        <i class="fas fa-user text-white text-2xl"></i>
+                                    </div>`
+                                }
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="text-2xl font-bold text-gray-900">${perangkat.penduduk_nama || perangkat.nama || 'N/A'}</h3>
+                                <p class="text-sm text-gray-600 mt-1">NIK: ${perangkat.penduduk_nik || perangkat.nik || 'N/A'}</p>
+                                <div class="mt-2">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                        <i class="fas fa-briefcase mr-2"></i>
+                                        ${getJabatanDisplay(perangkat.jabatan_code || perangkat.jabatan)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                ${getStatusBadge(perangkat.status_code || perangkat.status)}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Information Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Informasi Jabatan -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-5">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-id-badge text-blue-600"></i>
+                                    </div>
+                                </div>
+                                <h4 class="ml-3 text-lg font-semibold text-gray-900">Informasi Jabatan</h4>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-500">NIP</span>
+                                    <span class="text-sm text-gray-900">${perangkat.nip || 'Tidak ada'}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-500">SK Pengangkatan</span>
+                                    <span class="text-sm text-gray-900">${perangkat.sk_pengangkatan || 'Tidak ada'}</span>
+                                </div>
+                                ${perangkat.wilayah_kerja ? `
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                        <span class="text-sm font-medium text-gray-500">Wilayah Kerja</span>
+                                        <span class="text-sm text-gray-900">${perangkat.wilayah_kerja}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        
+                        <!-- Periode Tugas -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-5">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-calendar-alt text-green-600"></i>
+                                    </div>
+                                </div>
+                                <h4 class="ml-3 text-lg font-semibold text-gray-900">Periode Tugas</h4>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-500">Mulai Tugas</span>
+                                    <span class="text-sm text-gray-900">${perangkat.tanggal_mulai_tugas || perangkat.periode_mulai || 'Tidak ada'}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                    <span class="text-sm font-medium text-gray-500">Selesai Tugas</span>
+                                    <span class="text-sm text-gray-900">${perangkat.tanggal_selesai_tugas || perangkat.periode_selesai || 'Masih aktif'}</span>
+                                </div>
+                                ${perangkat.gaji_pokok ? `
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                        <span class="text-sm font-medium text-gray-500">Gaji Pokok</span>
+                                        <span class="text-sm text-gray-900 font-semibold text-green-600">Rp ${parseInt(perangkat.gaji_pokok).toLocaleString('id-ID')}</span>
+                                    </div>
+                                ` : ''}
+                                ${perangkat.tunjangan ? `
+                                    <div class="flex justify-between items-center py-2">
+                                        <span class="text-sm font-medium text-gray-500">Tunjangan</span>
+                                        <span class="text-sm text-gray-900 font-semibold text-green-600">Rp ${parseInt(perangkat.tunjangan).toLocaleString('id-ID')}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Deskripsi Tugas -->
+                    ${perangkat.deskripsi_tugas ? `
+                        <div class="bg-white border border-gray-200 rounded-lg p-5">
+                            <div class="flex items-center mb-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-tasks text-purple-600"></i>
+                                    </div>
+                                </div>
+                                <h4 class="ml-3 text-lg font-semibold text-gray-900">Deskripsi Tugas</h4>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-700 leading-relaxed">${perangkat.deskripsi_tugas}</p>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Kontak -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-5">
+                        <div class="flex items-center mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-address-book text-orange-600"></i>
+                                </div>
+                            </div>
+                            <h4 class="ml-3 text-lg font-semibold text-gray-900">Informasi Kontak</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${perangkat.kontak_whatsapp || perangkat.no_telepon ? `
+                                <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                                    <div class="flex-shrink-0">
+                                        <i class="fab fa-whatsapp text-green-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">WhatsApp/Telepon</p>
+                                        <p class="text-sm font-medium text-gray-900">${perangkat.kontak_whatsapp || perangkat.no_telepon}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            ${perangkat.email_dinas || perangkat.email ? `
+                                <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-envelope text-blue-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase tracking-wide">Email</p>
+                                        <p class="text-sm font-medium text-gray-900">${perangkat.email_dinas || perangkat.email}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        ${!perangkat.kontak_whatsapp && !perangkat.no_telepon && !perangkat.email_dinas && !perangkat.email ? `
+                            <div class="text-center py-4">
+                                <i class="fas fa-phone-slash text-gray-400 text-2xl mb-2"></i>
+                                <p class="text-sm text-gray-500">Informasi kontak tidak tersedia</p>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            content.innerHTML = '<div class="text-center py-8 text-red-600">Gagal memuat detail perangkat</div>';
+        });
+}
+
+// Setup edit form handler
+function setupEditFormHandler(id) {
+    const form = document.querySelector('#edit-modal-content form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch(`/pulosarok/organization/api/perangkat-desa/${id}/update/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Perangkat desa berhasil diperbarui');
+                    document.getElementById('edit-modal').classList.add('hidden');
+                    loadPerangkat(currentPage);
+                } else {
+                    showNotification('Gagal memperbarui perangkat desa', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Gagal memperbarui perangkat desa', 'error');
+            });
+        });
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    loadPerangkat();
+    
+    // Search and filter events
+    document.getElementById('search').addEventListener('input', () => loadPerangkat(1));
+    document.getElementById('jabatan-filter').addEventListener('change', () => loadPerangkat(1));
+    document.getElementById('status-filter').addEventListener('change', () => loadPerangkat(1));
+    
+    // Reset filter
+    document.getElementById('reset-filter').addEventListener('click', function() {
+        document.getElementById('search').value = '';
+        document.getElementById('jabatan-filter').value = '';
+        document.getElementById('status-filter').value = '';
+        loadPerangkat(1);
+    });
+    
+    // Modal events
+    document.getElementById('confirm-delete').addEventListener('click', deletePerangkat);
+    document.getElementById('cancel-delete').addEventListener('click', function() {
+        document.getElementById('delete-modal').classList.add('hidden');
+        deleteId = null;
+    });
+    
+    // Edit modal close events
+    document.getElementById('close-edit-modal').addEventListener('click', function() {
+        document.getElementById('edit-modal').classList.add('hidden');
+    });
+    document.getElementById('edit-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+    
+    // Detail modal close events
+    document.getElementById('close-detail-modal').addEventListener('click', function() {
+        document.getElementById('detail-modal').classList.add('hidden');
+    });
+    document.getElementById('detail-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+        }
+    });
+    
+    // Delete modal close events
+    document.getElementById('delete-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.add('hidden');
+            deleteId = null;
+        }
+    });
+});
+</script>
+{% endblock %}

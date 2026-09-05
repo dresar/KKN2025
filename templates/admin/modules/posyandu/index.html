@@ -1,0 +1,311 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard Posyandu{% endblock %}
+
+{% block page_title %}Dashboard Posyandu{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-6">
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-baby text-3xl opacity-80"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-blue-100 text-sm font-medium">Total Balita</p>
+                    <p class="text-3xl font-bold">{{ stats.total_balita|default:0 }}</p>
+                    <p class="text-blue-100 text-xs">+{{ stats.balita_growth|default:0 }} bulan ini</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-pink-500 to-pink-600 rounded-lg shadow-lg p-6 text-white">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-female text-3xl opacity-80"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-pink-100 text-sm font-medium">Ibu Hamil</p>
+                    <p class="text-3xl font-bold">{{ stats.total_ibu_hamil|default:0 }}</p>
+                    <p class="text-pink-100 text-xs">+{{ stats.ibu_hamil_growth|default:0 }} bulan ini</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-user-friends text-3xl opacity-80"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-green-100 text-sm font-medium">Kader Aktif</p>
+                    <p class="text-3xl font-bold">{{ stats.total_kader|default:0 }}</p>
+                    <p class="text-green-100 text-xs">Tersebar di posyandu</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg p-6 text-white">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-triangle text-3xl opacity-80"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-orange-100 text-sm font-medium">Stunting</p>
+                    <p class="text-3xl font-bold">{{ stats.total_stunting|default:0 }}</p>
+                    <p class="text-orange-100 text-xs">{{ stats.stunting_percentage|default:0 }}% dari balita</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions & Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Aksi Cepat</h3>
+            <div class="space-y-3">
+                <a href="{% url 'posyandu:view_balita' %}" 
+                   class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-baby text-blue-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">Data Balita</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                
+                <a href="{% url 'posyandu:ibu_hamil_admin' %}" 
+                   class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-female text-pink-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">Data Ibu Hamil</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                
+                <a href="{% url 'posyandu:kader_admin' %}" 
+                   class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-user-friends text-green-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">Kelola Kader</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                
+                <a href="{% url 'posyandu:stunting_admin' %}" 
+                   class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-orange-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">Data Stunting</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                
+                <a href="{% url 'posyandu:view_lansia' %}" 
+                   class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-user-clock text-purple-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">Data Lansia</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                
+                <a href="{% url 'posyandu:pengaturan_admin' %}" 
+                   class="w-full flex items-center justify-between p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fas fa-cog text-gray-600 mr-3"></i>
+                        <span class="font-medium text-gray-900">Pengaturan</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Health Status Overview -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Status Kesehatan</h3>
+                <div class="flex space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i>{{ health_status.normal_percentage|default:0 }}% Normal
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <i class="fas fa-exclamation-circle mr-1"></i>{{ health_status.warning_percentage|default:0 }}% Perhatian
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-times-circle mr-1"></i>{{ health_status.critical_percentage|default:0 }}% Kritis
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Nutrition Status Chart -->
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Gizi Normal</span>
+                        <span class="font-medium">{{ nutrition.gizi_normal|default:0 }} anak</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full" style="width: {{ nutrition.gizi_normal_percentage|default:0 }}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Gizi Kurang</span>
+                        <span class="font-medium">{{ nutrition.gizi_kurang|default:0 }} anak</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-yellow-500 h-2 rounded-full" style="width: {{ nutrition.gizi_kurang_percentage|default:0 }}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Gizi Buruk</span>
+                        <span class="font-medium">{{ nutrition.gizi_buruk|default:0 }} anak</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-red-500 h-2 rounded-full" style="width: {{ nutrition.gizi_buruk_percentage|default:0 }}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600">Stunting</span>
+                        <span class="font-medium">{{ nutrition.stunting|default:0 }} anak</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-orange-500 h-2 rounded-full" style="width: {{ nutrition.stunting_percentage|default:0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Posyandu Locations -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Lokasi Posyandu</h3>
+            <div class="space-y-3">
+                {% for location in posyandu_locations %}
+                <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                    <div>
+                        <div class="font-medium text-gray-900">{{ location.name }}</div>
+                        <div class="text-sm text-gray-500">{{ location.address }}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-medium text-gray-900">Kapasitas: {{ location.capacity|default:'-' }}</div>
+                        <div class="text-xs {% if location.is_active %}text-green-600{% else %}text-red-600{% endif %}">
+                            {% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-gray-500 py-4">Belum ada lokasi posyandu</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Monthly Activity -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Aktivitas Bulanan</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Pemeriksaan Balita</span>
+                    <span class="font-bold text-lg">{{ monthly_activity.balita_checkups|default:0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Pemeriksaan Ibu Hamil</span>
+                    <span class="font-bold text-lg text-pink-600">{{ monthly_activity.ibu_hamil_checkups|default:0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Imunisasi</span>
+                    <span class="font-bold text-lg text-blue-600">{{ monthly_activity.immunizations|default:0 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Vitamin A</span>
+                    <span class="font-bold text-lg text-orange-600">{{ monthly_activity.vitamin_a|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Aktivitas Terbaru (7 Hari Terakhir)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="text-center">
+                <div class="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-baby text-2xl text-blue-600"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ recent_activity.balita_records|default:0 }}</div>
+                <div class="text-sm text-gray-500">Data Balita Baru</div>
+            </div>
+            <div class="text-center">
+                <div class="bg-pink-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-female text-2xl text-pink-600"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ recent_activity.ibu_hamil_records|default:0 }}</div>
+                <div class="text-sm text-gray-500">Data Ibu Hamil Baru</div>
+            </div>
+            <div class="text-center">
+                <div class="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-syringe text-2xl text-green-600"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ recent_activity.immunizations|default:0 }}</div>
+                <div class="text-sm text-gray-500">Imunisasi</div>
+            </div>
+            <div class="text-center">
+                <div class="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-chart-line text-2xl text-orange-600"></i>
+                </div>
+                <div class="text-2xl font-bold text-gray-900">{{ recent_activity.growth_monitoring|default:0 }}</div>
+                <div class="text-sm text-gray-500">Pemantauan Tumbuh Kembang</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Schedules -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Jadwal Posyandu Mendatang</h3>
+            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Lihat Semua</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waktu</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kader</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for schedule in upcoming_schedules %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ schedule.schedule_date|date:"d M Y" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ schedule.location.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ schedule.coordinator|default:'-' }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {% if schedule.is_active %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if schedule.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">Tidak ada jadwal mendatang</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

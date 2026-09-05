@@ -1,0 +1,642 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Daftar Berita{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-900">Daftar Berita</h2>
+                <p class="text-gray-600 mt-1 text-sm sm:text-base">Kelola semua berita dan informasi desa</p>
+        </div>
+            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <button onclick="openNewsModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i>Tambah Berita
+                </button>
+                <a href="{% url 'news:news_admin' %}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 flex items-center justify-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow-sm border p-4 sm:p-6 mb-6">
+        <form method="GET" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Cari Berita</label>
+                    <input type="text" name="search" id="search" value="{{ request.GET.search }}" 
+                           placeholder="Judul atau konten..." 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            <div>
+                    <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                    <select name="category" id="category" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Semua Kategori</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>
+                                {{ cat.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                    <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" id="status" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Semua Status</option>
+                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
+                        <option value="published" {% if request.GET.status == 'published' %}selected{% endif %}>Published</option>
+                        <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                        <option value="archived" {% if request.GET.status == 'archived' %}selected{% endif %}>Archived</option>
+                </select>
+            </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                        <i class="fas fa-search mr-2"></i>Filter
+            </button>
+        </div>
+    </div>
+        </form>
+    </div>
+
+    <!-- News List -->
+    <div class="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Berita
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Kategori
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Penulis
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tanggal
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Statistik
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Aksi
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+            {% for news in news_list %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-12 w-12">
+                        {% if news.featured_image %}
+                                        <img class="h-12 w-12 rounded-lg object-cover" src="{{ news.featured_image.url }}" alt="{{ news.title }}">
+                        {% else %}
+                                        <div class="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                                            <i class="fas fa-image text-gray-400"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <a href="{% url 'news:news_view_detail' news.pk %}" class="hover:text-blue-600">
+                                            {{ news.title|truncatechars:50 }}
+                                        </a>
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        {{ news.excerpt|truncatechars:80|default:"Tidak ada ringkasan" }}
+                                    </div>
+                                    {% if news.tags.all %}
+                                        <div class="flex flex-wrap gap-1 mt-1">
+                                            {% for tag in news.tags.all|slice:":3" %}
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{{ tag.name }}</span>
+                                            {% endfor %}
+                                            {% if news.tags.count > 3 %}
+                                                <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">+{{ news.tags.count|add:"-3" }}</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                       {% if news.category.color == 'red' %}bg-red-100 text-red-800
+                                       {% elif news.category.color == 'blue' %}bg-blue-100 text-blue-800
+                                       {% elif news.category.color == 'green' %}bg-green-100 text-green-800
+                                       {% elif news.category.color == 'yellow' %}bg-yellow-100 text-yellow-800
+                                       {% elif news.category.color == 'purple' %}bg-purple-100 text-purple-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ news.category.name }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                       {% if news.status == 'published' %}bg-green-100 text-green-800
+                                       {% elif news.status == 'draft' %}bg-yellow-100 text-yellow-800
+                                       {% elif news.status == 'scheduled' %}bg-blue-100 text-blue-800
+                                       {% elif news.status == 'archived' %}bg-gray-100 text-gray-800
+                                       {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ news.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ news.author.get_full_name|default:news.author.username }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if news.status == 'published' and news.published_date %}
+                                {{ news.published_date|date:"d M Y" }}
+                            {% elif news.status == 'scheduled' and news.scheduled_date %}
+                                {{ news.scheduled_date|date:"d M Y H:i" }}
+                            {% else %}
+                                {{ news.created_at|date:"d M Y" }}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div class="space-y-1">
+                                <div class="flex items-center">
+                                    <i class="fas fa-eye text-gray-400 mr-1"></i>
+                                    <span>{{ news.views_count|default:0 }}</span>
+                    </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-heart text-gray-400 mr-1"></i>
+                                    <span>{{ news.likes.count }}</span>
+                    </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-comment text-gray-400 mr-1"></i>
+                                    <span>{{ news.comments.count }}</span>
+                        </div>
+                    </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button onclick="viewNews({{ news.pk }})" 
+                                        class="text-blue-600 hover:text-blue-900" title="Lihat">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editNews({{ news.pk }})" 
+                                        class="text-indigo-600 hover:text-indigo-900" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="duplicateNews({{ news.pk }})" 
+                                        class="text-green-600 hover:text-green-900" title="Duplikasi">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button onclick="deleteNews({{ news.pk }})" 
+                                        class="text-red-600 hover:text-red-900" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                        </div>
+                        </td>
+                    </tr>
+            {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-newspaper text-4xl text-gray-300 mb-4"></i>
+                                <p class="text-lg font-medium text-gray-900 mb-2">Belum ada berita</p>
+                                <p class="text-gray-600 mb-4">Mulai dengan membuat berita pertama Anda</p>
+                                <a href="{% url 'news:news_create_view' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                                    <i class="fas fa-plus mr-2"></i>Buat Berita Pertama
+                    </a>
+                </div>
+                        </td>
+                    </tr>
+            {% endfor %}
+                </tbody>
+            </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Sebelumnya
+                    </a>
+                {% endif %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Selanjutnya
+                    </a>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Menampilkan
+                        <span class="font-medium">{{ page_obj.start_index }}</span>
+                        sampai
+                        <span class="font-medium">{{ page_obj.end_index }}</span>
+                        dari
+                        <span class="font-medium">{{ page_obj.paginator.count }}</span>
+                        hasil
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-left"></i>
+                        </a>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                    {{ num }}
+                                </span>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    {{ num }}
+                                </a>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" 
+                               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    </div>
+</div>
+
+<!-- News Modal -->
+<div id="newsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-medium text-gray-900">Tambah Berita</h3>
+                <button onclick="closeNewsModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="newsForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Judul</label>
+                        <input type="text" name="title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                        <select name="category" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Pilih Kategori</option>
+                            {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Konten</label>
+                        <textarea name="content" id="newsContent" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ringkasan</label>
+                        <textarea name="excerpt" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Gambar Utama</label>
+                        <input type="file" name="featured_image" accept="image/*" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div id="imagePreview" class="mt-2 hidden">
+                            <img id="previewImg" class="max-w-xs h-32 object-cover rounded-lg">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="draft">Draft</option>
+                                <option value="published">Published</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Prioritas</label>
+                            <select name="priority" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_featured" class="mr-2">
+                            <span class="text-sm text-gray-700">Featured</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" name="is_breaking" class="mr-2">
+                            <span class="text-sm text-gray-700">Breaking News</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeNewsModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View News Modal -->
+<div id="viewModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Detail Berita</h3>
+                <button onclick="closeViewModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="viewContent" class="space-y-4">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-2">Konfirmasi Hapus</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500">
+                    Anda yakin ingin menghapus berita ini? Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let editingId = null;
+let deleteId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    const filterForm = document.querySelector('form[method="GET"]');
+    const filterInputs = filterForm.querySelectorAll('select, input[type="text"]');
+    
+    filterInputs.forEach(input => {
+        if (input.type === 'select-one') {
+            input.addEventListener('change', () => filterForm.submit());
+        }
+    });
+    
+    // Search with debounce
+    let searchTimeout;
+    const searchInput = document.getElementById('search');
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            filterForm.submit();
+        }, 500);
+    });
+    
+    // Image preview
+    const imageInput = document.querySelector('input[name="featured_image"]');
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Form submission
+    document.getElementById('newsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveNews();
+    });
+});
+
+// Modal functions
+function openNewsModal(id = null) {
+    editingId = id;
+    const modal = document.getElementById('newsModal');
+    const title = document.getElementById('modalTitle');
+    const form = document.getElementById('newsForm');
+    
+    if (id) {
+        title.textContent = 'Edit Berita';
+        loadNewsData(id);
+    } else {
+        title.textContent = 'Tambah Berita';
+        form.reset();
+        document.getElementById('imagePreview').classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeNewsModal() {
+    document.getElementById('newsModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    editingId = null;
+}
+
+function viewNews(id) {
+    fetch(`{% url 'news:news_detail_api' 0 %}`.replace('0', id))
+        .then(response => response.json())
+        .then(data => {
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-medium text-gray-900">${data.title}</h4>
+                        <p class="text-sm text-gray-500">Kategori: ${data.category_name}</p>
+                    </div>
+                    ${data.featured_image ? `<img src="${data.featured_image}" class="max-w-full h-48 object-cover rounded-lg">` : ''}
+                    <div>
+                        <h5 class="font-medium text-gray-700">Konten:</h5>
+                        <div class="prose max-w-none">${data.content}</div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>Status:</strong> ${data.status}</div>
+                        <div><strong>Prioritas:</strong> ${data.priority}</div>
+                        <div><strong>Penulis:</strong> ${data.author_name}</div>
+                        <div><strong>Tanggal:</strong> ${new Date(data.created_at).toLocaleDateString('id-ID')}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('viewContent').innerHTML = content;
+            document.getElementById('viewModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat data berita');
+        });
+}
+
+function closeViewModal() {
+    document.getElementById('viewModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+}
+
+function editNews(id) {
+    openNewsModal(id);
+}
+
+function loadNewsData(id) {
+    fetch(`{% url 'news:news_detail_api' 0 %}`.replace('0', id))
+        .then(response => response.json())
+        .then(data => {
+            const form = document.getElementById('newsForm');
+            form.querySelector('[name="title"]').value = data.title;
+            form.querySelector('[name="category"]').value = data.category;
+            form.querySelector('[name="content"]').value = data.content;
+            form.querySelector('[name="excerpt"]').value = data.excerpt || '';
+            form.querySelector('[name="status"]').value = data.status;
+            form.querySelector('[name="priority"]').value = data.priority;
+            form.querySelector('[name="is_featured"]').checked = data.is_featured;
+            form.querySelector('[name="is_breaking"]').checked = data.is_breaking;
+            
+            if (data.featured_image) {
+                document.getElementById('previewImg').src = data.featured_image;
+                document.getElementById('imagePreview').classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal memuat data berita');
+        });
+}
+
+function saveNews() {
+    const form = document.getElementById('newsForm');
+    const formData = new FormData(form);
+    
+    const url = editingId ? `{% url 'news:news_update_api' 0 %}`.replace('0', editingId) : `{% url 'news:news_create_api' %}`;
+    const method = 'POST';
+    
+    fetch(url, {
+        method: method,
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success || data.id) {
+            closeNewsModal();
+            location.reload();
+        } else {
+            alert('Gagal menyimpan berita: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Gagal menyimpan berita');
+    });
+}
+
+function duplicateNews(id) {
+    fetch(`{% url 'news:news_duplicate_api' 0 %}`.replace('0', id), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Gagal menduplikasi berita');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Gagal menduplikasi berita');
+    });
+}
+
+function deleteNews(id) {
+    deleteId = id;
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.body.classList.remove('overflow-hidden');
+    deleteId = null;
+}
+
+function confirmDelete() {
+    if (!deleteId) return;
+    
+    fetch(`{% url 'news:news_delete_api' 0 %}`.replace('0', deleteId), {
+         method: 'DELETE',
+         headers: {
+             'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            closeDeleteModal();
+            location.reload();
+        } else {
+            alert('Gagal menghapus berita');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Gagal menghapus berita');
+    });
+}
+</script>
+{% endblock %}

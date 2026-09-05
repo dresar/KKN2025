@@ -1,0 +1,353 @@
+<!-- Template untuk form edit kategori dalam modal -->
+<div class="modal-header flex justify-between items-center pb-3 mb-4 border-b border-gray-200">
+    <h3 class="text-xl font-semibold text-gray-900">Edit Kategori Wisata</h3>
+    <button type="button" data-close-modal class="text-gray-400 hover:text-gray-500 focus:outline-none">
+        <i class="fas fa-times text-xl"></i>
+    </button>
+</div>
+
+<form method="post" action="{% url 'tourism:admin_category_edit' category.id %}" enctype="multipart/form-data" id="categoryForm">
+    {% csrf_token %}
+    
+    <!-- Pesan error -->
+    {% if form.errors %}
+    <div class="p-4 mb-4 rounded-md bg-red-50 text-red-800 border border-red-200">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-circle text-red-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800">Terdapat kesalahan pada form:</h3>
+                <div class="mt-2 text-sm text-red-700">
+                    <ul class="list-disc pl-5 space-y-1">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if form.non_field_errors %}
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="grid grid-cols-1 gap-6">
+        <!-- Nama Kategori -->
+        <div>
+            <label for="id_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori <span class="text-red-600">*</span></label>
+            <input type="text" name="name" id="id_name" value="{{ form.name.value|default:category.name }}" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Masukkan nama kategori">
+            {% if form.name.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Slug -->
+        <div>
+            <label for="id_slug" class="block text-sm font-medium text-gray-700 mb-1">Slug <span class="text-red-600">*</span></label>
+            <div class="flex">
+                <input type="text" name="slug" id="id_slug" value="{{ form.slug.value|default:category.slug }}" required class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="kategori-wisata">
+                <button type="button" id="generateSlug" class="ml-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            {% if form.slug.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.slug.errors.0 }}</p>
+            {% else %}
+            <p class="mt-1 text-xs text-gray-500">URL yang digunakan untuk kategori ini. Hanya boleh berisi huruf, angka, dan tanda hubung (-).</p>
+            {% endif %}
+        </div>
+        
+        <!-- Deskripsi -->
+        <div>
+            <label for="id_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+            <textarea name="description" id="id_description" rows="4" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Deskripsi singkat tentang kategori wisata ini">{{ form.description.value|default:category.description }}</textarea>
+            {% if form.description.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Icon -->
+        <div>
+            <label for="id_icon" class="block text-sm font-medium text-gray-700 mb-1">Icon (Font Awesome)</label>
+            <div class="flex">
+                <div class="inline-block w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-2">
+                    <i id="iconPreview" class="{{ category.icon|default:'fas fa-tag' }} text-gray-600 text-xl"></i>
+                </div>
+                <input type="text" name="icon" id="id_icon" value="{{ form.icon.value|default:category.icon }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="fas fa-tag">
+            </div>
+            {% if form.icon.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.icon.errors.0 }}</p>
+            {% else %}
+            <p class="mt-1 text-xs text-gray-500">Kelas Font Awesome, contoh: fas fa-mountain, fas fa-umbrella-beach</p>
+            {% endif %}
+        </div>
+        
+        <!-- Color -->
+        <div>
+            <label for="id_color" class="block text-sm font-medium text-gray-700 mb-1">Warna</label>
+            <div class="flex items-center">
+                <input type="color" name="color" id="id_color" value="{{ form.color.value|default:category.color|default:'#4F46E5' }}" class="h-10 w-10 rounded-md border-gray-300 mr-2">
+                <input type="text" id="colorHex" value="{{ form.color.value|default:category.color|default:'#4F46E5' }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="#4F46E5" readonly>
+            </div>
+            {% if form.color.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.color.errors.0 }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Gambar Kategori -->
+        <div>
+            <label for="id_image" class="block text-sm font-medium text-gray-700 mb-1">Gambar Kategori</label>
+            <div class="mt-1 flex items-center">
+                <div class="media-preview w-full h-40 bg-gray-100 rounded-md overflow-hidden mb-2">
+                    {% if category.image %}
+                    <img id="imagePreview" src="{{ category.image.url }}" alt="{{ category.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <div id="imagePreviewPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <i class="fas fa-image text-gray-400 text-5xl"></i>
+                    </div>
+                    <img id="imagePreview" src="" alt="Preview" class="w-full h-full object-cover hidden">
+                    {% endif %}
+                </div>
+                <input type="file" name="image" id="id_image" accept="image/*" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+            </div>
+            {% if form.image.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.image.errors.0 }}</p>
+            {% else %}
+            <p class="mt-1 text-xs text-gray-500">Format yang didukung: JPG, PNG, GIF. Ukuran maksimal: 2MB.</p>
+            {% endif %}
+            {% if category.image %}
+            <div class="mt-2 flex items-center">
+                <input type="checkbox" name="remove_image" id="id_remove_image" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                <label for="id_remove_image" class="ml-2 block text-sm text-gray-700">Hapus gambar saat ini</label>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Video Kategori -->
+        <div>
+            <label for="id_video" class="block text-sm font-medium text-gray-700 mb-1">Video Kategori</label>
+            <div class="mt-1 flex items-center">
+                <div class="media-preview w-full h-40 bg-gray-100 rounded-md overflow-hidden mb-2">
+                    {% if category.video %}
+                    <video id="videoPreview" src="{{ category.video.url }}" controls class="w-full h-full object-cover">
+                        Your browser does not support the video tag.
+                    </video>
+                    {% else %}
+                    <div id="videoPreviewPlaceholder" class="w-full h-full flex items-center justify-center bg-gray-100">
+                        <i class="fas fa-video text-gray-400 text-5xl"></i>
+                    </div>
+                    <video id="videoPreview" src="" controls class="w-full h-full object-cover hidden">
+                        Your browser does not support the video tag.
+                    </video>
+                    {% endif %}
+                </div>
+                <input type="file" name="video" id="id_video" accept="video/*" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+            </div>
+            {% if form.video.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.video.errors.0 }}</p>
+            {% else %}
+            <p class="mt-1 text-xs text-gray-500">Format yang didukung: MP4, WebM. Ukuran maksimal: 10MB.</p>
+            {% endif %}
+            {% if category.video %}
+            <div class="mt-2 flex items-center">
+                <input type="checkbox" name="remove_video" id="id_remove_video" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                <label for="id_remove_video" class="ml-2 block text-sm text-gray-700">Hapus video saat ini</label>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- YouTube Link -->
+        <div>
+            <label for="id_youtube_link" class="block text-sm font-medium text-gray-700 mb-1">Link YouTube</label>
+            <div class="mt-1">
+                <input type="url" name="youtube_link" id="id_youtube_link" value="{{ form.youtube_link.value|default:category.youtube_link }}" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            {% if form.youtube_link.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.youtube_link.errors.0 }}</p>
+            {% else %}
+            <p class="mt-1 text-xs text-gray-500">Masukkan URL video YouTube (contoh: https://www.youtube.com/watch?v=abcdef123456).</p>
+            {% endif %}
+            {% if category.youtube_link %}
+            <div class="mt-2 flex items-center">
+                <input type="checkbox" name="remove_youtube_link" id="id_remove_youtube_link" class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded">
+                <label for="id_remove_youtube_link" class="ml-2 block text-sm text-gray-700">Hapus link YouTube saat ini</label>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Status -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label for="id_is_active" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <div class="relative inline-block w-full">
+                    <select name="is_active" id="id_is_active" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="True" {% if form.is_active.value or category.is_active %}selected{% endif %}>Aktif</option>
+                        <option value="False" {% if form.is_active.value == False or not category.is_active %}selected{% endif %}>Tidak Aktif</option>
+                    </select>
+                </div>
+                {% if form.is_active.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="id_featured" class="block text-sm font-medium text-gray-700 mb-1">Unggulan</label>
+                <div class="relative inline-block w-full">
+                    <select name="featured" id="id_featured" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="True" {% if form.featured.value or category.featured %}selected{% endif %}>Ya</option>
+                        <option value="False" {% if form.featured.value == False or not category.featured %}selected{% endif %}>Tidak</option>
+                    </select>
+                </div>
+                {% if form.featured.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.featured.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex justify-end space-x-3">
+        <button type="button" data-close-modal class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Batal
+        </button>
+        <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Simpan
+        </button>
+    </div>
+</form>
+
+<script>
+    // Fungsi untuk menghasilkan slug dari nama
+    function slugify(text) {
+        return text.toString().toLowerCase()
+            .replace(/\s+/g, '-')           // Ganti spasi dengan -
+            .replace(/[^\w\-]+/g, '')       // Hapus semua karakter non-word
+            .replace(/\-\-+/g, '-')         // Ganti multiple - dengan single -
+            .replace(/^-+/, '')             // Trim - dari awal teks
+            .replace(/-+$/, '');            // Trim - dari akhir teks
+    }
+    
+    // Event listener untuk tombol generate slug
+    document.getElementById('generateSlug').addEventListener('click', function() {
+        const nameInput = document.getElementById('id_name');
+        const slugInput = document.getElementById('id_slug');
+        
+        if (nameInput.value) {
+            slugInput.value = slugify(nameInput.value);
+        }
+    });
+    
+    // Preview icon saat input diubah
+    document.getElementById('id_icon').addEventListener('input', function() {
+        const iconPreview = document.getElementById('iconPreview');
+        
+        // Hapus semua kelas
+        iconPreview.className = '';
+        
+        // Tambahkan kelas baru
+        if (this.value) {
+            iconPreview.className = this.value + ' text-gray-600 text-xl';
+        } else {
+            iconPreview.className = 'fas fa-tag text-gray-600 text-xl';
+        }
+    });
+    
+    // Update warna hex saat color picker diubah
+    document.getElementById('id_color').addEventListener('input', function() {
+        document.getElementById('colorHex').value = this.value;
+    });
+    
+    // Preview gambar saat file dipilih
+    document.getElementById('id_image').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Validasi tipe file
+            const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('Format file tidak didukung. Gunakan JPG, PNG, atau GIF.');
+                this.value = '';
+                return;
+            }
+            
+            // Validasi ukuran file (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 2MB.');
+                this.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imagePreview = document.getElementById('imagePreview');
+                const placeholder = document.getElementById('imagePreviewPlaceholder');
+                
+                if (placeholder) placeholder.classList.add('hidden');
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Preview video saat file dipilih
+    document.getElementById('id_video').addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Validasi tipe file
+            const validTypes = ['video/mp4', 'video/webm'];
+            if (!validTypes.includes(file.type)) {
+                alert('Format file tidak didukung. Gunakan MP4 atau WebM.');
+                this.value = '';
+                return;
+            }
+            
+            // Validasi ukuran file (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar. Maksimal 10MB.');
+                this.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const videoPreview = document.getElementById('videoPreview');
+                const placeholder = document.getElementById('videoPreviewPlaceholder');
+                
+                if (placeholder) placeholder.classList.add('hidden');
+                videoPreview.src = e.target.result;
+                videoPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Menangani checkbox hapus gambar
+    if (document.getElementById('id_remove_image')) {
+        document.getElementById('id_remove_image').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('id_image').disabled = true;
+            } else {
+                document.getElementById('id_image').disabled = false;
+            }
+        });
+    }
+    
+    // Menangani checkbox hapus video
+    if (document.getElementById('id_remove_video')) {
+        document.getElementById('id_remove_video').addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('id_video').disabled = true;
+            } else {
+                document.getElementById('id_video').disabled = false;
+            }
+        });
+    }
+</script>

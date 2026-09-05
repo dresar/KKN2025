@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+
+{% block title %}Wisata Desa - Website Desa Pulosarok{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-in">Wisata Desa Pulosarok</h1>
+            <p class="text-xl opacity-90 fade-in">Jelajahi Keindahan Alam dan Budaya Desa Pulosarok</p>
+        </div>
+    </div>
+</section>
+
+<!-- Tourism Overview -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Destinasi Wisata Unggulan</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Desa Pulosarok menawarkan berbagai destinasi wisata menarik yang memadukan keindahan alam dengan kearifan lokal</p>
+        </div>
+        
+        <div id="tourism-stats" class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+            <!-- Stats will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section class="py-8 bg-gray-50 border-b">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                <div class="flex-1">
+                    <input type="text" id="search-input" placeholder="Cari destinasi wisata..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                
+                <select id="category-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="alam">Wisata Alam</option>
+                    <option value="budaya">Wisata Budaya</option>
+                    <option value="religi">Wisata Religi</option>
+                    <option value="kuliner">Wisata Kuliner</option>
+                    <option value="edukasi">Wisata Edukasi</option>
+                    <option value="adventure">Wisata Petualangan</option>
+                </select>
+                
+                <select id="facility-filter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Fasilitas</option>
+                    <option value="parkir">Area Parkir</option>
+                    <option value="toilet">Toilet</option>
+                    <option value="mushola">Mushola</option>
+                    <option value="warung">Warung Makan</option>
+                    <option value="gazebo">Gazebo</option>
+                    <option value="camping">Area Camping</option>
+                </select>
+            </div>
+            
+            <div class="flex gap-2">
+                <button onclick="toggleView('grid')" id="grid-btn" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-th-large mr-2"></i>Grid
+                </button>
+                <button onclick="toggleView('map')" id="map-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                    <i class="fas fa-map-marked-alt mr-2"></i>Peta
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tourism Grid View -->
+<section id="grid-view" class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div id="tourism-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Tourism destinations will be loaded here -->
+        </div>
+        
+        <!-- Pagination -->
+        <div id="pagination" class="flex items-center justify-center mt-12">
+            <!-- Pagination will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Tourism Map View -->
+<section id="map-view" class="py-16 bg-gray-50 hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <div class="lg:w-2/3">
+                    <div id="tourism-map" class="w-full h-96 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <div class="text-center text-gray-500">
+                            <i class="fas fa-map text-4xl mb-4"></i>
+                            <p>Peta Wisata Desa Pulosarok</p>
+                            <p class="text-sm mt-2">Fitur peta akan segera tersedia</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/3">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Daftar Destinasi</h3>
+                    <div id="map-destinations" class="space-y-3 max-h-96 overflow-y-auto">
+                        <!-- Map destinations list will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Destinations -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Destinasi Terpopuler</h2>
+            <p class="text-gray-600">Destinasi wisata yang paling banyak dikunjungi</p>
+        </div>
+        
+        <div id="featured-destinations" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Featured destinations will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Tourism Gallery -->
+<section class="py-16 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Galeri Wisata</h2>
+            <p class="text-gray-600">Koleksi foto-foto indah dari berbagai destinasi wisata</p>
+        </div>
+        
+        <div id="tourism-gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Gallery will be loaded here -->
+        </div>
+    </div>
+</section>
+
+<!-- Tourism Detail Modal -->
+<div id="tourism-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-6xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="tourism-modal-title" class="text-2xl font-bold text-gray-900"></h2>
+                    <button onclick="closeModal('tourism-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="tourism-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gallery Modal -->
+<div id="gallery-modal" class="fixed inset-0 bg-black bg-opacity-90 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative max-w-4xl w-full">
+            <button onclick="closeModal('gallery-modal')" class="absolute top-4 right-4 text-white hover:text-gray-300 z-10">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+            <div id="gallery-modal-content" class="text-center">
+                <!-- Gallery content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class TourismPage {
+        constructor() {
+            this.currentView = 'grid';
+            this.currentPage = 1;
+            this.pageSize = 9;
+            this.filters = {
+                search: '',
+                category: '',
+                facility: ''
+            };
+            this.destinations = [];
+            this.init();
+        }
+        
+        async init() {
+            await this.loadTourismStats();
+            await this.loadDestinations();
+            await this.loadFeaturedDestinations();
+            await this.loadGallery();
+            this.setupFilters();
+        }
+        
+        setupFilters() {
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                this.filters.search = e.target.value;
+                this.debounceSearch();
+            });
+            
+            document.getElementById('category-filter').addEventListener('change', (e) => {
+                this.filters.category = e.target.value;
+                this.currentPage = 1;
+                this.loadDestinations();
+            });
+            
+            document.getElementById('facility-filter').addEventListener('change', (e) => {
+                this.filters.facility = e.target.value;
+                this.currentPage = 1;
+                this.loadDestinations();
+            });
+        }
+        
+        debounceSearch() {
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                this.currentPage = 1;
+                this.loadDestinations();
+            }, 500);
+        }
+        
+        async loadTourismStats() {
+            try {
+                const data = await apiCall('/tourism/api/stats/');
+                this.renderTourismStats(data);
+            } catch (error) {
+                console.error('Error loading tourism stats:', error);
+                this.renderDefaultStats();
+            }
+        }
+        
+        renderTourismStats(data) {
+            const stats = data.stats || {};
+            const container = document.getElementById('tourism-stats');
+            
+            const statsData = [
+                { icon: 'fas fa-map-marker-alt', label: 'Destinasi Wisata', value: stats.total || 0, color: 'blue' },
+                { icon: 'fas fa-eye', label: 'Total Pengunjung', value: stats.total_visitors || 0, color: 'green' },
+                { icon: 'fas fa-star', label: 'Rating Rata-rata', value: (stats.average_rating || 0).toFixed(1), color: 'yellow' },
+                { icon: 'fas fa-images', label: 'Foto Galeri', value: stats.total_photos || 0, color: 'purple' }
+            ];
+            
+            container.innerHTML = statsData.map(stat => `
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-${stat.color}-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">${stat.label === 'Rating Rata-rata' ? stat.value : formatNumber(stat.value)}</h3>
+                    <p class="text-gray-600">${stat.label}</p>
+                </div>
+            `).join('');
+        }
+        
+        renderDefaultStats() {
+            const container = document.getElementById('tourism-stats');
+            const statsData = [
+                { icon: 'fas fa-map-marker-alt', label: 'Destinasi Wisata', value: 0, color: 'blue' },
+                { icon: 'fas fa-eye', label: 'Total Pengunjung', value: 0, color: 'green' },
+                { icon: 'fas fa-star', label: 'Rating Rata-rata', value: '0.0', color: 'yellow' },
+                { icon: 'fas fa-images', label: 'Foto Galeri', value: 0, color: 'purple' }
+            ];
+            
+            container.innerHTML = statsData.map(stat => `
+                <div class="bg-white rounded-lg shadow-lg p-6 text-center card-hover">
+                    <div class="w-16 h-16 bg-${stat.color}-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="${stat.icon} text-${stat.color}-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 mb-2">${stat.label === 'Rating Rata-rata' ? stat.value : formatNumber(stat.value)}</h3>
+                    <p class="text-gray-600">${stat.label}</p>
+                </div>
+            `).join('');
+        }
+        
+        async loadDestinations() {
+            try {
+                let url = `/tourism/api/destinations/?page=${this.currentPage}&page_size=${this.pageSize}`;
+                
+                if (this.filters.search) {
+                    url += `&search=${encodeURIComponent(this.filters.search)}`;
+                }
+                if (this.filters.category) {
+                    url += `&category=${this.filters.category}`;
+                }
+                if (this.filters.facility) {
+                    url += `&facility=${this.filters.facility}`;
+                }
+                
+                const data = await apiCall(url);
+                this.destinations = data.results || [];
+                
+                if (this.currentView === 'grid') {
+                    this.renderDestinationsGrid();
+                } else {
+                    this.renderDestinationsMap();
+                }
+                
+                this.renderPagination(data);
+            } catch (error) {
+                console.error('Error loading destinations:', error);
+                this.renderEmptyState();
+            }
+        }
+        
+        renderDestinationsGrid() {
+            const container = document.getElementById('tourism-grid');
+            
+            if (this.destinations.length === 0) {
+                container.innerHTML = '<div class="col-span-3 text-center text-gray-500 py-8">Tidak ada destinasi wisata ditemukan</div>';
+                return;
+            }
+            
+            container.innerHTML = this.destinations.map(destination => `
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden card-hover cursor-pointer" onclick="showDestinationDetail(${destination.id})">
+                    <div class="aspect-video bg-gray-200 relative">
+                        ${destination.image || destination.foto_utama ? `
+                            <img src="${destination.image || destination.foto_utama}" alt="${destination.title || destination.nama}" class="w-full h-full object-cover">
+                        ` : `
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-mountain text-4xl"></i>
+                            </div>
+                        `}
+                        <div class="absolute top-4 left-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                ${this.getCategoryLabel(destination.category || destination.kategori)}
+                            </span>
+                        </div>
+                        ${destination.rating ? `
+                            <div class="absolute top-4 right-4 bg-white bg-opacity-90 rounded-full px-2 py-1">
+                                <div class="flex items-center text-sm">
+                                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                    <span class="font-medium">${destination.rating.toFixed(1)}</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">${destination.title || destination.nama}</h3>
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">${destination.short_description || destination.deskripsi || 'Deskripsi tidak tersedia'}</p>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <div class="flex items-center">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                <span>${destination.address || destination.lokasi || 'Lokasi tidak tersedia'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-eye mr-2"></i>
+                                <span>${formatNumber(destination.visit_count || destination.jumlah_pengunjung || 0)}</span>
+                            </div>
+                        </div>
+                        
+                        ${(destination.facilities || destination.fasilitas) && (destination.facilities || destination.fasilitas).length > 0 ? `
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                ${(destination.facilities || destination.fasilitas).slice(0, 3).map(facility => `
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                                        ${this.getFacilityIcon(facility)} ${facility}
+                                    </span>
+                                `).join('')}
+                                ${(destination.facilities || destination.fasilitas).length > 3 ? `
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                                        +${(destination.facilities || destination.fasilitas).length - 3} lainnya
+                                    </span>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm text-gray-500">
+                                ${destination.jam_buka ? `
+                                    <i class="fas fa-clock mr-1"></i>
+                                    ${destination.jam_buka} - ${destination.jam_tutup || '17:00'}
+                                ` : 'Jam operasional: 24 jam'}
+                            </div>
+                            <button class="text-primary-600 hover:text-primary-800 font-medium text-sm">
+                                Lihat Detail <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        renderDestinationsMap() {
+            const mapContainer = document.getElementById('map-destinations');
+            
+            if (this.destinations.length === 0) {
+                mapContainer.innerHTML = '<div class="text-center text-gray-500 py-4">Tidak ada destinasi ditemukan</div>';
+                return;
+            }
+            
+            mapContainer.innerHTML = this.destinations.map(destination => `
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors" onclick="showDestinationDetail(${destination.id})">
+                    <div class="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                        ${destination.foto_utama ? `
+                            <img src="${destination.foto_utama}" alt="${destination.nama}" class="w-full h-full object-cover">
+                        ` : `
+                            <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-mountain"></i>
+                            </div>
+                        `}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-medium text-gray-900 truncate">${destination.nama}</h4>
+                        <p class="text-sm text-gray-500 truncate">${destination.lokasi || 'Lokasi tidak tersedia'}</p>
+                        ${destination.rating ? `
+                            <div class="flex items-center mt-1">
+                                <i class="fas fa-star text-yellow-400 text-xs mr-1"></i>
+                                <span class="text-xs text-gray-600">${destination.rating.toFixed(1)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        renderEmptyState() {
+            const container = this.currentView === 'grid' ? 
+                document.getElementById('tourism-grid') : 
+                document.getElementById('map-destinations');
+            container.innerHTML = '<div class="text-center text-gray-500 py-8">Gagal memuat destinasi wisata</div>';
+        }
+        
+        renderPagination(data) {
+            const container = document.getElementById('pagination');
+            const totalPages = Math.ceil((data.count || 0) / this.pageSize);
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="flex justify-center space-x-2">
+                    <button onclick="tourismPage.changePage(${this.currentPage - 1})" 
+                            ${this.currentPage === 1 ? 'disabled' : ''} 
+                            class="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left mr-2"></i>Sebelumnya
+                    </button>
+                    <span class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md">
+                        ${this.currentPage} / ${totalPages}
+                    </span>
+                    <button onclick="tourismPage.changePage(${this.currentPage + 1})" 
+                            ${this.currentPage === totalPages ? 'disabled' : ''} 
+                            class="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Selanjutnya<i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            `;
+        }
+        
+        changePage(page) {
+            if (page < 1) return;
+            this.currentPage = page;
+            this.loadDestinations();
+        }
+        
+        async loadFeaturedDestinations() {
+            try {
+                const data = await apiCall('/tourism/api/destinations/?featured=true&page_size=2');
+                this.renderFeaturedDestinations(data.results || []);
+            } catch (error) {
+                console.error('Error loading featured destinations:', error);
+            }
+        }
+        
+        renderFeaturedDestinations(destinations) {
+            const container = document.getElementById('featured-destinations');
+            
+            if (destinations.length === 0) {
+                container.innerHTML = '<div class="col-span-2 text-center text-gray-500 py-8">Belum ada destinasi unggulan</div>';
+                return;
+            }
+            
+            container.innerHTML = destinations.map((destination, index) => `
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden card-hover cursor-pointer" onclick="showDestinationDetail(${destination.id})">
+                    <div class="${index === 0 ? 'lg:flex' : ''}">
+                        <div class="${index === 0 ? 'lg:w-1/2' : ''} aspect-video bg-gray-200">
+                            ${destination.image || destination.foto_utama ? `
+                                <img src="${destination.image || destination.foto_utama}" alt="${destination.title || destination.nama}" class="w-full h-full object-cover">
+                            ` : `
+                                <div class="w-full h-full flex items-center justify-center text-gray-400">
+                                    <i class="fas fa-mountain text-4xl"></i>
+                                </div>
+                            `}
+                        </div>
+                        <div class="${index === 0 ? 'lg:w-1/2' : ''} p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+                                    ${this.getCategoryLabel(destination.category || destination.kategori)}
+                                </span>
+                                ${destination.rating ? `
+                                    <div class="flex items-center text-sm">
+                                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                        <span class="font-medium">${destination.rating.toFixed(1)}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-3">${destination.title || destination.nama}</h3>
+                            <p class="text-gray-600 mb-4 line-clamp-3">${destination.short_description || destination.deskripsi || 'Deskripsi tidak tersedia'}</p>
+                            <div class="flex items-center text-sm text-gray-500 mb-4">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                <span>${destination.address || destination.lokasi || 'Lokasi tidak tersedia'}</span>
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-eye mr-2"></i>
+                                <span>${formatNumber(destination.visit_count || destination.jumlah_pengunjung || 0)} pengunjung</span>
+                            </div>
+                            ${(destination.facilities || destination.fasilitas) && (destination.facilities || destination.fasilitas).length > 0 ? `
+                                <div class="flex flex-wrap gap-1">
+                                    ${(destination.facilities || destination.fasilitas).slice(0, 4).map(facility => `
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                                            ${this.getFacilityIcon(facility)} ${facility}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async loadGallery() {
+            try {
+                const data = await apiCall('/tourism/api/gallery/?page_size=12');
+                this.renderGallery(data.results || []);
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+            }
+        }
+        
+        renderGallery(photos) {
+            const container = document.getElementById('tourism-gallery');
+            
+            if (photos.length === 0) {
+                container.innerHTML = '<div class="col-span-4 text-center text-gray-500 py-8">Belum ada foto galeri</div>';
+                return;
+            }
+            
+            container.innerHTML = photos.map((photo, index) => `
+                <div class="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
+                     onclick="showGalleryImage('${photo.foto}', '${photo.judul || 'Foto Wisata'}', '${photo.deskripsi || ''}')">
+                    ${photo.foto ? `
+                        <img src="${photo.foto}" alt="${photo.judul || 'Foto Wisata'}" class="w-full h-full object-cover">
+                    ` : `
+                        <div class="w-full h-full flex items-center justify-center text-gray-400">
+                            <i class="fas fa-image text-2xl"></i>
+                        </div>
+                    `}
+                </div>
+            `).join('');
+        }
+        
+        getCategoryLabel(category) {
+            const categories = {
+                'alam': 'Wisata Alam',
+                'budaya': 'Wisata Budaya',
+                'religi': 'Wisata Religi',
+                'kuliner': 'Wisata Kuliner',
+                'edukasi': 'Wisata Edukasi',
+                'adventure': 'Wisata Petualangan'
+            };
+            return categories[category] || 'Wisata';
+        }
+        
+        getFacilityIcon(facility) {
+            const icons = {
+                'parkir': '<i class="fas fa-parking mr-1"></i>',
+                'toilet': '<i class="fas fa-restroom mr-1"></i>',
+                'mushola': '<i class="fas fa-mosque mr-1"></i>',
+                'warung': '<i class="fas fa-utensils mr-1"></i>',
+                'gazebo': '<i class="fas fa-home mr-1"></i>',
+                'camping': '<i class="fas fa-campground mr-1"></i>'
+            };
+            return icons[facility] || '<i class="fas fa-check mr-1"></i>';
+        }
+    }
+    
+    function toggleView(view) {
+        const gridView = document.getElementById('grid-view');
+        const mapView = document.getElementById('map-view');
+        const gridBtn = document.getElementById('grid-btn');
+        const mapBtn = document.getElementById('map-btn');
+        
+        if (view === 'grid') {
+            gridView.classList.remove('hidden');
+            mapView.classList.add('hidden');
+            gridBtn.classList.add('bg-primary-600', 'text-white');
+            gridBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            mapBtn.classList.add('bg-gray-200', 'text-gray-700');
+            mapBtn.classList.remove('bg-primary-600', 'text-white');
+        } else {
+            gridView.classList.add('hidden');
+            mapView.classList.remove('hidden');
+            mapBtn.classList.add('bg-primary-600', 'text-white');
+            mapBtn.classList.remove('bg-gray-200', 'text-gray-700');
+            gridBtn.classList.add('bg-gray-200', 'text-gray-700');
+            gridBtn.classList.remove('bg-primary-600', 'text-white');
+        }
+        
+        tourismPage.currentView = view;
+        tourismPage.loadDestinations();
+    }
+    
+    async function showDestinationDetail(destinationId) {
+        try {
+            const destination = await apiCall(`/tourism/api/destinations/${destinationId}/`);
+            
+            document.getElementById('tourism-modal-title').textContent = destination.nama || destination.title;
+            document.getElementById('tourism-modal-content').innerHTML = `
+                <div class="space-y-6">
+                    ${destination.foto_utama ? `
+                        <div class="aspect-video bg-gray-200 rounded-lg overflow-hidden">
+                            <img src="${destination.foto_utama}" alt="${destination.nama}" class="w-full h-full object-cover">
+                        </div>
+                    ` : ''}
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+                                    ${tourismPage.getCategoryLabel(destination.kategori)}
+                                </span>
+                                ${destination.rating ? `
+                                    <div class="flex items-center">
+                                        <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                        <span class="font-medium">${destination.rating.toFixed(1)}</span>
+                                        <span class="text-gray-500 ml-1">(${destination.jumlah_review || 0} review)</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="prose max-w-none mb-6">
+                                <p class="text-gray-700">${destination.deskripsi || 'Deskripsi tidak tersedia.'}</p>
+                            </div>
+                            
+                            ${destination.fasilitas && destination.fasilitas.length > 0 ? `
+                                <div class="mb-6">
+                                    <h4 class="font-semibold text-gray-900 mb-3">Fasilitas</h4>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        ${destination.fasilitas.map(facility => `
+                                            <div class="flex items-center text-sm text-gray-700">
+                                                ${tourismPage.getFacilityIcon(facility)}
+                                                <span>${facility}</span>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${destination.aktivitas && destination.aktivitas.length > 0 ? `
+                                <div class="mb-6">
+                                    <h4 class="font-semibold text-gray-900 mb-3">Aktivitas</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${destination.aktivitas.map(activity => `
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                                                ${activity}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="lg:col-span-1">
+                            <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-900 mb-2">Informasi</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex items-start">
+                                            <i class="fas fa-map-marker-alt text-gray-400 mr-2 mt-1"></i>
+                                            <span class="text-gray-700">${destination.lokasi || 'Lokasi tidak tersedia'}</span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-clock text-gray-400 mr-2"></i>
+                                            <span class="text-gray-700">
+                                                ${destination.jam_buka ? `${destination.jam_buka} - ${destination.jam_tutup || '17:00'}` : '24 Jam'}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <i class="fas fa-eye text-gray-400 mr-2"></i>
+                                            <span class="text-gray-700">${formatNumber(destination.jumlah_pengunjung || 0)} pengunjung</span>
+                                        </div>
+                                        ${destination.harga_tiket ? `
+                                            <div class="flex items-center">
+                                                <i class="fas fa-ticket-alt text-gray-400 mr-2"></i>
+                                                <span class="text-gray-700">Rp ${formatNumber(destination.harga_tiket)}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                
+                                ${destination.kontak ? `
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900 mb-2">Kontak</h4>
+                                        <div class="space-y-2 text-sm">
+                                            ${destination.kontak.telepon ? `
+                                                <div class="flex items-center">
+                                                    <i class="fas fa-phone text-gray-400 mr-2"></i>
+                                                    <span class="text-gray-700">${destination.kontak.telepon}</span>
+                                                </div>
+                                            ` : ''}
+                                            ${destination.kontak.whatsapp ? `
+                                                <div class="flex items-center">
+                                                    <i class="fab fa-whatsapp text-gray-400 mr-2"></i>
+                                                    <span class="text-gray-700">${destination.kontak.whatsapp}</span>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="pt-4 border-t">
+                                    <button onclick="shareDestination('${destination.nama}', window.location.href)" 
+                                            class="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors">
+                                        <i class="fas fa-share-alt mr-2"></i>Bagikan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    ${destination.galeri && destination.galeri.length > 0 ? `
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-4">Galeri Foto</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                ${destination.galeri.map(photo => `
+                                    <div class="aspect-square bg-gray-200 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity" 
+                                         onclick="showGalleryImage('${photo.foto}', '${photo.judul || destination.nama}', '${photo.deskripsi || ''}')">
+                                        <img src="${photo.foto}" alt="${photo.judul || destination.nama}" class="w-full h-full object-cover">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            openModal('tourism-modal');
+            
+            // Increment visitor count
+            apiCall(`/tourism/api/destinations/${destinationId}/visit/`, 'POST').catch(console.error);
+        } catch (error) {
+            console.error('Error loading destination detail:', error);
+        }
+    }
+    
+    function showGalleryImage(imageUrl, title, description) {
+        document.getElementById('gallery-modal-content').innerHTML = `
+            <div class="space-y-4">
+                <img src="${imageUrl}" alt="${title}" class="max-w-full max-h-96 mx-auto rounded-lg">
+                <div class="text-white text-center">
+                    <h3 class="text-xl font-semibold mb-2">${title}</h3>
+                    ${description ? `<p class="text-gray-300">${description}</p>` : ''}
+                </div>
+            </div>
+        `;
+        openModal('gallery-modal');
+    }
+    
+    function shareDestination(name, url) {
+        if (navigator.share) {
+            navigator.share({
+                title: `Wisata ${name} - Desa Pulosarok`,
+                url: url
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link berhasil disalin!');
+            }).catch(() => {
+                alert('Gagal menyalin link');
+            });
+        }
+    }
+    
+    // Initialize tourism page
+    let tourismPage;
+    document.addEventListener('DOMContentLoaded', function() {
+        tourismPage = new TourismPage();
+    });
+</script>
+{% endblock %}

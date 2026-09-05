@@ -1,0 +1,286 @@
+{% extends 'admin/base.html' %}
+{% load humanize %}
+
+{% block title %}Detail Lokasi Wisata{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Detail Lokasi Wisata</h1>
+            <p class="text-gray-600 mt-1">Informasi lengkap tentang lokasi wisata</p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="{% url 'tourism:admin_location_edit' location.id %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors duration-150">
+                <i class="fas fa-edit mr-2"></i>
+                <span>Edit</span>
+            </a>
+            <a href="{% url 'tourism:admin_location_list' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors duration-150">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Kembali</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <!-- Header dengan gambar dan info utama -->
+        <div class="relative">
+            {% if location.main_image %}
+            <div class="h-64 w-full bg-gray-200 overflow-hidden">
+                <img src="{{ location.main_image.url }}" alt="{{ location.name }}" class="w-full h-full object-cover">
+            </div>
+            {% else %}
+            <div class="h-64 w-full bg-gray-200 flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-gray-400 text-5xl"></i>
+            </div>
+            {% endif %}
+            
+            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                <h2 class="text-3xl font-bold text-white">{{ location.name }}</h2>
+                {% if location.address %}
+                <p class="text-white/90 mt-2 flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2"></i>
+                    {{ location.address }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Status badges -->
+        <div class="px-6 py-3 bg-gray-50 border-b border-gray-200">
+            <div class="flex flex-wrap gap-2">
+                <span class="px-3 py-1 rounded-full text-xs font-medium {% if location.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    {% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                </span>
+                {% if location.featured %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Featured
+                </span>
+                {% endif %}
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    ID: {{ location.id }}
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    Slug: {{ location.slug }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Kolom kiri: Informasi dasar -->
+                <div class="md:col-span-2 space-y-6">
+                    {% if location.description %}
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Deskripsi</h3>
+                        <div class="prose max-w-none text-gray-700">
+                            {{ location.description|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if location.latitude and location.longitude %}
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Lokasi di Peta</h3>
+                        <div class="h-64 bg-gray-100 rounded-lg overflow-hidden">
+                            <!-- Placeholder for map, in a real implementation you would use Google Maps or similar -->
+                            <div class="h-full w-full flex items-center justify-center bg-gray-200">
+                                <div class="text-center">
+                                    <i class="fas fa-map-marked-alt text-gray-400 text-4xl mb-2"></i>
+                                    <p class="text-gray-600">Peta Lokasi</p>
+                                    <p class="text-gray-500 text-sm mt-1">Latitude: {{ location.latitude }}, Longitude: {{ location.longitude }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Daftar paket wisata terkait -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Paket Wisata di Lokasi Ini</h3>
+                        {% if related_packages %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Paket</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for package in related_packages %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                {% if package.image %}
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    <img class="h-10 w-10 rounded-md object-cover" src="{{ package.image.url }}" alt="{{ package.title }}">
+                                                </div>
+                                                {% endif %}
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">{{ package.title }}</div>
+                                                    <div class="text-sm text-gray-500">{{ package.get_package_type_display }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ package.category.name }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ package.duration }} {{ package.get_duration_unit_display }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">Rp {{ package.price|floatformat:0|intcomma }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if package.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                                {% if package.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <a href="{% url 'tourism:admin_package_detail' package.id %}" class="text-blue-600 hover:text-blue-900 mr-3">Detail</a>
+                                            <a href="{% url 'tourism:admin_package_edit' package.id %}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="bg-gray-50 rounded-md p-4 text-gray-600">
+                            <p>Belum ada paket wisata yang terkait dengan lokasi ini.</p>
+                            <a href="{% url 'tourism:admin_package_create' %}" class="text-primary-600 hover:text-primary-700 mt-2 inline-block">
+                                <i class="fas fa-plus-circle mr-1"></i> Tambah Paket Wisata Baru
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Kolom kanan: Informasi tambahan -->
+                <div class="space-y-6">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Informasi Lokasi</h3>
+                        <ul class="space-y-3">
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Nama:</span>
+                                <span class="font-medium text-gray-900">{{ location.name }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Slug:</span>
+                                <span class="font-medium text-gray-900">{{ location.slug }}</span>
+                            </li>
+                            {% if location.address %}
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Alamat:</span>
+                                <span class="font-medium text-gray-900">{{ location.address }}</span>
+                            </li>
+                            {% endif %}
+                            {% if location.latitude and location.longitude %}
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Koordinat:</span>
+                                <span class="font-medium text-gray-900">{{ location.latitude }}, {{ location.longitude }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Google Maps:</span>
+                                <a href="https://www.google.com/maps?q={{ location.latitude }},{{ location.longitude }}" target="_blank" class="font-medium text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>Lihat di Google Maps
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Status:</span>
+                                <span class="font-medium {% if location.is_active %}text-green-600{% else %}text-red-600{% endif %}">
+                                    {% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                                </span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Featured:</span>
+                                <span class="font-medium {% if location.featured %}text-purple-600{% else %}text-gray-600{% endif %}">
+                                    {% if location.featured %}Ya{% else %}Tidak{% endif %}
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Metadata</h3>
+                        <ul class="space-y-3">
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">ID:</span>
+                                <span class="font-medium text-gray-900">{{ location.id }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Dibuat:</span>
+                                <span class="font-medium text-gray-900">{{ location.created_at|date:"d M Y, H:i" }}</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-gray-600">Diperbarui:</span>
+                                <span class="font-medium text-gray-900">{{ location.updated_at|date:"d M Y, H:i" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-3">Tindakan</h3>
+                        <div class="space-y-2">
+                            <a href="{% url 'tourism:admin_location_edit' location.id %}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md inline-flex items-center justify-center transition-colors duration-150">
+                                <i class="fas fa-edit mr-2"></i>
+                                <span>Edit Lokasi</span>
+                            </a>
+                            <a href="#" onclick="confirmDelete('{% url 'tourism:admin_location_delete' location.id %}')" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md inline-flex items-center justify-center transition-colors duration-150">
+                                <i class="fas fa-trash mr-2"></i>
+                                <span>Hapus Lokasi</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal konfirmasi hapus -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg max-w-md w-full p-6">
+        <div class="sm:flex sm:items-start">
+            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Hapus Lokasi</h3>
+                <div class="mt-2">
+                    <p class="text-sm text-gray-500">Apakah Anda yakin ingin menghapus lokasi ini? Tindakan ini tidak dapat dibatalkan dan mungkin akan memengaruhi paket wisata yang terkait.</p>
+                </div>
+            </div>
+        </div>
+        <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+            <form id="deleteForm" method="post" action="">
+                {% csrf_token %}
+                <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Hapus
+                </button>
+            </form>
+            <button type="button" onclick="closeDeleteModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm">
+                Batal
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(url) {
+        document.getElementById('deleteForm').action = url;
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,905 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Pengaturan Posyandu{% endblock %}
+
+{% block page_title %}Pengaturan Posyandu{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 space-y-6">
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Pengaturan Posyandu</h1>
+            <p class="mt-1 text-sm text-gray-600">Kelola lokasi, jadwal, dan pengaturan umum Posyandu</p>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+            <button onclick="showTab('locations')" id="tab-locations" class="tab-button border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                <i class="fas fa-map-marker-alt mr-2"></i>
+                Lokasi Posyandu
+            </button>
+            <button onclick="showTab('schedules')" id="tab-schedules" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                <i class="fas fa-calendar-alt mr-2"></i>
+                Jadwal Kegiatan
+            </button>
+            <button onclick="showTab('general')" id="tab-general" class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                <i class="fas fa-cog mr-2"></i>
+                Pengaturan Umum
+            </button>
+        </nav>
+    </div>
+
+    <!-- Locations Tab -->
+    <div id="locations-tab" class="tab-content">
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">Lokasi Posyandu</h3>
+                <button onclick="openLocationModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Lokasi
+                </button>
+            </div>
+            
+            <!-- Search and Filter -->
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <input type="text" id="location-search" placeholder="Cari lokasi..." class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <select id="location-status-filter" class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Semua Status</option>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Tidak Aktif</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button onclick="loadLocations()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                            <i class="fas fa-search mr-2"></i>
+                            Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Posyandu</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dusun</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="locations-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedules Tab -->
+    <div id="schedules-tab" class="tab-content hidden">
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">Jadwal Kegiatan Posyandu</h3>
+                <button onclick="openScheduleModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    <i class="fas fa-plus mr-2"></i>
+                    Tambah Jadwal
+                </button>
+            </div>
+            
+            <!-- Calendar View -->
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Calendar -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white border border-gray-200 rounded-lg">
+                            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                                <h4 class="text-lg font-medium text-gray-900" id="calendar-month-year">Januari 2024</h4>
+                                <div class="flex space-x-2">
+                                    <button onclick="previousMonth()" class="p-2 text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button onclick="nextMonth()" class="p-2 text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="calendar-grid" class="p-4">
+                                <!-- Calendar grid will be generated here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upcoming Schedules -->
+                    <div>
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Jadwal Mendatang</h4>
+                        <div id="upcoming-schedules" class="space-y-3">
+                            <!-- Upcoming schedules will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- General Settings Tab -->
+    <div id="general-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- System Settings -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Pengaturan Sistem</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nama Desa</label>
+                        <input type="text" id="village-name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="Pulosarok">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Kepala Desa</label>
+                        <input type="text" id="village-head" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Alamat Kantor Desa</label>
+                        <textarea id="village-address" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                        <input type="tel" id="village-phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <button onclick="saveGeneralSettings()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan Pengaturan
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Notification Settings -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Pengaturan Notifikasi</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Email Notifikasi</label>
+                            <p class="text-sm text-gray-500">Kirim notifikasi melalui email</p>
+                        </div>
+                        <input type="checkbox" id="email-notifications" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">SMS Notifikasi</label>
+                            <p class="text-sm text-gray-500">Kirim notifikasi melalui SMS</p>
+                        </div>
+                        <input type="checkbox" id="sms-notifications" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Reminder Jadwal</label>
+                            <p class="text-sm text-gray-500">Pengingat jadwal posyandu</p>
+                        </div>
+                        <input type="checkbox" id="schedule-reminders" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email Administrator</label>
+                        <input type="email" id="admin-email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <button onclick="saveNotificationSettings()" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        <i class="fas fa-save mr-2"></i>
+                        Simpan Notifikasi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Location Modal -->
+<div id="location-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="location-modal-title">Tambah Lokasi Posyandu</h3>
+                <button onclick="closeLocationModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="location-form" class="space-y-4">
+                <input type="hidden" id="location-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="location-name" class="block text-sm font-medium text-gray-700">Nama Posyandu</label>
+                        <input type="text" id="location-name" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="location-code" class="block text-sm font-medium text-gray-700">Kode Posyandu</label>
+                        <input type="text" id="location-code" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="location-address" class="block text-sm font-medium text-gray-700">Alamat</label>
+                    <textarea id="location-address" required rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="location-dusun" class="block text-sm font-medium text-gray-700">Dusun</label>
+                        <select id="location-dusun" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih dusun...</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="location-status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <select id="location-status" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Tidak Aktif</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="location-latitude" class="block text-sm font-medium text-gray-700">Latitude</label>
+                        <input type="number" id="location-latitude" step="any" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="location-longitude" class="block text-sm font-medium text-gray-700">Longitude</label>
+                        <input type="number" id="location-longitude" step="any" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="location-description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                    <textarea id="location-description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Deskripsi tambahan..."></textarea>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeLocationModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Modal -->
+<div id="schedule-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="schedule-modal-title">Tambah Jadwal Kegiatan</h3>
+                <button onclick="closeScheduleModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="schedule-form" class="space-y-4">
+                <input type="hidden" id="schedule-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="schedule-posyandu" class="block text-sm font-medium text-gray-700">Posyandu</label>
+                        <select id="schedule-posyandu" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih posyandu...</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="schedule-activity" class="block text-sm font-medium text-gray-700">Jenis Kegiatan</label>
+                        <select id="schedule-activity" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <option value="">Pilih kegiatan...</option>
+                            <option value="pemeriksaan_balita">Pemeriksaan Balita</option>
+                            <option value="pemeriksaan_ibu_hamil">Pemeriksaan Ibu Hamil</option>
+                            <option value="pemeriksaan_lansia">Pemeriksaan Lansia</option>
+                            <option value="imunisasi">Imunisasi</option>
+                            <option value="penyuluhan">Penyuluhan Kesehatan</option>
+                            <option value="vitamin_a">Pemberian Vitamin A</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="schedule-date" class="block text-sm font-medium text-gray-700">Tanggal</label>
+                        <input type="date" id="schedule-date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                    
+                    <div>
+                        <label for="schedule-time" class="block text-sm font-medium text-gray-700">Waktu</label>
+                        <input type="time" id="schedule-time" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="schedule-description" class="block text-sm font-medium text-gray-700">Deskripsi Kegiatan</label>
+                    <textarea id="schedule-description" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Deskripsi kegiatan..."></textarea>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" id="schedule-recurring" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                    <label for="schedule-recurring" class="ml-2 block text-sm text-gray-900">Jadwal berulang (mingguan)</label>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeScheduleModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4" id="delete-modal-title">Hapus Data</h3>
+            <div class="mt-2 px-7 py-3">
+                <p class="text-sm text-gray-500" id="delete-modal-message">Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="flex justify-center space-x-3 mt-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Batal
+                </button>
+                <button onclick="confirmDelete()" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentTab = 'locations';
+let deleteId = null;
+let deleteType = null;
+let currentDate = new Date();
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadLocations();
+    loadDusunOptions();
+    loadPosyanduOptions();
+    loadGeneralSettings();
+    loadNotificationSettings();
+    generateCalendar();
+    loadUpcomingSchedules();
+    
+    // Setup form submissions
+    document.getElementById('location-form').addEventListener('submit', handleLocationSubmit);
+    document.getElementById('schedule-form').addEventListener('submit', handleScheduleSubmit);
+    
+    // Setup search on enter
+    document.getElementById('location-search').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            loadLocations();
+        }
+    });
+});
+
+function showTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('border-blue-500', 'text-blue-600');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    
+    // Add active class to selected tab button
+    const activeButton = document.getElementById('tab-' + tabName);
+    activeButton.classList.remove('border-transparent', 'text-gray-500');
+    activeButton.classList.add('border-blue-500', 'text-blue-600');
+    
+    currentTab = tabName;
+    
+    // Load data for the selected tab
+    if (tabName === 'locations') {
+        loadLocations();
+    } else if (tabName === 'schedules') {
+        generateCalendar();
+        loadUpcomingSchedules();
+    }
+}
+
+function loadLocations() {
+    const search = document.getElementById('location-search').value;
+    const status = document.getElementById('location-status-filter').value;
+    
+    const params = new URLSearchParams({
+        search: search,
+        status: status
+    });
+    
+    fetch(`/pulosarok/posyandu/api/locations/?${params}`)
+        .then(response => response.json())
+        .then(data => {
+            updateLocationsTable(data.results || data);
+        })
+        .catch(error => {
+            console.error('Error loading locations:', error);
+            showNotification('Error loading locations', 'error');
+        });
+}
+
+function updateLocationsTable(data) {
+    const tbody = document.getElementById('locations-table-body');
+    tbody.innerHTML = '';
+    
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Tidak ada data lokasi</td></tr>';
+        return;
+    }
+    
+    data.forEach(location => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${location.name}</div>
+                <div class="text-sm text-gray-500">${location.code}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${location.address}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${location.dusun_name || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    location.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }">
+                    ${location.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button onclick="editLocation(${location.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button onclick="deleteLocation(${location.id})" class="text-red-600 hover:text-red-900">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function loadDusunOptions() {
+    fetch('/references/api/dusun/')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('location-dusun');
+            const firstOption = select.querySelector('option');
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            data.forEach(dusun => {
+                const option = document.createElement('option');
+                option.value = dusun.id;
+                option.textContent = dusun.name;
+                select.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading dusun options:', error));
+}
+
+function loadPosyanduOptions() {
+    fetch('/pulosarok/posyandu/api/posyandu/list/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('schedule-posyandu');
+            const firstOption = select.querySelector('option');
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            const posyandus = data.results || data;
+            if (Array.isArray(posyandus)) {
+                posyandus.forEach(posyandu => {
+                    const option = document.createElement('option');
+                    option.value = posyandu.id;
+                    option.textContent = posyandu.name;
+                    select.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error loading posyandu options:', error);
+            showNotification('Error loading posyandu options: ' + error.message, 'error');
+        });
+}
+
+function openLocationModal() {
+    document.getElementById('location-modal-title').textContent = 'Tambah Lokasi Posyandu';
+    document.getElementById('location-form').reset();
+    document.getElementById('location-id').value = '';
+    document.getElementById('location-modal').classList.remove('hidden');
+}
+
+function editLocation(id) {
+    document.getElementById('location-modal-title').textContent = 'Edit Lokasi Posyandu';
+    document.getElementById('location-id').value = id;
+    
+    fetch(`/pulosarok/posyandu/api/locations/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const location = data.data;
+                document.getElementById('location-name').value = location.name;
+                document.getElementById('location-code').value = location.code;
+                document.getElementById('location-address').value = location.address;
+                document.getElementById('location-dusun').value = location.dusun_id || '';
+                document.getElementById('location-status').value = location.status;
+                document.getElementById('location-latitude').value = location.latitude || '';
+                document.getElementById('location-longitude').value = location.longitude || '';
+                document.getElementById('location-description').value = location.description || '';
+                
+                document.getElementById('location-modal').classList.remove('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading location data:', error);
+            showNotification('Error loading data', 'error');
+        });
+}
+
+function deleteLocation(id) {
+    deleteId = id;
+    deleteType = 'location';
+    document.getElementById('delete-modal-title').textContent = 'Hapus Lokasi Posyandu';
+    document.getElementById('delete-modal-message').textContent = 'Apakah Anda yakin ingin menghapus lokasi posyandu ini? Tindakan ini tidak dapat dibatalkan.';
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+
+function handleLocationSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        name: document.getElementById('location-name').value,
+        code: document.getElementById('location-code').value,
+        address: document.getElementById('location-address').value,
+        dusun_id: document.getElementById('location-dusun').value,
+        status: document.getElementById('location-status').value,
+        latitude: document.getElementById('location-latitude').value,
+        longitude: document.getElementById('location-longitude').value,
+        description: document.getElementById('location-description').value
+    };
+    
+    const locationId = document.getElementById('location-id').value;
+    const url = locationId ? `/pulosarok/posyandu/api/locations/${locationId}/update/` : '/pulosarok/posyandu/api/locations/create/';
+    const method = locationId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closeLocationModal();
+            loadLocations();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving location:', error);
+        showNotification('Error saving data', 'error');
+    });
+}
+
+function openScheduleModal() {
+    document.getElementById('schedule-modal-title').textContent = 'Tambah Jadwal Kegiatan';
+    document.getElementById('schedule-form').reset();
+    document.getElementById('schedule-id').value = '';
+    document.getElementById('schedule-modal').classList.remove('hidden');
+}
+
+function handleScheduleSubmit(e) {
+    e.preventDefault();
+    
+    const formData = {
+        posyandu_id: document.getElementById('schedule-posyandu').value,
+        activity_type: document.getElementById('schedule-activity').value,
+        scheduled_date: document.getElementById('schedule-date').value,
+        scheduled_time: document.getElementById('schedule-time').value,
+        description: document.getElementById('schedule-description').value,
+        is_recurring: document.getElementById('schedule-recurring').checked
+    };
+    
+    const scheduleId = document.getElementById('schedule-id').value;
+    const url = scheduleId ? `/pulosarok/posyandu/api/schedules/${scheduleId}/update/` : '/pulosarok/posyandu/api/schedules/create/';
+    const method = scheduleId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            closeScheduleModal();
+            generateCalendar();
+            loadUpcomingSchedules();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving schedule:', error);
+        showNotification('Error saving data', 'error');
+    });
+}
+
+function generateCalendar() {
+    const monthNames = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    
+    document.getElementById('calendar-month-year').textContent = 
+        `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    
+    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const calendarGrid = document.getElementById('calendar-grid');
+    calendarGrid.innerHTML = '';
+    
+    // Day headers
+    const dayHeaders = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    const headerRow = document.createElement('div');
+    headerRow.className = 'grid grid-cols-7 gap-1 mb-2';
+    
+    dayHeaders.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'text-center text-sm font-medium text-gray-500 py-2';
+        dayHeader.textContent = day;
+        headerRow.appendChild(dayHeader);
+    });
+    
+    calendarGrid.appendChild(headerRow);
+    
+    // Calendar days
+    const daysGrid = document.createElement('div');
+    daysGrid.className = 'grid grid-cols-7 gap-1';
+    
+    for (let i = 0; i < 42; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        
+        const dayCell = document.createElement('div');
+        dayCell.className = `text-center py-2 text-sm cursor-pointer hover:bg-gray-100 rounded ${
+            date.getMonth() !== currentDate.getMonth() ? 'text-gray-400' : 'text-gray-900'
+        }`;
+        dayCell.textContent = date.getDate();
+        
+        // Add click event to show schedules for this date
+        dayCell.addEventListener('click', () => showSchedulesForDate(date));
+        
+        daysGrid.appendChild(dayCell);
+    }
+    
+    calendarGrid.appendChild(daysGrid);
+}
+
+function previousMonth() {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    generateCalendar();
+}
+
+function nextMonth() {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    generateCalendar();
+}
+
+function showSchedulesForDate(date) {
+    // This would show schedules for the selected date
+    console.log('Show schedules for:', date);
+}
+
+function loadUpcomingSchedules() {
+    fetch('/pulosarok/posyandu/api/schedules/upcoming/')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('upcoming-schedules');
+            container.innerHTML = '';
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-sm">Tidak ada jadwal mendatang</p>';
+                return;
+            }
+            
+            data.forEach(schedule => {
+                const scheduleItem = document.createElement('div');
+                scheduleItem.className = 'bg-gray-50 p-3 rounded-lg';
+                scheduleItem.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h5 class="font-medium text-gray-900">${schedule.activity_type}</h5>
+                            <p class="text-sm text-gray-600">${schedule.posyandu_name}</p>
+                            <p class="text-sm text-gray-500">${schedule.scheduled_date} ${schedule.scheduled_time}</p>
+                        </div>
+                        <button onclick="editSchedule(${schedule.id})" class="text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(scheduleItem);
+            });
+        })
+        .catch(error => console.error('Error loading upcoming schedules:', error));
+}
+
+function editSchedule(id) {
+    // Implementation for editing schedule
+    console.log('Edit schedule:', id);
+}
+
+function loadGeneralSettings() {
+    // Load general settings from API or local storage
+    // This is a placeholder implementation
+}
+
+function saveGeneralSettings() {
+    const settings = {
+        village_name: document.getElementById('village-name').value,
+        village_head: document.getElementById('village-head').value,
+        village_address: document.getElementById('village-address').value,
+        village_phone: document.getElementById('village-phone').value
+    };
+    
+    // Save settings via API
+    showNotification('Pengaturan umum berhasil disimpan', 'success');
+}
+
+function loadNotificationSettings() {
+    // Load notification settings from API or local storage
+    // This is a placeholder implementation
+}
+
+function saveNotificationSettings() {
+    const settings = {
+        email_notifications: document.getElementById('email-notifications').checked,
+        sms_notifications: document.getElementById('sms-notifications').checked,
+        schedule_reminders: document.getElementById('schedule-reminders').checked,
+        admin_email: document.getElementById('admin-email').value
+    };
+    
+    // Save settings via API
+    showNotification('Pengaturan notifikasi berhasil disimpan', 'success');
+}
+
+function confirmDelete() {
+    if (!deleteId || !deleteType) return;
+    
+    const url = deleteType === 'location' ? 
+        `/pulosarok/posyandu/api/locations/${deleteId}/delete/` :
+        `/pulosarok/posyandu/api/schedules/${deleteId}/delete/`;
+    
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            if (deleteType === 'location') {
+                loadLocations();
+            } else {
+                generateCalendar();
+                loadUpcomingSchedules();
+            }
+        } else {
+            showNotification(data.message, 'error');
+        }
+        closeDeleteModal();
+    })
+    .catch(error => {
+        console.error('Error deleting:', error);
+        showNotification('Error deleting data', 'error');
+        closeDeleteModal();
+    });
+}
+
+function closeLocationModal() {
+    document.getElementById('location-modal').classList.add('hidden');
+}
+
+function closeScheduleModal() {
+    document.getElementById('schedule-modal').classList.add('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+    deleteId = null;
+    deleteType = null;
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

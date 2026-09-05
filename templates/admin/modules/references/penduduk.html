@@ -1,0 +1,751 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block title %}Data Penduduk{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+    .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-action {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+    
+    @media (max-width: 768px) {
+        .mobile-card {
+            margin-bottom: 1rem;
+        }
+        
+        .mobile-hidden {
+            display: none;
+        }
+        
+        .mobile-show {
+            display: block;
+        }
+    }
+    
+    @media (min-width: 769px) {
+        .mobile-show {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-users text-primary-600 mr-3"></i>
+                    Data Penduduk
+                </h1>
+                <p class="text-gray-600">Kelola data penduduk Desa Pulosarok</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="exportData()" class="btn btn-outline-success btn-action flex items-center justify-center px-4 py-2 rounded-lg">
+                    <i class="fas fa-download mr-2"></i>
+                    <span class="hidden sm:inline">Export Excel</span>
+                    <span class="sm:hidden">Export</span>
+                </button>
+                <a href="{% url 'references:add_penduduk_new' %}" class="btn btn-primary btn-action flex items-center justify-center px-4 py-2 rounded-lg">
+                    <i class="fas fa-plus mr-2"></i>
+                    <span class="hidden sm:inline">Tambah Penduduk</span>
+                    <span class="sm:hidden">Tambah</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Cari nama, NIK, atau data lainnya..." 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Filter Dusun</label>
+                <select id="dusunFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="">Semua Dusun</option>
+                </select>
+            </div>
+            <div class="flex items-end gap-2">
+                <button onclick="searchPenduduk()" class="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    <span class="hidden sm:inline">Cari</span>
+                </button>
+                <button onclick="clearSearch()" class="flex-1 bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    <span class="hidden sm:inline">Reset</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-users text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Penduduk</p>
+                    <p class="text-2xl font-bold text-gray-900" id="totalPenduduk">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-male text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Laki-laki</p>
+                    <p class="text-2xl font-bold text-gray-900" id="totalLakiLaki">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-pink-100 text-pink-600">
+                    <i class="fas fa-female text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Perempuan</p>
+                    <p class="text-2xl font-bold text-gray-900" id="totalPerempuan">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-home text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Kepala Keluarga</p>
+                    <p class="text-2xl font-bold text-gray-900" id="totalKepalaKeluarga">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table/Cards -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Desktop Table -->
+        <div class="mobile-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="gradient-bg">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">NIK</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Jenis Kelamin</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Umur</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Dusun</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendudukTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Mobile Cards -->
+        <div class="mobile-show p-4" id="pendudukMobileCards">
+            <!-- Mobile cards will be loaded here -->
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-container">
+            <div class="pagination-info">
+                <span>Menampilkan <span class="text-primary-600" id="showingStart">0</span> - <span class="text-primary-600" id="showingEnd">0</span> dari <span class="text-primary-600" id="totalEntries">0</span> data</span>
+            </div>
+            <div class="pagination-controls">
+                <div class="pagination-nav" id="pagination">
+                    <!-- Pagination buttons will be generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+    <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 class="text-xl font-semibold text-gray-900">
+                <i class="fas fa-user mr-2 text-primary-600"></i>
+                Detail Penduduk
+            </h3>
+            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <div id="detailContent" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Detail content will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="flex justify-end space-x-3 p-6 border-t border-gray-200">
+            <button onclick="closeDetailModal()" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                <i class="fas fa-times mr-2"></i>Tutup
+            </button>
+            <button onclick="editFromDetail()" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                <i class="fas fa-edit mr-2"></i>Edit Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+    <div class="bg-white rounded-lg p-6 flex items-center space-x-3">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+        <span class="text-gray-700">Memuat data...</span>
+    </div>
+</div>
+
+{% csrf_token %}
+
+<script>
+// Global variables
+let currentPage = 1;
+let totalPages = 1;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadDusunOptions();
+    loadPendudukList();
+    loadStats();
+    
+    // Search on enter
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchPenduduk();
+        }
+    });
+});
+
+// Load dusun options for filter
+function loadDusunOptions() {
+    fetch('/api/references/api/dusun/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const select = document.getElementById('dusunFilter');
+            select.innerHTML = '<option value="">Semua Dusun</option>';
+            
+            // Handle both array and object with results property
+            const dusunList = Array.isArray(data) ? data : (data.results || data.data || []);
+            dusunList.forEach(dusun => {
+                select.innerHTML += `<option value="${dusun.id}">${dusun.name}</option>`;
+            });
+        })
+        .catch(error => {
+            console.error('Error loading dusun options:', error);
+        });
+}
+
+// Load penduduk list
+function loadPendudukList(page = 1) {
+    showLoading(true);
+    currentPage = page;
+    
+    const searchQuery = document.getElementById('searchInput').value;
+    const dusunFilter = document.getElementById('dusunFilter').value;
+    
+    let url = `/api/references/api/penduduk/?page=${page}`;
+    if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+    if (dusunFilter) url += `&dusun=${encodeURIComponent(dusunFilter)}`;
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.results) {
+                displayPendudukList(data.results);
+                updatePagination(data.pagination);
+                updateShowingInfo(data.pagination);
+            } else {
+                showAlert('Gagal memuat data penduduk', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading penduduk:', error);
+            showAlert('Gagal memuat data penduduk', 'error');
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+}
+
+// Display penduduk list
+function displayPendudukList(pendudukList) {
+    // Desktop table
+    const tableBody = document.getElementById('pendudukTableBody');
+    tableBody.innerHTML = '';
+    
+    // Mobile cards
+    const mobileCards = document.getElementById('pendudukMobileCards');
+    mobileCards.innerHTML = '';
+    
+    pendudukList.forEach(penduduk => {
+        // Desktop row
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50 transition-colors';
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${penduduk.nik || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${penduduk.name || '-'}</div>
+                <div class="text-sm text-gray-500">${penduduk.kk_number || '-'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${penduduk.gender || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${penduduk.age || '-'} tahun</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${penduduk.dusun || '-'}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    penduduk.marital_status === 'married' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                }">
+                    ${penduduk.marital_status || '-'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                <div class="flex justify-center space-x-2">
+                    <button onclick="viewDetailModal(${penduduk.id})" class="text-blue-600 hover:text-blue-900 btn-action" title="Lihat Detail">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <a href="/pulosarok/references/admin/penduduk/edit/${penduduk.id}/" class="text-green-600 hover:text-green-900 btn-action" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <button onclick="deletePenduduk(${penduduk.id})" class="text-red-600 hover:text-red-900 btn-action" title="Hapus">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+        
+        // Mobile card
+        const card = document.createElement('div');
+        card.className = 'bg-gray-50 rounded-lg p-4 mobile-card';
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900">${penduduk.name || '-'}</h3>
+                    <p class="text-sm text-gray-600">NIK: ${penduduk.nik || '-'}</p>
+                </div>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    penduduk.marital_status === 'married' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                }">
+                    ${penduduk.marital_status || '-'}
+                </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                <div><span class="font-medium">Jenis Kelamin:</span> ${penduduk.gender || '-'}</div>
+                <div><span class="font-medium">Umur:</span> ${penduduk.age || '-'} tahun</div>
+                <div><span class="font-medium">Dusun:</span> ${penduduk.dusun || '-'}</div>
+                <div><span class="font-medium">No. KK:</span> ${penduduk.kk_number || '-'}</div>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button onclick="viewDetailModal(${penduduk.id})" class="text-blue-600 hover:text-blue-900 btn-action" title="Lihat Detail">
+                    <i class="fas fa-eye mr-1"></i>Detail
+                </button>
+                <a href="/pulosarok/references/admin/penduduk/edit/${penduduk.id}/" class="text-green-600 hover:text-green-900 btn-action" title="Edit">
+                    <i class="fas fa-edit mr-1"></i>Edit
+                </a>
+                <button onclick="deletePenduduk(${penduduk.id})" class="text-red-600 hover:text-red-900 btn-action" title="Hapus">
+                    <i class="fas fa-trash mr-1"></i>Hapus
+                </button>
+            </div>
+        `;
+        mobileCards.appendChild(card);
+    });
+}
+
+// Load statistics
+function loadStats() {
+    fetch('/api/references/api/stats/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Use the correct structure from references_stats_api
+            const basicStats = data.basic_stats || {};
+            const demographics = data.demographics || {};
+            
+            document.getElementById('totalPenduduk').textContent = basicStats.total_penduduk || 0;
+            document.getElementById('totalLakiLaki').textContent = demographics.male_count || 0;
+            document.getElementById('totalPerempuan').textContent = demographics.female_count || 0;
+            document.getElementById('totalKepalaKeluarga').textContent = basicStats.total_dusun || 0;
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+            // Set default values on error
+            document.getElementById('totalPenduduk').textContent = '0';
+            document.getElementById('totalLakiLaki').textContent = '0';
+            document.getElementById('totalPerempuan').textContent = '0';
+            document.getElementById('totalKepalaKeluarga').textContent = '0';
+        });
+}
+
+// Update pagination
+function updatePagination(pagination) {
+    totalPages = pagination.total_pages;
+    const paginationContainer = document.getElementById('pagination');
+    
+    if (!pagination || pagination.total_pages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    
+    // Previous button
+    if (pagination.current_page > 1) {
+        paginationHTML += `
+            <button onclick="loadPendudukList(${pagination.current_page - 1})" class="pagination-btn nav-btn">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+    }
+    
+    // Page numbers with range limit
+    const startPage = Math.max(1, pagination.current_page - 2);
+    const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === pagination.current_page) {
+            paginationHTML += `
+                <button class="pagination-btn page-number active">${i}</button>
+            `;
+        } else {
+            paginationHTML += `
+                <button onclick="loadPendudukList(${i})" class="pagination-btn page-number">${i}</button>
+            `;
+        }
+    }
+    
+    // Next button
+    if (pagination.current_page < pagination.total_pages) {
+        paginationHTML += `
+            <button onclick="loadPendudukList(${pagination.current_page + 1})" class="pagination-btn nav-btn">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+    }
+    
+    paginationContainer.innerHTML = paginationHTML;
+}
+
+// Update showing info
+function updateShowingInfo(pagination) {
+    const start = ((pagination.current_page - 1) * 10) + 1;
+    const end = Math.min(pagination.current_page * 10, pagination.total_items);
+    
+    document.getElementById('showingStart').textContent = start;
+    document.getElementById('showingEnd').textContent = end;
+    document.getElementById('totalEntries').textContent = pagination.total_items;
+}
+
+// Search functions
+function searchPenduduk() {
+    loadPendudukList(1);
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('dusunFilter').value = '';
+    loadPendudukList(1);
+}
+
+// Export function
+function exportData() {
+    const searchQuery = document.getElementById('searchInput').value;
+    const dusunFilter = document.getElementById('dusunFilter').value;
+    
+    let url = '/api/references/api/penduduk/export/';
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('search', searchQuery);
+    if (dusunFilter) params.append('dusun', dusunFilter);
+    
+    if (params.toString()) {
+        url += '?' + params.toString();
+    }
+    
+    window.open(url, '_blank');
+}
+
+// View detail modal function
+function viewDetailModal(id) {
+    showLoading(true);
+    
+    fetch(`/api/references/admin-api/penduduk/${id}/`, {
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+            .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            displayDetailModal(data);
+            document.getElementById('detailModal').style.display = 'flex';
+        })
+        .catch(error => {
+            console.error('Error loading penduduk detail:', error);
+            showAlert('Gagal memuat detail penduduk: ' + error.message, 'error');
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+}
+
+// Display detail in modal
+function displayDetailModal(data) {
+    const detailContent = document.getElementById('detailContent');
+    
+    detailContent.innerHTML = `
+        <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-900 border-b pb-2">Informasi Dasar</h4>
+            <div class="grid grid-cols-1 gap-3">
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">NIK:</span>
+                    <span class="text-gray-900">${data.nik || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Nama:</span>
+                    <span class="text-gray-900">${data.name || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Jenis Kelamin:</span>
+                    <span class="text-gray-900">${data.gender || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Tempat Lahir:</span>
+                    <span class="text-gray-900">${data.birth_place || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Tanggal Lahir:</span>
+                    <span class="text-gray-900">${data.birth_date || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Agama:</span>
+                    <span class="text-gray-900">${data.religion || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Status Perkawinan:</span>
+                    <span class="text-gray-900">${data.marital_status || '-'}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-900 border-b pb-2">Informasi Keluarga</h4>
+            <div class="grid grid-cols-1 gap-3">
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">No. KK:</span>
+                    <span class="text-gray-900">${data.kk_number || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Kepala Keluarga:</span>
+                    <span class="text-gray-900">${data.family_head_name || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Hubungan dengan KK:</span>
+                    <span class="text-gray-900">${data.relationship_to_head || '-'}</span>
+                </div>
+            </div>
+            
+            <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 mt-6">Informasi Alamat</h4>
+            <div class="grid grid-cols-1 gap-3">
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Dusun:</span>
+                    <span class="text-gray-900">${data.dusun_name || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Lorong:</span>
+                    <span class="text-gray-900">${data.lorong_name || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">RT/RW:</span>
+                    <span class="text-gray-900">${data.rt_number || '-'}/${data.rw_number || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Alamat:</span>
+                    <span class="text-gray-900">${data.address || '-'}</span>
+                </div>
+            </div>
+            
+            <h4 class="text-lg font-semibold text-gray-900 border-b pb-2 mt-6">Informasi Kontak</h4>
+            <div class="grid grid-cols-1 gap-3">
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Telepon:</span>
+                    <span class="text-gray-900">${data.phone_number || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Email:</span>
+                    <span class="text-gray-900">${data.email || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Pekerjaan:</span>
+                    <span class="text-gray-900">${data.occupation || '-'}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-medium text-gray-600">Pendidikan:</span>
+                    <span class="text-gray-900">${data.education || '-'}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Store current penduduk ID for edit function
+    window.currentPendudukId = data.id;
+}
+
+// Close detail modal
+function closeDetailModal() {
+    document.getElementById('detailModal').style.display = 'none';
+    window.currentPendudukId = null;
+}
+
+// Edit from detail modal
+function editFromDetail() {
+    if (window.currentPendudukId) {
+        window.location.href = `/pulosarok/references/admin/penduduk/edit/${window.currentPendudukId}/`;
+    }
+}
+
+// Delete function
+function deletePenduduk(id) {
+    if (!confirm('Apakah Anda yakin ingin menghapus data penduduk ini?')) {
+        return;
+    }
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
+    fetch(`/api/references/api/penduduk/${id}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Data berhasil dihapus', 'success');
+            loadPendudukList(currentPage);
+            loadStats();
+        } else {
+            showAlert(data.message || 'Gagal menghapus data', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting penduduk:', error);
+        showAlert('Gagal menghapus data', 'error');
+    });
+}
+
+// Utility functions
+function showAlert(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm ${
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+        type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
+        'bg-blue-100 border border-blue-400 text-blue-700'
+    }`;
+    
+    alertDiv.innerHTML = `
+        <div class="flex items-center justify-between">
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-lg font-bold">&times;</button>
+        </div>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function showLoading(show) {
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = show ? 'flex' : 'none';
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

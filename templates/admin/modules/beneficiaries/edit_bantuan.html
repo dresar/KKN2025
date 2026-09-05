@@ -1,0 +1,488 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Edit Data Bantuan{% endblock %}
+{% block page_title %}Edit Data Bantuan{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+    }
+    .form-header {
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #ef4444;
+    }
+    .btn-action {
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .stats-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .stats-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .stats-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Edit Data Bantuan</h1>
+                <p class="text-gray-600 mt-1">Edit informasi data bantuan</p>
+            </div>
+            <div>
+                <a href="/admin/beneficiaries/data-bantuan/" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Card -->
+    <div class="stats-card">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="stats-item">
+                <div class="stats-value">{{ bantuan.created_at|date:"d M Y" }}</div>
+                <div class="stats-label">Tanggal Dibuat</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value">{{ bantuan.updated_at|date:"d M Y" }}</div>
+                <div class="stats-label">Terakhir Diupdate</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value">{{ bantuan.get_status_display }}</div>
+                <div class="stats-label">Status</div>
+            </div>
+            <div class="stats-item">
+                <div class="stats-value">Rp {{ bantuan.nilai_bantuan|floatformat:0 }}</div>
+                <div class="stats-label">Nilai Bantuan</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <form id="bantuanForm" method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="id" id="bantuan_id" value="{{ bantuan.id }}">
+        
+        <!-- Informasi Dasar -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Informasi Dasar</h3>
+                <p class="text-sm text-gray-600">Informasi dasar tentang penerima bantuan</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nama Penerima</label>
+                    <input type="text" name="nama_penerima" id="nama_penerima" required value="{{ bantuan.person.nama }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">NIK Penerima</label>
+                    <input type="text" name="nik_penerima" id="nik_penerima" required maxlength="16" value="{{ bantuan.person.nik }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">Nomor Induk Kependudukan 16 digit</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detail Bantuan -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Detail Bantuan</h3>
+                <p class="text-sm text-gray-600">Informasi detail tentang bantuan yang diberikan</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Jenis Bantuan</label>
+                    <select name="jenis_bantuan" id="jenis_bantuan" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="">Pilih Jenis Bantuan</option>
+                        <option value="blt" {% if bantuan.jenis_bantuan == 'blt' %}selected{% endif %}>BLT (Bantuan Langsung Tunai)</option>
+                        <option value="pkh" {% if bantuan.jenis_bantuan == 'pkh' %}selected{% endif %}>PKH (Program Keluarga Harapan)</option>
+                        <option value="bpnt" {% if bantuan.jenis_bantuan == 'bpnt' %}selected{% endif %}>BPNT (Bantuan Pangan Non Tunai)</option>
+                        <option value="pip" {% if bantuan.jenis_bantuan == 'pip' %}selected{% endif %}>PIP (Program Indonesia Pintar)</option>
+                        <option value="kis" {% if bantuan.jenis_bantuan == 'kis' %}selected{% endif %}>KIS (Kartu Indonesia Sehat)</option>
+                        <option value="bansos" {% if bantuan.jenis_bantuan == 'bansos' %}selected{% endif %}>Bantuan Sosial</option>
+                        <option value="banpres" {% if bantuan.jenis_bantuan == 'banpres' %}selected{% endif %}>Bantuan Presiden</option>
+                        <option value="banprov" {% if bantuan.jenis_bantuan == 'banprov' %}selected{% endif %}>Bantuan Provinsi</option>
+                        <option value="bankab" {% if bantuan.jenis_bantuan == 'bankab' %}selected{% endif %}>Bantuan Kabupaten</option>
+                        <option value="bangam" {% if bantuan.jenis_bantuan == 'bangam' %}selected{% endif %}>Bantuan Gampong</option>
+                        <option value="lainnya" {% if bantuan.jenis_bantuan == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nama Program</label>
+                    <input type="text" name="nama_program" id="nama_program" required value="{{ bantuan.nama_program }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Kartu</label>
+                    <input type="text" name="nomor_kartu" id="nomor_kartu" value="{{ bantuan.nomor_kartu }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <p class="text-xs text-gray-500 mt-1">Nomor kartu bantuan (jika ada)</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Nilai Bantuan</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500">Rp</span>
+                        </div>
+                        <input type="number" name="nilai_bantuan" id="nilai_bantuan" required min="0" value="{{ bantuan.nilai_bantuan }}" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Periode Bantuan</label>
+                    <input type="text" name="periode_bantuan" id="periode_bantuan" value="{{ bantuan.periode_bantuan }}" placeholder="Contoh: Januari-Desember 2023" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Sumber Dana</label>
+                    <input type="text" name="sumber_dana" id="sumber_dana" value="{{ bantuan.sumber_dana }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instansi Pemberi</label>
+                    <input type="text" name="instansi_pemberi" id="instansi_pemberi" value="{{ bantuan.instansi_pemberi }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Tanggal Mulai</label>
+                    <input type="date" name="tanggal_mulai" id="tanggal_mulai" required value="{{ bantuan.tanggal_mulai|date:'Y-m-d' }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Berakhir</label>
+                    <input type="date" name="tanggal_berakhir" id="tanggal_berakhir" value="{% if bantuan.tanggal_berakhir %}{{ bantuan.tanggal_berakhir|date:'Y-m-d' }}{% endif %}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Informasi Tambahan -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Informasi Tambahan</h3>
+                <p class="text-sm text-gray-600">Informasi tambahan tentang bantuan</p>
+            </div>
+            
+            <div class="grid grid-cols-1 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Syarat Penerima</label>
+                    <textarea name="syarat_penerima" id="syarat_penerima" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">{{ bantuan.syarat_penerima }}</textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dokumen Pendukung</label>
+                    <textarea name="dokumen_pendukung" id="dokumen_pendukung" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">{{ bantuan.dokumen_pendukung }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1">Daftar dokumen yang diperlukan untuk mendapatkan bantuan</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Catatan</label>
+                    <textarea name="catatan" id="catatan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">{{ bantuan.catatan }}</textarea>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Bantuan -->
+        <div class="form-section">
+            <div class="form-header">
+                <h3 class="text-lg font-semibold text-gray-900">Status Bantuan</h3>
+                <p class="text-sm text-gray-600">Status bantuan saat ini</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2 required-field">Status</label>
+                <select name="status" id="status" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="aktif" {% if bantuan.status == 'aktif' %}selected{% endif %}>Aktif</option>
+                    <option value="nonaktif" {% if bantuan.status == 'nonaktif' %}selected{% endif %}>Non Aktif</option>
+                    <option value="pending" {% if bantuan.status == 'pending' %}selected{% endif %}>Menunggu</option>
+                    <option value="ditolak" {% if bantuan.status == 'ditolak' %}selected{% endif %}>Ditolak</option>
+                    <option value="selesai" {% if bantuan.status == 'selesai' %}selected{% endif %}>Selesai</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex justify-between mt-6">
+            <div>
+                <button type="button" id="deleteBtn" class="btn-action bg-red-500 hover:bg-red-600 text-white">
+                    <i class="fas fa-trash mr-2"></i>Hapus
+                </button>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/admin/beneficiaries/data-bantuan/" class="btn-action bg-gray-500 hover:bg-gray-600 text-white">
+                    Batal
+                </a>
+                <button type="button" id="duplicateBtn" class="btn-action bg-blue-500 hover:bg-blue-600 text-white">
+                    <i class="fas fa-copy mr-2"></i>Duplikat
+                </button>
+                <button type="submit" class="btn-action bg-primary-600 hover:bg-primary-700 text-white">
+                    <i class="fas fa-check mr-2"></i>Simpan Perubahan
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Konfirmasi Hapus</h3>
+                    <button onclick="closeDeleteModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <p class="mb-4 text-gray-700">Apakah Anda yakin ingin menghapus data bantuan ini? Tindakan ini tidak dapat dibatalkan.</p>
+                
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                        Batal
+                    </button>
+                    <button type="button" id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        Hapus
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Delete modal functions
+    function openDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+    }
+    
+    // Form validation
+    document.getElementById('bantuanForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Basic validation
+        const requiredFields = [
+            'nama_penerima',
+            'nik_penerima',
+            'jenis_bantuan',
+            'nama_program',
+            'nilai_bantuan',
+            'tanggal_mulai',
+            'status'
+        ];
+        
+        let isValid = true;
+        let firstInvalidField = null;
+        
+        requiredFields.forEach(field => {
+            const input = document.getElementById(field);
+            if (!input.value.trim()) {
+                input.classList.add('border-red-500');
+                isValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = input;
+                }
+            } else {
+                input.classList.remove('border-red-500');
+            }
+        });
+        
+        // NIK validation (16 digits)
+        const nikInput = document.getElementById('nik_penerima');
+        if (nikInput.value.trim() && nikInput.value.trim().length !== 16) {
+            nikInput.classList.add('border-red-500');
+            showNotification('NIK harus terdiri dari 16 digit', 'error');
+            isValid = false;
+            if (!firstInvalidField) {
+                firstInvalidField = nikInput;
+            }
+        }
+        
+        if (!isValid) {
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+            }
+            showNotification('Mohon lengkapi semua field yang wajib diisi', 'error');
+            return false;
+        }
+        
+        // Submit form via API
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        const bantuanId = document.getElementById('bantuan_id').value;
+        
+        // Cari penduduk berdasarkan NIK terlebih dahulu
+        fetch(`/api/references/penduduk/by-nik/?nik=${data.nik_penerima}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.data) {
+                // Jika penduduk ditemukan, kirim data bantuan dengan person_id
+                data.person_id = result.data.id;
+                
+                return fetch(`/api/beneficiaries/data-bantuan/${bantuanId}/update/`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(data)
+                });
+            } else {
+                throw new Error('Penduduk dengan NIK tersebut tidak ditemukan');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Data bantuan berhasil diperbarui', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/beneficiaries/data-bantuan/';
+                }, 1500);
+            } else {
+                showNotification('Gagal memperbarui data: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat memperbarui data', 'error');
+        });
+    });
+    
+    // Delete button
+    document.getElementById('deleteBtn').addEventListener('click', function() {
+        openDeleteModal();
+    });
+    
+    // Confirm delete
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        const bantuanId = document.getElementById('bantuan_id').value;
+        
+        fetch(`/api/beneficiaries/data-bantuan/${bantuanId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Data bantuan berhasil dihapus', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/beneficiaries/data-bantuan/';
+                }, 1500);
+            } else {
+                closeDeleteModal();
+                showNotification('Gagal menghapus data: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            closeDeleteModal();
+            showNotification('Terjadi kesalahan saat menghapus data', 'error');
+        });
+    });
+    
+    // Duplicate button
+    document.getElementById('duplicateBtn').addEventListener('click', function() {
+        const form = document.getElementById('bantuanForm');
+        const formData = new FormData(form);
+        
+        // Remove ID to create a new record
+        formData.delete('id');
+        
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Add indication that this is a duplicate
+        data.nama_program = data.nama_program + ' (Duplikat)';
+        
+        fetch('/api/beneficiaries/data-bantuan/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Data bantuan berhasil diduplikasi', 'success');
+                setTimeout(() => {
+                    window.location.href = '/admin/beneficiaries/data-bantuan/';
+                }, 1500);
+            } else {
+                showNotification('Gagal menduplikasi data: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Terjadi kesalahan saat menduplikasi data', 'error');
+        });
+    });
+    
+    // Show notification function
+    function showNotification(message, type) {
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+        notificationDiv.innerHTML = message;
+        document.body.appendChild(notificationDiv);
+        
+        setTimeout(() => {
+            notificationDiv.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ object.nama_organisasi }}</h1>
+                <p class="mt-1 text-sm text-gray-600">Detail informasi organisasi kepemudaan</p>
+            </div>
+            <div class="mt-4 sm:mt-0 space-x-2">
+                <a href="{% url 'organization:kepemudaan_edit' object.id %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <i class="fas fa-edit mr-2"></i>Edit
+                </a>
+                <a href="{% url 'organization:kepemudaan_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Content -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <!-- Main Info -->
+        <div class="p-6 border-b border-gray-200">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Left Column: Basic Info -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-info-circle mr-2 text-green-600"></i>Informasi Dasar
+                    </h3>
+                    <dl class="grid grid-cols-1 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Nama Organisasi</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.nama_organisasi }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Jenis Organisasi</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.get_jenis_organisasi_display }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Ketua</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.ketua.name|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Tanggal Terbentuk</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.tanggal_terbentuk|date:"d F Y"|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Status</dt>
+                            <dd class="mt-1">
+                                {% if object.status == 'aktif' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Aktif
+                                </span>
+                                {% elif object.status == 'tidak_aktif' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>Tidak Aktif
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    {{ object.get_status_display }}
+                                </span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+                
+                <!-- Right Column: Additional Info -->
+                <div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-users mr-2 text-green-600"></i>Informasi Anggota
+                    </h3>
+                    <dl class="grid grid-cols-1 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Jumlah Anggota</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.jumlah_anggota|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Jumlah Anggota Aktif</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.jumlah_anggota_aktif|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Rentang Usia</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.rentang_usia|default:'-' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Kontak dan Alamat -->
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                <i class="fas fa-address-book mr-2 text-green-600"></i>Kontak dan Alamat
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <dl class="grid grid-cols-1 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Alamat Sekretariat</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.alamat_sekretariat|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Kontak Telepon</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.kontak_phone|default:'-' }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ object.email|default:'-' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Foto Kegiatan -->
+        {% if object.foto_kegiatan %}
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                <i class="fas fa-image mr-2 text-green-600"></i>Foto Kegiatan
+            </h3>
+            <div class="mt-2">
+                <img src="{{ object.foto_kegiatan.url }}" alt="Foto Kegiatan {{ object.nama_organisasi }}" class="max-w-full h-auto rounded-lg shadow-md">
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Deskripsi -->
+        {% if object.deskripsi %}
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                <i class="fas fa-align-left mr-2 text-green-600"></i>Deskripsi
+            </h3>
+            <div class="prose max-w-none text-sm text-gray-700">
+                {{ object.deskripsi|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Kegiatan Rutin -->
+        {% if object.kegiatan_rutin %}
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                <i class="fas fa-calendar-alt mr-2 text-green-600"></i>Kegiatan Rutin
+            </h3>
+            <div class="prose max-w-none text-sm text-gray-700">
+                {{ object.kegiatan_rutin|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Prestasi -->
+        {% if object.prestasi %}
+        <div class="p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+                <i class="fas fa-trophy mr-2 text-green-600"></i>Prestasi
+            </h3>
+            <div class="prose max-w-none text-sm text-gray-700">
+                {{ object.prestasi|linebreaks }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

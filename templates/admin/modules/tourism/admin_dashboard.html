@@ -1,0 +1,541 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Dashboard Wisata{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-800">Dashboard Wisata</h1>
+        <p class="text-gray-600 mt-1">Kelola wisata di desa Pulo Sarok</p>
+    </div>
+
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-4 mb-4 rounded-md {% if message.tags == 'success' %}bg-green-50 text-green-800{% elif message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    {% if message.tags == 'success' %}
+                    <i class="fas fa-check-circle text-green-400"></i>
+                    {% elif message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                    {% else %}
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                    {% endif %}
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">{{ message }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Statistik -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Total Lokasi -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-map-marker-alt text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Total Lokasi</h2>
+                    <p class="text-2xl font-semibold text-gray-800">{{ total_locations }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Kategori -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-tags text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Total Kategori</h2>
+                    <p class="text-2xl font-semibold text-gray-800">{{ total_categories }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lokasi Unggulan -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-star text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Lokasi Unggulan</h2>
+                    <p class="text-2xl font-semibold text-gray-800">{{ featured_locations_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Paket -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-box text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <h2 class="text-sm font-medium text-gray-600">Total Paket</h2>
+                    <p class="text-2xl font-semibold text-gray-800">{{ total_packages }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lokasi Unggulan -->
+    <div class="bg-white rounded-lg shadow-sm mb-8 border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-medium text-gray-900">Lokasi Unggulan</h2>
+                <a href="{% url 'tourism:admin_location_list' %}" class="text-primary-600 hover:text-primary-800 text-sm font-medium">Lihat Semua</a>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if featured_locations %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for location in featured_locations %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    {% if location.main_image %}
+                    <div class="h-48 overflow-hidden">
+                        <img src="{{ location.main_image.url }}" alt="{{ location.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% else %}
+                    <div class="h-48 bg-gray-200 flex items-center justify-center">
+                        <i class="fas fa-image text-gray-400 text-4xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">{{ location.title }}</h3>
+                        <p class="text-sm text-gray-500 mb-2">{{ location.category.name }}</p>
+                        <p class="text-sm text-gray-700 mb-4 line-clamp-2">{{ location.short_description }}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full {% if location.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                {% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                            </span>
+                            <div>
+                                <a href="{% url 'tourism:admin_location_detail' location.id %}" class="text-blue-600 hover:text-blue-900 mr-2">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'tourism:admin_location_edit' location.id %}" class="text-indigo-600 hover:text-indigo-900 mr-2">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" onclick="openLocationModal('delete', {{ location.id }})" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="flex justify-center mb-4">
+                    <i class="fas fa-star text-gray-400 text-5xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Belum ada lokasi unggulan</h3>
+                <p class="mt-1 text-sm text-gray-500">Tambahkan lokasi unggulan untuk ditampilkan di sini.</p>
+                <div class="mt-6">
+                    <button type="button" onclick="openLocationModal('create')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-plus mr-2"></i>
+                        Tambah Lokasi
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Kategori Wisata -->
+    <div class="bg-white rounded-lg shadow-sm mb-8 border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-medium text-gray-900">Kategori Wisata</h2>
+                <button type="button" onclick="openCategoryModal('list')" class="text-primary-600 hover:text-primary-800 text-sm font-medium">Lihat Semua</button>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if categories %}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {% for category in categories %}
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+                    <div class="flex justify-center mb-3">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: {{ category.color }}">
+                            <i class="{{ category.icon }} text-white text-xl"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-md font-medium text-gray-900 mb-1">{{ category.name }}</h3>
+                    <p class="text-sm text-gray-500 mb-3">{{ category.locations.count }} lokasi</p>
+                    <div class="flex justify-center space-x-2">
+                        <button type="button" onclick="openCategoryModal('view', {{ category.id }})" class="text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" onclick="openCategoryModal('edit', {{ category.id }})" class="text-indigo-600 hover:text-indigo-900">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button type="button" onclick="openCategoryModal('delete', {{ category.id }})" class="text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="flex justify-center mb-4">
+                    <i class="fas fa-tags text-gray-400 text-5xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Belum ada kategori wisata</h3>
+                <p class="mt-1 text-sm text-gray-500">Tambahkan kategori wisata untuk mengorganisir lokasi wisata.</p>
+                <div class="mt-6">
+                    <button type="button" onclick="openCategoryModal('create')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-plus mr-2"></i>
+                        Tambah Kategori
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lokasi Terbaru -->
+    <div class="bg-white rounded-lg shadow-sm mb-8 border border-gray-200">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-medium text-gray-900">Lokasi Terbaru</h2>
+                <button type="button" onclick="openLocationModal('list')" class="text-primary-600 hover:text-primary-800 text-sm font-medium">Lihat Semua</button>
+            </div>
+        </div>
+        <div class="p-6">
+            {% if recent_locations %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Dibuat</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for location in recent_locations %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    {% if location.main_image %}
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <img class="h-10 w-10 rounded-md object-cover" src="{{ location.main_image.url }}" alt="{{ location.title }}">
+                                    </div>
+                                    {% else %}
+                                    <div class="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md flex items-center justify-center">
+                                        <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">{{ location.title }}</div>
+                                        <div class="text-sm text-gray-500">{{ location.address|truncatechars:30 }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ location.category.name }}</div>
+                                <div class="text-sm text-gray-500">{{ location.location_type_display }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if location.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {% if location.is_active %}Aktif{% else %}Tidak Aktif{% endif %}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">{{ location.created_at|date:"d M Y" }}</div>
+                                <div class="text-sm text-gray-500">{{ location.created_at|time:"H:i" }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="{% url 'tourism:admin_location_detail' location.id %}" class="text-blue-600 hover:text-blue-900 mr-2">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'tourism:admin_location_edit' location.id %}" class="text-indigo-600 hover:text-indigo-900 mr-2">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" onclick="openLocationModal('delete', {{ location.id }})" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8">
+                <div class="flex justify-center mb-4">
+                    <i class="fas fa-map-marker-alt text-gray-400 text-5xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Belum ada lokasi wisata</h3>
+                <p class="mt-1 text-sm text-gray-500">Mulai dengan menambahkan lokasi wisata baru.</p>
+                <div class="mt-6">
+                    <button type="button" onclick="openLocationModal('create')" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <i class="fas fa-plus mr-2"></i>
+                        Tambah Lokasi
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal untuk Lokasi (hanya untuk delete) -->
+<div id="locationModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div class="p-6" id="locationModalContent">
+            <!-- Konten modal akan diisi melalui AJAX -->
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal untuk Kategori -->
+<div id="categoryModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div class="p-6" id="categoryModalContent">
+            <!-- Konten modal akan diisi melalui AJAX -->
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal untuk Paket -->
+<div id="packageModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div class="p-6" id="packageModalContent">
+            <!-- Konten modal akan diisi melalui AJAX -->
+            <div class="flex justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Fungsi untuk membuka modal lokasi
+    function openLocationModal(action, id = null) {
+        // Hanya menangani operasi delete
+        if (action === 'delete' && id) {
+            const modal = document.getElementById('locationModal');
+            const modalContent = document.getElementById('locationModalContent');
+            
+            // Tampilkan modal
+            modal.classList.remove('hidden');
+            
+            // URL untuk AJAX request
+            const url = `/tourism/admin/location/${id}/delete/`;
+            
+            // Lakukan AJAX request
+            fetch(url, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = html;
+                
+                // Inisialisasi form jika ada
+                if (modalContent.querySelector('form')) {
+                    initFormSubmit(modalContent.querySelector('form'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                modalContent.innerHTML = `<div class="text-center py-8"><p class="text-red-600">Terjadi kesalahan saat memuat data. Silakan coba lagi.</p></div>`;
+            });
+        } else if (action === 'list') {
+            window.location.href = '{% url "tourism:admin_location_list" %}';
+        } else if (action === 'create') {
+            window.location.href = '{% url "tourism:admin_location_create" %}';
+        } else if (action === 'view' && id) {
+            window.location.href = `/tourism/admin/location/${id}/detail/`;
+        } else if (action === 'edit' && id) {
+            window.location.href = `/tourism/admin/location/${id}/edit/`;
+        }
+    }
+    
+    // Fungsi untuk membuka modal kategori
+    function openCategoryModal(action, id = null) {
+        const modal = document.getElementById('categoryModal');
+        const modalContent = document.getElementById('categoryModalContent');
+        
+        // Tampilkan modal
+        modal.classList.remove('hidden');
+        
+        // URL untuk AJAX request
+        let url = '';
+        
+        if (action === 'create') {
+            url = '{% url "tourism:admin_category_create" %}';
+        } else if (action === 'view' && id) {
+            url = `/tourism/admin/category/${id}/detail/`;
+        } else if (action === 'edit' && id) {
+            url = `/tourism/admin/category/${id}/edit/`;
+        } else if (action === 'delete' && id) {
+            url = `/tourism/admin/category/${id}/delete/`;
+        } else if (action === 'list') {
+            url = '{% url "tourism:admin_category_list" %}';
+        }
+        
+        // Lakukan AJAX request
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            modalContent.innerHTML = html;
+            
+            // Inisialisasi form jika ada
+            if (modalContent.querySelector('form')) {
+                initFormSubmit(modalContent.querySelector('form'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = `<div class="text-center py-8"><p class="text-red-600">Terjadi kesalahan saat memuat data. Silakan coba lagi.</p></div>`;
+        });
+    }
+    
+    // Fungsi untuk membuka modal paket
+    function openPackageModal(action, id = null) {
+        const modal = document.getElementById('packageModal');
+        const modalContent = document.getElementById('packageModalContent');
+        
+        // Tampilkan modal
+        modal.classList.remove('hidden');
+        
+        // URL untuk AJAX request
+        let url = '';
+        
+        if (action === 'create') {
+            url = '{% url "tourism:admin_package_create" %}';
+        } else if (action === 'view' && id) {
+            url = `/tourism/admin/package/${id}/detail/`;
+        } else if (action === 'edit' && id) {
+            url = `/tourism/admin/package/${id}/edit/`;
+        } else if (action === 'delete' && id) {
+            url = `/tourism/admin/package/${id}/delete/`;
+        } else if (action === 'list') {
+            url = '{% url "tourism:package_list" %}';
+        }
+        
+        // Lakukan AJAX request
+        fetch(url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.text())
+        .then(html => {
+            modalContent.innerHTML = html;
+            
+            // Inisialisasi form jika ada
+            if (modalContent.querySelector('form')) {
+                initFormSubmit(modalContent.querySelector('form'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            modalContent.innerHTML = `<div class="text-center py-8"><p class="text-red-600">Terjadi kesalahan saat memuat data. Silakan coba lagi.</p></div>`;
+        });
+    }
+    
+    // Fungsi untuk menutup modal
+    function closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        modal.classList.add('hidden');
+    }
+    
+    // Fungsi untuk menginisialisasi form submit
+    function initFormSubmit(form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    // Tutup modal
+                    closeModal(form.closest('[id$="Modal"]').id);
+                    
+                    // Refresh halaman
+                    window.location.reload();
+                } else {
+                    // Tampilkan pesan error
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'p-4 mb-4 rounded-md bg-red-50 text-red-800';
+                    errorDiv.innerHTML = `<p>${data.message}</p>`;
+                    
+                    form.prepend(errorDiv);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Tampilkan pesan error
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'p-4 mb-4 rounded-md bg-red-50 text-red-800';
+                errorDiv.innerHTML = `<p>Terjadi kesalahan saat mengirim data. Silakan coba lagi.</p>`;
+                
+                form.prepend(errorDiv);
+            });
+        });
+    }
+    
+    // Event listener untuk tombol close di modal
+    document.addEventListener('click', function(e) {
+        if (e.target.matches('[data-close-modal]')) {
+            const modalId = e.target.getAttribute('data-close-modal');
+            closeModal(modalId);
+        }
+    });
+    
+    // Event listener untuk menutup modal saat klik di luar modal
+    document.addEventListener('click', function(e) {
+        const locationModal = document.getElementById('locationModal');
+        const categoryModal = document.getElementById('categoryModal');
+        const packageModal = document.getElementById('packageModal');
+        
+        if (e.target === locationModal) {
+            closeModal('locationModal');
+        } else if (e.target === categoryModal) {
+            closeModal('categoryModal');
+        } else if (e.target === packageModal) {
+            closeModal('packageModal');
+        }
+    });
+</script>
+{% endblock %}

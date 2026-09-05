@@ -1,0 +1,1181 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Membuat Surat{% endblock %}
+{% block page_title %}Membuat Surat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .letter-card {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .letter-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    .template-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .template-card:hover {
+        border-color: #3b82f6;
+        background-color: #f8fafc;
+    }
+    .template-card.selected {
+        border-color: #3b82f6;
+        background-color: #eff6ff;
+    }
+    .letter-preview {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 2rem;
+        font-family: 'Times New Roman', serif;
+        line-height: 1.6;
+        min-height: 600px;
+    }
+    .letter-header {
+        text-align: center;
+        border-bottom: 2px solid #000;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    .letter-content {
+        margin: 2rem 0;
+    }
+    .signature-area {
+        margin-top: 3rem;
+        text-align: right;
+    }
+    .form-section {
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .variable-tag {
+        background: #dbeafe;
+        color: #1e40af;
+        padding: 0.125rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        display: inline-block;
+        margin: 0.125rem;
+    }
+    .variable-tag:hover {
+        background: #bfdbfe;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Kelola Surat</h1>
+                <p class="text-gray-600 mt-1">Buat dan kelola surat resmi gampong</p>
+            </div>
+            <div class="flex space-x-3">
+                <button onclick="openModal('letterModal')" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-plus mr-2"></i>Buat Surat
+                </button>
+                <button onclick="openModal('templateModal')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-file-alt mr-2"></i>Kelola Template
+                </button>
+                <button onclick="exportLetters()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-download mr-2"></i>Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100">
+                    <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Surat</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_letters|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Selesai</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ completed_letters|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100">
+                    <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Pending</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ pending_letters|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100">
+                    <i class="fas fa-file-pdf text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Template</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_templates|default:0 }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Filter Surat</h3>
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat</label>
+                <select name="jenis" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Jenis</option>
+                    <option value="keterangan" {% if request.GET.jenis == 'keterangan' %}selected{% endif %}>Surat Keterangan</option>
+                    <option value="pengantar" {% if request.GET.jenis == 'pengantar' %}selected{% endif %}>Surat Pengantar</option>
+                    <option value="rekomendasi" {% if request.GET.jenis == 'rekomendasi' %}selected{% endif %}>Surat Rekomendasi</option>
+                    <option value="undangan" {% if request.GET.jenis == 'undangan' %}selected{% endif %}>Surat Undangan</option>
+                    <option value="pemberitahuan" {% if request.GET.jenis == 'pemberitahuan' %}selected{% endif %}>Surat Pemberitahuan</option>
+                    <option value="permohonan" {% if request.GET.jenis == 'permohonan' %}selected{% endif %}>Surat Permohonan</option>
+                    <option value="keputusan" {% if request.GET.jenis == 'keputusan' %}selected{% endif %}>Surat Keputusan</option>
+                    <option value="lainnya" {% if request.GET.jenis == 'lainnya' %}selected{% endif %}>Lainnya</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Status</option>
+                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>Draft</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if request.GET.status == 'approved' %}selected{% endif %}>Disetujui</option>
+                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Selesai</option>
+                    <option value="rejected" {% if request.GET.status == 'rejected' %}selected{% endif %}>Ditolak</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Bulan</label>
+                <select name="month" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <option value="">Semua Bulan</option>
+                    {% for month in months %}
+                    <option value="{{ month.value }}" {% if request.GET.month == month.value|stringformat:'s' %}selected{% endif %}>{{ month.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pencarian</label>
+                <input type="text" name="search" value="{{ request.GET.search }}" placeholder="Nomor surat, perihal..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Letters Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nomor Surat</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Perihal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jenis</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Penerima</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for letter in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ letter.nomor_surat }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ letter.perihal|truncatechars:50 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ letter.get_jenis_display }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ letter.penerima|truncatechars:30 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ letter.tanggal_surat|date:"d M Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="status-badge 
+                                {% if letter.status == 'draft' %}bg-gray-100 text-gray-800
+                                {% elif letter.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% elif letter.status == 'approved' %}bg-blue-100 text-blue-800
+                                {% elif letter.status == 'completed' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ letter.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex space-x-2">
+                                <button onclick="viewLetter({{ letter.id }})" class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button onclick="editLetter({{ letter.id }})" class="text-yellow-600 hover:text-yellow-900">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="printLetter({{ letter.id }})" class="text-green-600 hover:text-green-900">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button onclick="downloadLetter({{ letter.id }})" class="text-purple-600 hover:text-purple-900">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button onclick="deleteLetter({{ letter.id }})" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <i class="fas fa-file-alt text-4xl text-gray-300 mb-4"></i>
+                            <p>Belum ada surat yang dibuat</p>
+                            <button onclick="openModal('letterModal')" class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg">
+                                Buat Surat Pertama
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex justify-center">
+        <div class="flex space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.jenis %}&jenis={{ request.GET.jenis }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" 
+                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="px-3 py-2 text-sm bg-primary-600 text-white border border-primary-600 rounded-md">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.jenis %}&jenis={{ request.GET.jenis }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" 
+                       class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.jenis %}&jenis={{ request.GET.jenis }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}" 
+                   class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Create/Edit Letter Modal -->
+<div id="letterModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900" id="letterModalTitle">Buat Surat Baru</h3>
+                    <button onclick="closeModal('letterModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Form Section -->
+                    <div>
+                        <form id="letterForm" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="letter_id" id="letter_id">
+                            
+                            <!-- Template Selection -->
+                            <div class="form-section">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Pilih Template</h4>
+                                <div class="grid grid-cols-1 gap-3" id="templateSelection">
+                                    {% for template in letter_templates %}
+                                    <div class="template-card" data-template-id="{{ template.id }}" onclick="selectTemplate({{ template.id }})">
+                                        <div class="flex items-center justify-between">
+                                            <div>
+                                                <h5 class="font-medium text-gray-900">{{ template.nama }}</h5>
+                                                <p class="text-sm text-gray-500">{{ template.deskripsi }}</p>
+                                            </div>
+                                            <i class="fas fa-file-alt text-gray-400"></i>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" name="template_id" id="selectedTemplate">
+                            </div>
+                            
+                            <!-- Basic Information -->
+                            <div class="form-section">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Informasi Dasar</h4>
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Nomor Surat *</label>
+                                            <input type="text" name="nomor_surat" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Surat *</label>
+                                            <input type="date" name="tanggal_surat" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Perihal *</label>
+                                        <input type="text" name="perihal" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Jenis Surat *</label>
+                                            <select name="jenis" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                                <option value="">Pilih Jenis</option>
+                                                <option value="keterangan">Surat Keterangan</option>
+                                                <option value="pengantar">Surat Pengantar</option>
+                                                <option value="rekomendasi">Surat Rekomendasi</option>
+                                                <option value="undangan">Surat Undangan</option>
+                                                <option value="pemberitahuan">Surat Pemberitahuan</option>
+                                                <option value="permohonan">Surat Permohonan</option>
+                                                <option value="keputusan">Surat Keputusan</option>
+                                                <option value="lainnya">Lainnya</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                                            <select name="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                                <option value="draft">Draft</option>
+                                                <option value="pending">Pending</option>
+                                                <option value="approved">Disetujui</option>
+                                                <option value="completed">Selesai</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Recipient Information -->
+                            <div class="form-section">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Informasi Penerima</h4>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Nama Penerima *</label>
+                                        <input type="text" name="penerima" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Alamat Penerima</label>
+                                        <textarea name="alamat_penerima" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Variables -->
+                            <div class="form-section">
+                                <h4 class="text-md font-semibold text-gray-900 mb-3">Variabel Template</h4>
+                                <div id="templateVariables" class="space-y-3">
+                                    <p class="text-sm text-gray-500">Pilih template untuk melihat variabel yang tersedia</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-3">
+                                <button type="button" onclick="closeModal('letterModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
+                                    Batal
+                                </button>
+                                <button type="button" onclick="saveDraft()" class="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">
+                                    Simpan Draft
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">
+                                    Simpan Surat
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Preview Section -->
+                    <div>
+                        <h4 class="text-md font-semibold text-gray-900 mb-3">Preview Surat</h4>
+                        <div class="letter-preview" id="letterPreview">
+                            <div class="letter-header">
+                                <h2>PEMERINTAH GAMPONG PULOSAROK</h2>
+                                <h3>KECAMATAN PEUKAN BADA</h3>
+                                <h3>KABUPATEN ACEH BESAR</h3>
+                                <p>Alamat: Jl. Raya Pulosarok, Kec. Peukan Bada, Kab. Aceh Besar</p>
+                            </div>
+                            
+                            <div class="letter-content">
+                                <p class="text-center font-bold text-lg mb-4">SURAT [JENIS_SURAT]</p>
+                                <p class="mb-2">Nomor: [NOMOR_SURAT]</p>
+                                <p class="mb-4">Perihal: [PERIHAL]</p>
+                                
+                                <p class="mb-4">Kepada Yth.<br>[PENERIMA]<br>[ALAMAT_PENERIMA]</p>
+                                
+                                <p class="mb-4">Dengan hormat,</p>
+                                
+                                <div class="mb-4">
+                                    [KONTEN_SURAT]
+                                </div>
+                                
+                                <p class="mb-4">Demikian surat ini dibuat untuk dapat dipergunakan sebagaimana mestinya.</p>
+                            </div>
+                            
+                            <div class="signature-area">
+                                <p>Pulosarok, [TANGGAL_SURAT]</p>
+                                <p class="mb-16">Keuchik Gampong Pulosarok</p>
+                                <p class="font-bold">[NAMA_KEUCHIK]</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Management Modal -->
+<div id="templateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Kelola Template Surat</h3>
+                    <button onclick="closeModal('templateModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-4">
+                    <button onclick="createTemplate()" class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-plus mr-2"></i>Buat Template Baru
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for template in letter_templates %}
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium text-gray-900">{{ template.nama }}</h4>
+                            <div class="flex space-x-2">
+                                <button onclick="editTemplate({{ template.id }})" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="deleteTemplate({{ template.id }})" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">{{ template.deskripsi }}</p>
+                        <div class="text-xs text-gray-500">
+                            <p>Variabel: {{ template.variables|join:", " }}</p>
+                            <p>Dibuat: {{ template.created_at|date:"d M Y" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let selectedTemplateId = null;
+    let templateData = {};
+    
+    function selectTemplate(templateId) {
+        // Remove previous selection
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Select new template
+        document.querySelector(`[data-template-id="${templateId}"]`).classList.add('selected');
+        selectedTemplateId = templateId;
+        document.getElementById('selectedTemplate').value = templateId;
+        
+        // Load template data and update preview
+        loadTemplateData(templateId);
+    }
+    
+    function loadTemplateData(templateId) {
+        fetch(`/admin/beneficiaries/surat/template/${templateId}/`)
+            .then(response => response.json())
+            .then(data => {
+                templateData = data;
+                updateTemplateVariables(data.variables);
+                updateLetterPreview();
+            })
+            .catch(error => {
+                console.error('Error loading template:', error);
+            });
+    }
+    
+    function updateTemplateVariables(variables) {
+        const container = document.getElementById('templateVariables');
+        container.innerHTML = '';
+        
+        if (variables && variables.length > 0) {
+            variables.forEach(variable => {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <label class="block text-sm font-medium text-gray-700 mb-1">${variable.label}</label>
+                    <input type="text" name="var_${variable.name}" placeholder="${variable.placeholder || ''}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                           onchange="updateLetterPreview()">
+                `;
+                container.appendChild(div);
+            });
+            
+            // Add available variables info
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'mt-3 p-3 bg-blue-50 rounded-md';
+            infoDiv.innerHTML = `
+                <p class="text-sm font-medium text-blue-900 mb-2">Variabel yang tersedia:</p>
+                <div class="flex flex-wrap gap-1">
+                    ${variables.map(v => `<span class="variable-tag" onclick="insertVariable('${v.name}')">[${v.name}]</span>`).join('')}
+                </div>
+            `;
+            container.appendChild(infoDiv);
+        } else {
+            container.innerHTML = '<p class="text-sm text-gray-500">Template ini tidak memiliki variabel khusus</p>';
+        }
+    }
+    
+    function updateLetterPreview() {
+        if (!templateData.content) return;
+        
+        let content = templateData.content;
+        const form = document.getElementById('letterForm');
+        const formData = new FormData(form);
+        
+        // Replace basic variables
+        content = content.replace(/\[NOMOR_SURAT\]/g, formData.get('nomor_surat') || '[NOMOR_SURAT]');
+        content = content.replace(/\[TANGGAL_SURAT\]/g, formData.get('tanggal_surat') || '[TANGGAL_SURAT]');
+        content = content.replace(/\[PERIHAL\]/g, formData.get('perihal') || '[PERIHAL]');
+        content = content.replace(/\[PENERIMA\]/g, formData.get('penerima') || '[PENERIMA]');
+        content = content.replace(/\[ALAMAT_PENERIMA\]/g, formData.get('alamat_penerima') || '[ALAMAT_PENERIMA]');
+        content = content.replace(/\[JENIS_SURAT\]/g, formData.get('jenis') || '[JENIS_SURAT]');
+        
+        // Replace custom variables
+        if (templateData.variables) {
+            templateData.variables.forEach(variable => {
+                const value = formData.get(`var_${variable.name}`) || `[${variable.name}]`;
+                const regex = new RegExp(`\\[${variable.name}\\]`, 'g');
+                content = content.replace(regex, value);
+            });
+        }
+        
+        document.getElementById('letterPreview').innerHTML = content;
+    }
+    
+    function insertVariable(variableName) {
+        // This function can be used to insert variables into text fields
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.tagName === 'INPUT') {
+            const cursorPos = activeElement.selectionStart;
+            const textBefore = activeElement.value.substring(0, cursorPos);
+            const textAfter = activeElement.value.substring(activeElement.selectionEnd);
+            activeElement.value = textBefore + `[${variableName}]` + textAfter;
+            activeElement.focus();
+            activeElement.setSelectionRange(cursorPos + variableName.length + 2, cursorPos + variableName.length + 2);
+            updateLetterPreview();
+        }
+    }
+    
+    function openModal(modalId) {
+        document.getElementById(modalId).classList.remove('hidden');
+        if (modalId === 'letterModal') {
+            // Set default date to today
+            document.querySelector('[name="tanggal_surat"]').value = new Date().toISOString().split('T')[0];
+        }
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).classList.add('hidden');
+        if (modalId === 'letterModal') {
+            document.getElementById('letterForm').reset();
+            document.getElementById('letterModalTitle').textContent = 'Buat Surat Baru';
+            selectedTemplateId = null;
+            templateData = {};
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById('templateVariables').innerHTML = '<p class="text-sm text-gray-500">Pilih template untuk melihat variabel yang tersedia</p>';
+        }
+    }
+    
+    function viewLetter(id) {
+        // Fetch letter data from API
+        fetch(`/api/beneficiaries/surat/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const letter = data.data;
+                
+                // Create detail modal if it doesn't exist
+                let detailModal = document.getElementById('letterDetailModal');
+                if (!detailModal) {
+                    detailModal = document.createElement('div');
+                    detailModal.id = 'letterDetailModal';
+                    detailModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+                    detailModal.innerHTML = `
+                        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <h3 class="text-xl font-medium text-gray-900" id="letterDetailTitle">Detail Surat</h3>
+                                <button type="button" onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-500">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="mt-4" id="letterDetailContent"></div>
+                            <div class="mt-4 flex justify-end space-x-3">
+                                <button onclick="closeDetailModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Tutup</button>
+                                <button onclick="editLetter(${id})" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Edit</button>
+                                <button onclick="printLetter(${id})" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Cetak</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(detailModal);
+                } else {
+                    // Update existing modal
+                    document.getElementById('letterDetailContent').innerHTML = '';
+                    detailModal.style.display = 'block';
+                }
+                
+                // Populate letter details
+                const detailContent = document.getElementById('letterDetailContent');
+                
+                // Format date
+                const tanggalSurat = new Date(letter.tanggal_surat).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+                
+                // Get status class and label
+                const statusClass = getStatusClass(letter.status);
+                const statusLabel = getStatusLabel(letter.status);
+                
+                // Create detail HTML
+                detailContent.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Nomor Surat</p>
+                            <p class="text-base">${letter.nomor_surat}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Tanggal Surat</p>
+                            <p class="text-base">${tanggalSurat}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Perihal</p>
+                            <p class="text-base">${letter.perihal}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Jenis Surat</p>
+                            <p class="text-base">${letter.jenis_surat}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Penerima</p>
+                            <p class="text-base">${letter.penerima}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Status</p>
+                            <p class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}">
+                                ${statusLabel}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm font-medium text-gray-500">Isi Surat</p>
+                        <div class="mt-2 p-4 border rounded-md bg-gray-50">
+                            <pre class="whitespace-pre-wrap">${letter.isi_surat}</pre>
+                        </div>
+                    </div>
+                `;
+            } else {
+                alert('Gagal memuat data surat: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat memuat data surat');
+        });
+    }
+    
+    function closeDetailModal() {
+        const detailModal = document.getElementById('letterDetailModal');
+        if (detailModal) {
+            detailModal.style.display = 'none';
+        }
+    }
+    
+    function getStatusClass(status) {
+        switch(status) {
+            case 'draft':
+                return 'bg-gray-100 text-gray-800';
+            case 'published':
+                return 'bg-green-100 text-green-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    }
+    
+    function getStatusLabel(status) {
+        switch(status) {
+            case 'draft':
+                return 'Draft';
+            case 'published':
+                return 'Terbit';
+            case 'pending':
+                return 'Menunggu';
+            default:
+                return status;
+        }
+    }
+    
+    function editLetter(id) {
+        // Fetch letter data from API
+        fetch(`/api/beneficiaries/surat/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const letter = data.data;
+                
+                // Fill form fields
+                document.querySelector('[name="nomor_surat"]').value = letter.nomor_surat;
+                document.querySelector('[name="tanggal_surat"]').value = letter.tanggal_surat;
+                document.querySelector('[name="perihal"]').value = letter.perihal;
+                document.querySelector('[name="jenis"]').value = letter.jenis;
+                document.querySelector('[name="penerima"]').value = letter.penerima;
+                document.querySelector('[name="alamat_penerima"]').value = letter.alamat_penerima || '';
+                document.querySelector('[name="catatan"]').value = letter.catatan || '';
+                
+                // Set content
+                if (letter.content) {
+                    document.querySelector('[name="content"]').value = letter.content;
+                }
+                
+                // Add hidden input for letter ID
+                let idInput = document.querySelector('input[name="letter_id"]');
+                if (!idInput) {
+                    idInput = document.createElement('input');
+                    idInput.type = 'hidden';
+                    idInput.name = 'letter_id';
+                    document.getElementById('letterForm').appendChild(idInput);
+                }
+                idInput.value = id;
+                
+                // Update form action for API update
+                document.getElementById('letterForm').action = `/api/beneficiaries/surat/${id}/update/`;
+                document.getElementById('letterForm').method = 'PUT';
+                
+                // Update modal title
+                document.getElementById('modalTitle').textContent = 'Edit Surat';
+                
+                // Open modal
+                openModal('letterModal');
+            } else {
+                alert('Gagal memuat data surat: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat memuat data surat');
+        });
+    }
+    
+    function printLetter(id) {
+        // Open print view in new tab using API
+        window.open(`/api/beneficiaries/surat/${id}/print/`, '_blank');
+    }
+    
+    function downloadLetter(id) {
+        // Download letter using API
+        window.open(`/api/beneficiaries/surat/${id}/download/`, '_blank');
+    }
+    
+    function deleteLetter(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus surat ini?')) {
+            // Use API to delete letter
+            fetch(`/api/beneficiaries/surat/${id}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || 'Surat berhasil dihapus');
+                    location.reload();
+                } else {
+                    alert('Gagal menghapus surat: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menghapus surat');
+            });
+        }
+    }
+    
+    function saveDraft() {
+        const form = document.getElementById('letterForm');
+        const formData = new FormData(form);
+        
+        // Add draft status
+        formData.append('status', 'draft');
+        
+        // Get letter ID if exists
+        const id = formData.get('letter_id');
+        
+        // Convert FormData to JSON
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Determine if this is a create or update request
+        const url = id ? 
+            `/api/beneficiaries/surat/${id}/update/` : 
+            '/api/beneficiaries/surat/create/';
+        
+        const method = id ? 'PUT' : 'POST';
+        
+        // Send request to API
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Draft berhasil disimpan');
+                location.reload();
+            } else {
+                alert('Gagal menyimpan draft: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan draft');
+        });
+    }
+    
+    function exportLetters() {
+        // Export letters using API
+        window.open('/api/beneficiaries/surat/export/', '_blank');
+    }
+    
+    function createTemplate() {
+        const templateName = document.getElementById('templateName').value.trim();
+        const templateContent = document.getElementById('templateContent').value.trim();
+        
+        if (!templateName) {
+            alert('Nama template harus diisi!');
+            return;
+        }
+        
+        if (!templateContent) {
+            alert('Isi template harus diisi!');
+            return;
+        }
+        
+        // Prepare data for API
+        const data = {
+            name: templateName,
+            content: templateContent
+        };
+        
+        // Send request to API
+        fetch('/api/beneficiaries/surat-template/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload page
+                closeModal('templateModal');
+                alert(data.message || 'Template berhasil disimpan');
+                location.reload();
+            } else {
+                alert('Gagal menyimpan template: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan template');
+        });
+    }
+    
+    function editTemplate(id) {
+        // Fetch template data from API
+        fetch(`/api/beneficiaries/surat-template/${id}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const template = data.data;
+                
+                // Open modal with template data
+                document.getElementById('letterModalTitle').textContent = 'Edit Template';
+                
+                // Create template edit form if it doesn't exist
+                let templateForm = document.getElementById('templateForm');
+                if (!templateForm) {
+                    const modalContent = document.querySelector('#templateModal .p-6');
+                    
+                    // Create form
+                    templateForm = document.createElement('form');
+                    templateForm.id = 'templateForm';
+                    templateForm.innerHTML = `
+                        <input type="hidden" name="template_id" id="template_id" value="${id}">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Template</label>
+                            <input type="text" id="templateName" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
+                            <input type="text" id="templateDesc" name="description" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Konten Template</label>
+                            <textarea id="templateContent" name="content" rows="10" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                        </div>
+                        <div class="flex justify-end space-x-3">
+                            <button type="button" onclick="closeModal('templateModal')" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Batal</button>
+                            <button type="submit" class="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700">Simpan Template</button>
+                        </div>
+                    `;
+                    
+                    // Add form to modal
+                    modalContent.appendChild(templateForm);
+                }
+                
+                // Fill form with template data
+                document.getElementById('template_id').value = id;
+                document.getElementById('templateName').value = template.nama;
+                document.getElementById('templateDesc').value = template.deskripsi || '';
+                document.getElementById('templateContent').value = template.content;
+                
+                // Set form submission handler
+                templateForm.onsubmit = function(e) {
+                    e.preventDefault();
+                    
+                    // Get form data
+                    const formData = new FormData(templateForm);
+                    const data = {};
+                    formData.forEach((value, key) => {
+                        data[key] = value;
+                    });
+                    
+                    // Send request to API
+                    fetch(`/api/beneficiaries/surat-template/${id}/update/`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            closeModal('templateModal');
+                            alert(data.message || 'Template berhasil diperbarui');
+                            location.reload();
+                        } else {
+                            alert('Gagal memperbarui template: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan saat memperbarui template');
+                    });
+                    
+                    return false;
+                };
+                
+                // Open modal
+                openModal('templateModal');
+            } else {
+                alert('Gagal memuat data template: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat memuat data template');
+        });
+    }
+    
+    function deleteTemplate(id) {
+        if (confirm('Apakah Anda yakin ingin menghapus template ini?')) {
+            // Use API to delete template
+            fetch(`/api/beneficiaries/surat-template/${id}/delete/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message || 'Template berhasil dihapus');
+                    location.reload();
+                } else {
+                    alert('Gagal menghapus template: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat menghapus template');
+            });
+        }
+    }
+    
+    // Form submission with validation
+    document.getElementById('letterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate required fields
+        const nomorSurat = document.querySelector('[name="nomor_surat"]').value.trim();
+        const tanggalSurat = document.querySelector('[name="tanggal_surat"]').value;
+        const perihal = document.querySelector('[name="perihal"]').value.trim();
+        const jenis = document.querySelector('[name="jenis"]').value;
+        const penerima = document.querySelector('[name="penerima"]').value.trim();
+        
+        if (!nomorSurat) {
+            alert('Nomor surat harus diisi!');
+            return false;
+        }
+        
+        if (!tanggalSurat) {
+            alert('Tanggal surat harus diisi!');
+            return false;
+        }
+        
+        if (!perihal) {
+            alert('Perihal surat harus diisi!');
+            return false;
+        }
+        
+        if (!jenis) {
+            alert('Jenis surat harus dipilih!');
+            return false;
+        }
+        
+        if (!penerima) {
+            alert('Nama penerima harus diisi!');
+            return false;
+        }
+        
+        // Get form data
+        const form = this;
+        const formData = new FormData(form);
+        const id = formData.get('letter_id');
+        
+        // Convert FormData to JSON
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+        
+        // Determine if this is a create or update request
+        const url = id ? 
+            `/api/beneficiaries/surat/${id}/update/` : 
+            '/api/beneficiaries/surat/create/';
+        
+        const method = id ? 'PUT' : 'POST';
+        
+        // Send request to API
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload page
+                closeModal('letterModal');
+                alert(data.message || 'Surat berhasil disimpan');
+                location.reload();
+            } else {
+                alert('Gagal menyimpan surat: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyimpan surat');
+        });
+        
+        return false;
+    });
+    
+    // Auto-update preview when form fields change
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('letterForm');
+        form.addEventListener('input', updateLetterPreview);
+        form.addEventListener('change', updateLetterPreview);
+    });
+</script>
+{% endblock %}

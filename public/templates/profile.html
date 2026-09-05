@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+
+{% block title %}Profil Desa - Website Desa Pulosarok{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-gradient text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 fade-in">Profil Desa Pulosarok</h1>
+            <p class="text-xl opacity-90 fade-in">Mengenal Lebih Dekat Desa Pulosarok</p>
+        </div>
+    </div>
+</section>
+
+<!-- Navigation Tabs -->
+<section class="bg-white border-b sticky top-16 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex space-x-8 overflow-x-auto">
+            <button class="tab-btn active py-4 px-2 border-b-2 border-primary-600 text-primary-600 font-semibold whitespace-nowrap" data-tab="visi-misi">
+                Visi & Misi
+            </button>
+            <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-semibold whitespace-nowrap" data-tab="sejarah">
+                Sejarah
+            </button>
+            <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-semibold whitespace-nowrap" data-tab="geografis">
+                Geografis
+            </button>
+            <button class="tab-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-semibold whitespace-nowrap" data-tab="peta">
+                Peta Desa
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Content Sections -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Visi Misi Tab -->
+    <div id="visi-misi" class="tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-eye text-primary-600 text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Visi Desa</h2>
+                </div>
+                <div id="visi-content" class="text-gray-700 leading-relaxed">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-bullseye text-primary-600 text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Misi Desa</h2>
+                </div>
+                <div id="misi-content" class="text-gray-700 leading-relaxed">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sejarah Tab -->
+    <div id="sejarah" class="tab-content hidden">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-history text-primary-600 text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">Sejarah Desa Pulosarok</h2>
+            </div>
+            <div id="sejarah-content" class="text-gray-700 leading-relaxed">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Geografis Tab -->
+    <div id="geografis" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-globe text-primary-600 text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Kondisi Geografis</h2>
+                </div>
+                <div id="geografis-content" class="text-gray-700 leading-relaxed">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Data Geografis</h3>
+                <div id="geografis-data" class="space-y-4">
+                    <!-- Data will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Peta Tab -->
+    <div id="peta" class="tab-content hidden">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-map text-primary-600 text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900">Peta Desa Pulosarok</h2>
+                </div>
+                <button onclick="openModal('map-modal')" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+                    <i class="fas fa-expand mr-2"></i>Lihat Peta Besar
+                </button>
+            </div>
+            <div id="peta-content" class="">
+                <!-- Map content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Modal -->
+<div id="map-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-6xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-gray-900">Peta Desa Pulosarok</h2>
+                    <button onclick="closeModal('map-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="map-modal-content" class="h-96">
+                    <!-- Large map will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detail-modal" class="fixed inset-0 bg-black bg-opacity-50 modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <h2 id="detail-modal-title" class="text-2xl font-bold text-gray-900"></h2>
+                    <button onclick="closeModal('detail-modal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div id="detail-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    class ProfilePage {
+        constructor() {
+            this.currentTab = 'visi-misi';
+            this.init();
+        }
+        
+        async init() {
+            this.setupTabs();
+            await this.loadProfileData();
+        }
+        
+        setupTabs() {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabId = btn.dataset.tab;
+                    this.switchTab(tabId);
+                });
+            });
+        }
+        
+        switchTab(tabId) {
+            // Update active tab button
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'border-primary-600', 'text-primary-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
+            activeBtn.classList.add('active', 'border-primary-600', 'text-primary-600');
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            
+            // Update active content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+                content.classList.remove('active');
+            });
+            
+            const activeContent = document.getElementById(tabId);
+            activeContent.classList.remove('hidden');
+            activeContent.classList.add('active');
+            
+            this.currentTab = tabId;
+            
+            // Load specific content if needed
+            if (tabId === 'peta' && !document.getElementById('peta-content').innerHTML.trim()) {
+                this.loadMapData();
+            }
+        }
+        
+        async loadProfileData() {
+            try {
+                const data = await apiCall('/api/village-profile/');
+                this.renderProfileData(data.results || []);
+            } catch (error) {
+                console.error('Error loading profile data:', error);
+                this.renderDefaultContent();
+            }
+        }
+        
+        renderProfileData(profiles) {
+            const visiProfile = profiles.find(p => p.type === 'visi') || {};
+            const misiProfile = profiles.find(p => p.type === 'misi') || {};
+            const sejarahProfile = profiles.find(p => p.type === 'sejarah') || {};
+            const geografisProfile = profiles.find(p => p.type === 'geografis') || {};
+            
+            // Render Visi
+            document.getElementById('visi-content').innerHTML = visiProfile.content || 
+                '<p class="text-gray-500">Visi desa belum tersedia.</p>';
+            
+            // Render Misi
+            if (misiProfile.content) {
+                const misiList = misiProfile.content.split('\n').filter(item => item.trim());
+                document.getElementById('misi-content').innerHTML = `
+                    <ol class="list-decimal list-inside space-y-2">
+                        ${misiList.map(misi => `<li>${misi.trim()}</li>`).join('')}
+                    </ol>
+                `;
+            } else {
+                document.getElementById('misi-content').innerHTML = 
+                    '<p class="text-gray-500">Misi desa belum tersedia.</p>';
+            }
+            
+            // Render Sejarah
+            document.getElementById('sejarah-content').innerHTML = sejarahProfile.content || 
+                '<p class="text-gray-500">Sejarah desa belum tersedia.</p>';
+            
+            // Render Geografis
+            document.getElementById('geografis-content').innerHTML = geografisProfile.content || 
+                '<p class="text-gray-500">Informasi geografis belum tersedia.</p>';
+            
+            // Render geografis data
+            this.renderGeografisData(geografisProfile);
+        }
+        
+        renderGeografisData(geografisProfile) {
+            const container = document.getElementById('geografis-data');
+            const defaultData = [
+                { label: 'Luas Wilayah', value: geografisProfile.area || 'Belum tersedia', icon: 'fas fa-ruler-combined' },
+                { label: 'Ketinggian', value: geografisProfile.altitude || 'Belum tersedia', icon: 'fas fa-mountain' },
+                { label: 'Curah Hujan', value: geografisProfile.rainfall || 'Belum tersedia', icon: 'fas fa-cloud-rain' },
+                { label: 'Suhu Rata-rata', value: geografisProfile.temperature || 'Belum tersedia', icon: 'fas fa-thermometer-half' },
+                { label: 'Batas Utara', value: geografisProfile.north_border || 'Belum tersedia', icon: 'fas fa-compass' },
+                { label: 'Batas Selatan', value: geografisProfile.south_border || 'Belum tersedia', icon: 'fas fa-compass' },
+                { label: 'Batas Timur', value: geografisProfile.east_border || 'Belum tersedia', icon: 'fas fa-compass' },
+                { label: 'Batas Barat', value: geografisProfile.west_border || 'Belum tersedia', icon: 'fas fa-compass' }
+            ];
+            
+            container.innerHTML = defaultData.map(item => `
+                <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                    <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="${item.icon} text-primary-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600">${item.label}</p>
+                        <p class="font-semibold text-gray-900">${item.value}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async loadMapData() {
+            try {
+                const data = await apiCall('/pulosarok/village-profile/api/?type=peta');
+                const mapData = data.results && data.results[0];
+                
+                if (mapData && mapData.image) {
+                    document.getElementById('peta-content').innerHTML = `
+                        <div class="relative">
+                            <img src="${mapData.image}" alt="Peta Desa Pulosarok" class="w-full h-96 object-contain bg-gray-100 rounded-lg">
+                            <div class="absolute top-4 right-4">
+                                <button onclick="showMapDetail('${mapData.image}')" class="bg-white bg-opacity-90 text-gray-700 px-3 py-2 rounded-lg hover:bg-opacity-100 transition-all">
+                                    <i class="fas fa-search-plus mr-2"></i>Zoom
+                                </button>
+                            </div>
+                        </div>
+                        ${mapData.description ? `<div class="mt-4 p-4 bg-gray-50 rounded-lg"><p class="text-gray-700">${mapData.description}</p></div>` : ''}
+                    `;
+                } else {
+                    document.getElementById('peta-content').innerHTML = `
+                        <div class="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="text-center text-gray-500">
+                                <i class="fas fa-map text-4xl mb-4"></i>
+                                <p>Peta desa belum tersedia</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading map data:', error);
+                document.getElementById('peta-content').innerHTML = `
+                    <div class="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div class="text-center text-gray-500">
+                            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                            <p>Gagal memuat peta desa</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        renderDefaultContent() {
+            document.getElementById('visi-content').innerHTML = `
+                <p class="text-lg font-medium text-primary-600 mb-4">"Terwujudnya Desa Pulosarok yang Maju, Sejahtera, dan Berbudaya"</p>
+                <p class="text-gray-700">Visi ini mencerminkan cita-cita bersama masyarakat Desa Pulosarok untuk menjadi desa yang berkembang dalam berbagai aspek kehidupan, dengan tetap menjaga nilai-nilai budaya dan kearifan lokal.</p>
+            `;
+            
+            document.getElementById('misi-content').innerHTML = `
+                <ol class="list-decimal list-inside space-y-3">
+                    <li>Meningkatkan kualitas sumber daya manusia melalui pendidikan dan pelatihan</li>
+                    <li>Mengembangkan potensi ekonomi desa berbasis kearifan lokal</li>
+                    <li>Memperkuat tata kelola pemerintahan yang transparan dan akuntabel</li>
+                    <li>Melestarikan budaya dan tradisi desa</li>
+                    <li>Meningkatkan infrastruktur dan fasilitas publik</li>
+                    <li>Menjaga kelestarian lingkungan hidup</li>
+                </ol>
+            `;
+            
+            document.getElementById('sejarah-content').innerHTML = `
+                <p class="mb-4">Desa Pulosarok memiliki sejarah panjang yang dimulai dari zaman kolonial. Nama "Pulosarok" berasal dari bahasa Jawa yang memiliki makna mendalam bagi masyarakat setempat.</p>
+                <p class="mb-4">Desa ini telah mengalami berbagai perkembangan dari masa ke masa, mulai dari sistem pemerintahan tradisional hingga sistem pemerintahan desa modern seperti sekarang ini.</p>
+                <p>Masyarakat Desa Pulosarok dikenal dengan gotong royong yang kuat dan tetap menjaga nilai-nilai budaya Jawa dalam kehidupan sehari-hari.</p>
+            `;
+            
+            document.getElementById('geografis-content').innerHTML = `
+                <p class="mb-4">Desa Pulosarok terletak di wilayah Kecamatan Tempursari, Kabupaten Malang, Jawa Timur. Desa ini memiliki kondisi geografis yang strategis dengan akses yang mudah ke berbagai wilayah.</p>
+                <p class="mb-4">Topografi desa ini relatif datar dengan beberapa perbukitan kecil, sehingga cocok untuk berbagai aktivitas pertanian dan perkebunan.</p>
+                <p>Iklim tropis dengan curah hujan yang cukup membuat desa ini subur dan hijau sepanjang tahun.</p>
+            `;
+        }
+    }
+    
+    function showMapDetail(imageUrl) {
+        document.getElementById('map-modal-content').innerHTML = `
+            <img src="${imageUrl}" alt="Peta Desa Pulosarok" class="w-full h-full object-contain bg-gray-100 rounded-lg">
+        `;
+        openModal('map-modal');
+    }
+    
+    // Initialize profile page
+    document.addEventListener('DOMContentLoaded', function() {
+        new ProfilePage();
+    });
+</script>
+{% endblock %}

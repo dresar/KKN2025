@@ -1,0 +1,380 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}
+    {% if form.instance.id %}Edit{% else %}Tambah{% endif %} Lembaga Adat
+{% endblock %}
+
+{% block page_title %}
+    {% if form.instance.id %}Edit{% else %}Tambah{% endif %} Lembaga Adat
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Responsive styles for mobile */
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1rem;
+        }
+        .form-card {
+            padding: 1rem;
+        }
+        .grid-cols-2, .grid-cols-3 {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Custom file input styling */
+    .custom-file-input::-webkit-file-upload-button {
+        visibility: hidden;
+    }
+    .custom-file-input::before {
+        content: 'Pilih File';
+        display: inline-block;
+        background: linear-gradient(to bottom, #f9f9f9, #e3e3e3);
+        border: 1px solid #999;
+        border-radius: 3px;
+        padding: 5px 8px;
+        outline: none;
+        white-space: nowrap;
+        cursor: pointer;
+        text-shadow: 1px 1px #fff;
+        font-weight: 700;
+        font-size: 10pt;
+    }
+    .custom-file-input:hover::before {
+        border-color: black;
+    }
+    .custom-file-input:active::before {
+        background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-6 form-container">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{% if form.instance.id %}Edit{% else %}Tambah{% endif %} Lembaga Adat</h1>
+                <p class="mt-1 text-sm text-gray-600">{% if form.instance.id %}Edit data{% else %}Tambahkan data baru{% endif %} lembaga adat</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <a href="{% url 'organization:lembaga_adat_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    <i class="fas fa-arrow-left mr-2"></i>Kembali
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white shadow rounded-lg p-4 sm:p-6 form-card">
+        <form method="post" enctype="multipart/form-data" id="lembaga-adat-form">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-red-700">
+                            Mohon perbaiki kesalahan berikut:
+                        </p>
+                        <ul class="list-disc pl-5 space-y-1 text-sm text-red-700">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                    <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Informasi Dasar -->
+            <div class="mb-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Informasi Dasar</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.nama_lembaga.id_for_label }}" class="block text-sm font-medium text-gray-700">Nama Lembaga <span class="text-red-500">*</span></label>
+                        {{ form.nama_lembaga }}
+                        {% if form.nama_lembaga.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.nama_lembaga.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.jenis_lembaga.id_for_label }}" class="block text-sm font-medium text-gray-700">Jenis Lembaga <span class="text-red-500">*</span></label>
+                        {{ form.jenis_lembaga }}
+                        {% if form.jenis_lembaga.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.jenis_lembaga.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.tanggal_terbentuk.id_for_label }}" class="block text-sm font-medium text-gray-700">Tanggal Terbentuk</label>
+                        {{ form.tanggal_terbentuk }}
+                        {% if form.tanggal_terbentuk.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.tanggal_terbentuk.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Format: YYYY-MM-DD (contoh: 2023-01-31)</p>
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">Status <span class="text-red-500">*</span></label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kepengurusan -->
+            <div class="mb-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Kepengurusan</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="{{ form.ketua.id_for_label }}" class="block text-sm font-medium text-gray-700">Ketua</label>
+                        {{ form.ketua }}
+                        {% if form.ketua.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.ketua.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.sekretaris.id_for_label }}" class="block text-sm font-medium text-gray-700">Sekretaris</label>
+                        {{ form.sekretaris }}
+                        {% if form.sekretaris.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.sekretaris.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.bendahara.id_for_label }}" class="block text-sm font-medium text-gray-700">Bendahara</label>
+                        {{ form.bendahara }}
+                        {% if form.bendahara.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.bendahara.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.jumlah_anggota.id_for_label }}" class="block text-sm font-medium text-gray-700">Jumlah Anggota</label>
+                        {{ form.jumlah_anggota }}
+                        {% if form.jumlah_anggota.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.jumlah_anggota.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kontak dan Alamat -->
+            <div class="mb-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Kontak dan Alamat</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="{{ form.kontak_phone.id_for_label }}" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                        {{ form.kontak_phone }}
+                        {% if form.kontak_phone.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.kontak_phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="md:col-span-2">
+                        <label for="{{ form.alamat_sekretariat.id_for_label }}" class="block text-sm font-medium text-gray-700">Alamat Sekretariat</label>
+                        {{ form.alamat_sekretariat }}
+                        {% if form.alamat_sekretariat.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.alamat_sekretariat.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Deskripsi dan Kegiatan -->
+            <div class="mb-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Deskripsi dan Kegiatan</h2>
+                <div class="grid grid-cols-1 gap-6">
+                    <div>
+                        <label for="{{ form.deskripsi.id_for_label }}" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                        {{ form.deskripsi }}
+                        {% if form.deskripsi.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.deskripsi.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Jelaskan secara singkat tentang lembaga adat ini</p>
+                    </div>
+                    
+                    <div>
+                        <label for="{{ form.kegiatan_rutin.id_for_label }}" class="block text-sm font-medium text-gray-700">Kegiatan Rutin</label>
+                        {{ form.kegiatan_rutin }}
+                        {% if form.kegiatan_rutin.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.kegiatan_rutin.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-xs text-gray-500">Jelaskan kegiatan rutin yang dilakukan oleh lembaga adat ini</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Foto Kegiatan -->
+            <div class="mb-8">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Foto Kegiatan</h2>
+                <div>
+                    <label for="{{ form.foto_kegiatan.id_for_label }}" class="block text-sm font-medium text-gray-700">Foto Kegiatan</label>
+                    {{ form.foto_kegiatan }}
+                    {% if form.foto_kegiatan.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ form.foto_kegiatan.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Unggah foto-foto kegiatan lembaga adat (bisa lebih dari satu)</p>
+                </div>
+                
+                {% if form.instance.id and form.instance.foto_kegiatan %}
+                <div class="mt-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Foto Kegiatan Saat Ini</h3>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="relative">
+                            <img src="{{ form.instance.foto_kegiatan.url }}" alt="Foto Kegiatan" class="h-24 w-full object-cover rounded-lg">
+                            <div class="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity duration-200 rounded-lg">
+                                <a href="#" class="text-white hover:text-red-300" onclick="return confirm('Apakah Anda yakin ingin menghapus foto ini?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                    <i class="fas fa-save mr-2"></i>Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // CSRF Token handling
+    function getCSRFToken() {
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        return cookieValue;
+    }
+
+    // Notification function
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} shadow-lg z-50 transform transition-transform duration-300 ease-in-out`;
+        notification.innerHTML = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('opacity-0');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Form submission with AJAX
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('lembaga-adat-form');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+            
+            // Determine if this is an edit or add operation
+            const isEdit = window.location.href.includes('/edit/');
+            const endpoint = isEdit 
+                ? `/pulosarok/organization/api/lembaga-adat/${window.location.pathname.split('/')[3]}/update/`
+                : '/pulosarok/organization/api/lembaga-adat/create/';
+            
+            // Gunakan POST untuk semua operasi karena form dengan file upload
+            const method = 'POST';
+            
+            // Send AJAX request
+            fetch(endpoint, {
+                method: method,
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showNotification(data.message || 'Data berhasil disimpan');
+                    
+                    // Redirect to detail page or list page
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        window.location.href = '/pulosarok/organization/lembaga-adat/';
+                    }
+                } else {
+                    // Show error messages
+                    showNotification(data.message || 'Terjadi kesalahan saat menyimpan data', 'error');
+                    
+                    // Display field errors
+                    if (data.errors) {
+                        for (const field in data.errors) {
+                            const errorMsg = data.errors[field].join(', ');
+                            const inputField = form.querySelector(`[name="${field}"]`);
+                            
+                            if (inputField) {
+                                // Add error class to input
+                                inputField.classList.add('border-red-500');
+                                
+                                // Add or update error message
+                                let errorElement = inputField.parentNode.querySelector('.text-red-600');
+                                if (!errorElement) {
+                                    errorElement = document.createElement('p');
+                                    errorElement.className = 'mt-2 text-sm text-red-600';
+                                    inputField.parentNode.appendChild(errorElement);
+                                }
+                                errorElement.textContent = errorMsg;
+                            }
+                        }
+                    }
+                    
+                    // Reset button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan saat mengirim data: ' + error.message, 'error');
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
+        });
+    });
+</script>
+{% endblock %}

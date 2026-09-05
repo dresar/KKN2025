@@ -1,0 +1,728 @@
+{% extends 'admin/base.html' %}
+
+{% block title %}Input Data Aset{% endblock %}
+
+{% block page_title %}Input Data Aset - Manajemen Aset Desa{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <!-- Header Section -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-6 text-white">
+            <h1 class="text-2xl font-bold mb-2">Input Data Aset</h1>
+            <p class="text-blue-100">Manajemen dan inventarisasi aset milik desa</p>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="mb-6 flex flex-wrap gap-4">
+        <button onclick="openAddModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Tambah Aset
+        </button>
+        <button onclick="exportData()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-download mr-2"></i>
+            Export Data
+        </button>
+        <button onclick="generateReport()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-chart-bar mr-2"></i>
+            Laporan Aset
+        </button>
+        <button onclick="printInventory()" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center">
+            <i class="fas fa-print mr-2"></i>
+            Cetak Inventaris
+        </button>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Cari Aset</label>
+                <input type="text" id="searchInput" placeholder="Nama aset atau kode..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Aset</label>
+                <select id="kategoriFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Semua Kategori</option>
+                    <option value="tanah">Tanah</option>
+                    <option value="bangunan">Bangunan</option>
+                    <option value="kendaraan">Kendaraan</option>
+                    <option value="peralatan">Peralatan</option>
+                    <option value="inventaris">Inventaris</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Kondisi</label>
+                <select id="kondisiFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Semua Kondisi</option>
+                    <option value="baik">Baik</option>
+                    <option value="rusak_ringan">Rusak Ringan</option>
+                    <option value="rusak_berat">Rusak Berat</option>
+                    <option value="tidak_dapat_digunakan">Tidak Dapat Digunakan</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button onclick="filterData()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md">
+                    <i class="fas fa-search mr-2"></i>
+                    Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                    <i class="fas fa-boxes text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Aset</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="totalAset">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-green-100 text-green-600">
+                    <i class="fas fa-check-circle text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Kondisi Baik</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="asetBaik">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Perlu Perbaikan</p>
+                    <p class="text-2xl font-semibold text-gray-900" id="asetRusak">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                    <i class="fas fa-money-bill-wave text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total Nilai</p>
+                    <p class="text-lg font-semibold text-gray-900" id="totalNilai">Rp 0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Daftar Aset Desa</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200" id="asetTable">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode Aset</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Aset</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategori</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nilai</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kondisi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lokasi</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="asetTableBody">
+                    <!-- Data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Menampilkan <span id="showingStart">1</span> sampai <span id="showingEnd">10</span> dari <span id="totalRecords">0</span> data
+        </div>
+        <div class="flex space-x-2" id="pagination">
+            <!-- Pagination buttons will be generated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="asetModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900" id="modalTitle">Tambah Aset</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="asetForm" class="space-y-4">
+                <input type="hidden" id="asetId">
+                
+                <!-- Basic Information -->
+                <div class="border-b pb-4">
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Informasi Dasar</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kode Aset *</label>
+                            <input type="text" id="kodeAset" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nama Aset *</label>
+                            <input type="text" id="namaAset" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kategori Aset *</label>
+                            <select id="kategoriAset" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Pilih Kategori</option>
+                                <option value="tanah">Tanah</option>
+                                <option value="bangunan">Bangunan</option>
+                                <option value="kendaraan">Kendaraan</option>
+                                <option value="peralatan">Peralatan</option>
+                                <option value="inventaris">Inventaris</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Perolehan</label>
+                            <input type="date" id="tanggalPerolehan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Information -->
+                <div class="border-b pb-4">
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Informasi Keuangan</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nilai Perolehan (Rp) *</label>
+                            <input type="number" id="nilaiPerolehan" required min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nilai Saat Ini (Rp)</label>
+                            <input type="number" id="nilaiSaatIni" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sumber Dana</label>
+                            <select id="sumberDana" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Pilih Sumber</option>
+                                <option value="apbd">APBD</option>
+                                <option value="apbn">APBN</option>
+                                <option value="hibah">Hibah</option>
+                                <option value="swadaya">Swadaya</option>
+                                <option value="lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Physical Information -->
+                <div class="border-b pb-4">
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Informasi Fisik</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Kondisi *</label>
+                            <select id="kondisi" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="baik">Baik</option>
+                                <option value="rusak_ringan">Rusak Ringan</option>
+                                <option value="rusak_berat">Rusak Berat</option>
+                                <option value="tidak_dapat_digunakan">Tidak Dapat Digunakan</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Lokasi/Penempatan *</label>
+                            <input type="text" id="lokasi" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Merk/Brand</label>
+                            <input type="text" id="merk" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Model/Type</label>
+                            <input type="text" id="model" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tahun Pembuatan</label>
+                            <input type="number" id="tahunPembuatan" min="1900" max="2030" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Information -->
+                <div class="border-b pb-4">
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Informasi Tambahan</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Penanggung Jawab</label>
+                            <input type="text" id="penanggungJawab" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Status Kepemilikan</label>
+                            <select id="statusKepemilikan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="milik_desa">Milik Desa</option>
+                                <option value="sewa">Sewa</option>
+                                <option value="pinjam_pakai">Pinjam Pakai</option>
+                                <option value="hibah">Hibah</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Keterangan</label>
+                        <textarea id="keterangan" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Maintenance Information -->
+                <div>
+                    <h4 class="text-md font-medium text-gray-900 mb-3">Informasi Pemeliharaan</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tanggal Pemeliharaan Terakhir</label>
+                            <input type="date" id="tanggalPemeliharaan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Biaya Pemeliharaan (Rp)</label>
+                            <input type="number" id="biayaPemeliharaan" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables for API data
+let asetData = [];
+let currentPage = 1;
+let totalRecords = 0;
+const recordsPerPage = 10;
+let editingId = null;
+
+// Load data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadAsetData();
+});
+
+// Get CSRF token
+async function getCSRFToken() {
+    try {
+        const response = await fetch('/pulosarok/business/csrf-token/');
+        const data = await response.json();
+        return data.csrf_token;
+    } catch (error) {
+        console.error('Error getting CSRF token:', error);
+        return getCookie('csrftoken') || '';
+    }
+}
+
+// Load Aset data from API
+async function loadAsetData(page = 1) {
+    try {
+        const searchTerm = document.getElementById('searchInput')?.value || '';
+        const kategoriFilter = document.getElementById('kategoriFilter')?.value || '';
+        const kondisiFilter = document.getElementById('kondisiFilter')?.value || '';
+        
+        let url = `/pulosarok/business/api/aset/?page=${page}`;
+        
+        if (searchTerm) {
+            url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        if (kategoriFilter) {
+            url += `&kategori=${kategoriFilter}`;
+        }
+        
+        if (kondisiFilter) {
+            url += `&kondisi=${kondisiFilter}`;
+        }
+        
+        const token = await getCSRFToken();
+        const response = await fetch(url, {
+            headers: {
+                'X-CSRFToken': token
+            }
+        });
+        const data = await response.json();
+        
+        asetData = data.results || [];
+        currentPage = page;
+        totalPages = data.num_pages || 1;
+        totalRecords = data.count || 0;
+        displayAsetData();
+        updatePagination(totalPages, currentPage);
+        updateStatistics();
+    } catch (error) {
+        console.error('Error fetching Aset data:', error);
+        showToast('Gagal memuat data aset', 'error');
+    }
+}
+
+// Format currency
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0
+    }).format(amount);
+}
+
+// Get category display name
+function getCategoryName(category) {
+    const categories = {
+        'tanah': 'Tanah',
+        'bangunan': 'Bangunan',
+        'kendaraan': 'Kendaraan',
+        'peralatan': 'Peralatan',
+        'inventaris': 'Inventaris'
+    };
+    return categories[category] || category;
+}
+
+// Get condition display name
+function getConditionName(condition) {
+    const conditions = {
+        'baik': 'Baik',
+        'rusak_ringan': 'Rusak Ringan',
+        'rusak_berat': 'Rusak Berat',
+        'tidak_dapat_digunakan': 'Tidak Dapat Digunakan'
+    };
+    return conditions[condition] || condition;
+}
+
+// Update statistics
+function updateStatistics() {
+    const totalAset = asetData.length;
+    const asetBaik = asetData.filter(item => item.kondisi === 'baik').length;
+    const asetRusak = asetData.filter(item => item.kondisi === 'rusak_ringan' || item.kondisi === 'rusak_berat').length;
+    const totalNilai = asetData.reduce((sum, item) => sum + (item.nilai_saat_ini || 0), 0);
+    
+    document.getElementById('totalAset').textContent = totalAset;
+    document.getElementById('asetBaik').textContent = asetBaik;
+    document.getElementById('asetRusak').textContent = asetRusak;
+    document.getElementById('totalNilai').textContent = formatCurrency(totalNilai);
+}
+
+// Display Aset data
+function displayAsetData() {
+    const tbody = document.getElementById('asetTableBody');
+    const mobileContainer = document.getElementById('mobileCards');
+    
+    if (tbody) {
+        tbody.innerHTML = '';
+        
+        asetData.forEach((item, index) => {
+            const rowNumber = (currentPage - 1) * 10 + index + 1;
+            const kondisiColors = {
+                'baik': 'bg-green-100 text-green-800',
+                'rusak_ringan': 'bg-yellow-100 text-yellow-800',
+                'rusak_berat': 'bg-orange-100 text-orange-800',
+                'tidak_dapat_digunakan': 'bg-red-100 text-red-800'
+            };
+            
+            const row = `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${rowNumber}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.kode_aset || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.nama_aset || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            ${getCategoryName(item.kategori || 'lainnya')}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formatCurrency(item.nilai_saat_ini || 0)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${kondisiColors[item.kondisi] || 'bg-gray-100 text-gray-800'}">
+                            ${getConditionName(item.kondisi || 'baik')}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.lokasi || '-'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="editAset(${item.id})" class="text-blue-600 hover:text-blue-900 mr-3" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteAset(${item.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.innerHTML += row;
+        });
+    }
+    
+    // Mobile view
+    if (mobileContainer) {
+        mobileContainer.innerHTML = '';
+        
+        asetData.forEach((item, index) => {
+            const rowNumber = (currentPage - 1) * 10 + index + 1;
+            const kondisiColors = {
+                'baik': 'bg-green-100 text-green-800',
+                'rusak_ringan': 'bg-yellow-100 text-yellow-800',
+                'rusak_berat': 'bg-orange-100 text-orange-800',
+                'tidak_dapat_digunakan': 'bg-red-100 text-red-800'
+            };
+            
+            const card = `
+                <div class="bg-white p-4 rounded-lg shadow border">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-gray-900">${item.nama_aset || '-'}</h3>
+                        <span class="px-2 py-1 text-xs font-medium rounded-full ${kondisiColors[item.kondisi] || 'bg-gray-100 text-gray-800'}">
+                            ${getConditionName(item.kondisi || 'baik')}
+                        </span>
+                    </div>
+                    <div class="space-y-1 text-sm text-gray-600">
+                        <p><span class="font-medium">No:</span> ${rowNumber}</p>
+                        <p><span class="font-medium">Kode:</span> ${item.kode_aset || '-'}</p>
+                        <p><span class="font-medium">Kategori:</span> ${getCategoryName(item.kategori || 'lainnya')}</p>
+                        <p><span class="font-medium">Nilai:</span> ${formatCurrency(item.nilai_saat_ini || 0)}</p>
+                        <p><span class="font-medium">Lokasi:</span> ${item.lokasi || '-'}</p>
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-3">
+                        <button onclick="editAset(${item.id})" class="text-blue-600 hover:text-blue-900" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteAset(${item.id})" class="text-red-600 hover:text-red-900" title="Hapus">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            mobileContainer.innerHTML += card;
+        });
+    }
+}
+
+// Open add modal
+function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Tambah Aset';
+    document.getElementById('asetForm').reset();
+    document.getElementById('asetId').value = '';
+    document.getElementById('asetModal').classList.remove('hidden');
+}
+
+// Edit Aset
+function editAset(id) {
+    const aset = asetData.find(item => item.id === id);
+    if (aset) {
+        document.getElementById('modalTitle').textContent = 'Edit Aset';
+        document.getElementById('asetId').value = aset.id;
+        document.getElementById('kodeAset').value = aset.kode_aset;
+        document.getElementById('namaAset').value = aset.nama_aset;
+        document.getElementById('kategoriAset').value = aset.kategori;
+        document.getElementById('tanggalPerolehan').value = aset.tanggal_perolehan || '';
+        document.getElementById('nilaiPerolehan').value = aset.nilai_perolehan || '';
+        document.getElementById('nilaiSaatIni').value = aset.nilai_saat_ini || '';
+        document.getElementById('sumberDana').value = aset.sumber_dana || '';
+        document.getElementById('kondisi').value = aset.kondisi;
+        document.getElementById('lokasi').value = aset.lokasi;
+        document.getElementById('merk').value = aset.merk || '';
+        document.getElementById('model').value = aset.model || '';
+        document.getElementById('tahunPembuatan').value = aset.tahun_pembuatan || '';
+        document.getElementById('penanggungJawab').value = aset.penanggung_jawab || '';
+        document.getElementById('statusKepemilikan').value = aset.status_kepemilikan || 'milik_desa';
+        document.getElementById('keterangan').value = aset.keterangan || '';
+        document.getElementById('tanggalPemeliharaan').value = aset.tanggal_pemeliharaan || '';
+        document.getElementById('biayaPemeliharaan').value = aset.biaya_pemeliharaan || '';
+        document.getElementById('asetModal').classList.remove('hidden');
+    }
+}
+
+// Delete Aset
+async function deleteAset(id) {
+    if (confirm('Apakah Anda yakin ingin menghapus data aset ini?')) {
+        try {
+            const response = await fetch(`/pulosarok/business/api/aset/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Data aset berhasil dihapus!');
+                loadAsetData(currentPage);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error deleting Aset:', error);
+            alert('Terjadi kesalahan saat menghapus aset.');
+        }
+    }
+}
+
+// Close modal
+function closeModal() {
+    document.getElementById('asetModal').classList.add('hidden');
+}
+
+// Handle form submission
+document.getElementById('asetForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        kode_aset: document.getElementById('kodeAset').value,
+        nama_aset: document.getElementById('namaAset').value,
+        kategori: document.getElementById('kategoriAset').value,
+        tanggal_perolehan: document.getElementById('tanggalPerolehan').value,
+        nilai_perolehan: parseInt(document.getElementById('nilaiPerolehan').value) || 0,
+        nilai_saat_ini: parseInt(document.getElementById('nilaiSaatIni').value) || 0,
+        sumber_dana: document.getElementById('sumberDana').value,
+        kondisi: document.getElementById('kondisi').value,
+        lokasi: document.getElementById('lokasi').value,
+        merk: document.getElementById('merk').value,
+        model: document.getElementById('model').value,
+        tahun_pembuatan: parseInt(document.getElementById('tahunPembuatan').value) || null,
+        penanggung_jawab: document.getElementById('penanggungJawab').value,
+        status_kepemilikan: document.getElementById('statusKepemilikan').value,
+        keterangan: document.getElementById('keterangan').value,
+        tanggal_pemeliharaan: document.getElementById('tanggalPemeliharaan').value,
+        biaya_pemeliharaan: parseInt(document.getElementById('biayaPemeliharaan').value) || 0
+    };
+    
+    try {
+        const asetId = document.getElementById('asetId').value;
+        const url = asetId ? `/pulosarok/business/api/aset/${asetId}/` : '/pulosarok/business/api/aset/';
+        const method = asetId ? 'PUT' : 'POST';
+        const token = await getCSRFToken();
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': token
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(asetId ? 'Data aset berhasil diperbarui!' : 'Data aset berhasil ditambahkan!');
+            closeModal();
+            loadAsetData(currentPage);
+        } else {
+            alert('Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error saving Aset:', error);
+        alert('Terjadi kesalahan saat menyimpan data aset.');
+    }
+});
+
+// Get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Filter data
+function filterData() {
+    loadAsetData(1);
+}
+
+// Export data
+function exportData() {
+    window.location.href = '/pulosarok/business/export/aset/';
+}
+
+// Generate report
+function generateReport() {
+    // This would typically generate a comprehensive asset report
+    alert('Fitur laporan aset akan segera tersedia!');
+}
+
+// Print inventory
+function printInventory() {
+    // This would typically generate a printable inventory report
+    alert('Fitur cetak inventaris akan segera tersedia!');
+}
+
+// Update pagination
+function updatePagination() {
+    const totalPages = Math.ceil(totalRecords / recordsPerPage);
+    const startRecord = (currentPage - 1) * recordsPerPage + 1;
+    const endRecord = Math.min(currentPage * recordsPerPage, totalRecords);
+    
+    document.getElementById('showingStart').textContent = startRecord;
+    document.getElementById('showingEnd').textContent = endRecord;
+    document.getElementById('totalRecords').textContent = totalRecords;
+    
+    // Generate pagination buttons
+    const paginationContainer = document.getElementById('pagination');
+    paginationContainer.innerHTML = '';
+    
+    // Previous button
+    if (currentPage > 1) {
+        const prevButton = document.createElement('button');
+        prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevButton.className = 'px-3 py-2 bg-white border border-gray-300 text-gray-500 hover:bg-gray-50 rounded-l-md';
+        prevButton.onclick = () => loadAsetData(currentPage - 1);
+        paginationContainer.appendChild(prevButton);
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.textContent = i;
+        pageButton.className = i === currentPage 
+            ? 'px-3 py-2 bg-blue-600 text-white border border-blue-600'
+            : 'px-3 py-2 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50';
+        pageButton.onclick = () => loadAsetData(i);
+        paginationContainer.appendChild(pageButton);
+    }
+    
+    // Next button
+    if (currentPage < totalPages) {
+        const nextButton = document.createElement('button');
+        nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextButton.className = 'px-3 py-2 bg-white border border-gray-300 text-gray-500 hover:bg-gray-50 rounded-r-md';
+        nextButton.onclick = () => loadAsetData(currentPage + 1);
+        paginationContainer.appendChild(nextButton);
+    }
+}
+</script>
+{% endblock %}
